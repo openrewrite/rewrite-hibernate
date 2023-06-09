@@ -25,6 +25,7 @@ description: >
 
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernateDependencies61
+  - org.openrewrite.hibernate.TypeDescriptorToType
   - org.openrewrite.java.migrate.jakarta.JavaxPersistenceToJakartaPersistence
   - org.openrewrite.java.migrate.jakarta.JavaxPersistenceXmlToJakartaPersistenceXml
 
@@ -379,3 +380,19 @@ recipeList:
   - org.openrewrite.java.dependencies.RemoveDependency:
         groupId: org.hibernate
         artifactId: hibernate-entitymanager
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.TypeDescriptorToType
+displayName: Rename `JavaTypeDescriptor` and `SqlTypeDescriptor` to `JavaType` and `SqlType`
+description: >
+  Rename `JavaTypeDescriptor` and `SqlTypeDescriptor` to `JavaType` and `SqlType` respectively.
+  See https://github.com/hibernate/hibernate-orm/blob/6.0/migration-guide.adoc#type-system
+
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.type.descriptor.java.JavaTypeDescriptor
+      newFullyQualifiedTypeName: org.hibernate.type.descriptor.java.JavaType
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.type.descriptor.sql.SqlTypeDescriptor
+      newFullyQualifiedTypeName: org.hibernate.type.descriptor.sql.SqlType
