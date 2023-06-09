@@ -21,6 +21,7 @@ gradle-app.setting
 .classpath
 
 .idea/
+out/
 
 # Compiled class file
 *.class
