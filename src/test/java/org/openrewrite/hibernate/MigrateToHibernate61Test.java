@@ -33,7 +33,7 @@ class MigrateToHibernate61Test implements RewriteTest {
         spec.recipe(Environment.builder()
           .scanRuntimeClasspath("org.openrewrite.hibernate", "org.openrewrite.java.migrate.jakarta")
           .build()
-          .activateRecipes("org.openrewrite.java.migrate.hibernate.MigrateToHibernate61"));
+          .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"));
     }
 
     @Test
