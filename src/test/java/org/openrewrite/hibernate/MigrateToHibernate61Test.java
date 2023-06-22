@@ -91,4 +91,69 @@ class MigrateToHibernate61Test implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void groupIdHypersistenceUtilsRenamedAndPackageUpdated() {
+        rewriteRun(
+          mavenProject(
+            "Sample",
+            //language=xml
+            pomXml("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                  <modelVersion>4.0.0</modelVersion>
+                  <groupId>com.example</groupId>
+                  <artifactId>demo</artifactId>
+                  <version>0.0.1-SNAPSHOT</version>
+                  <dependencies>
+                    <dependency>
+                      <groupId>com.vladmihalcea</groupId>
+                      <artifactId>hibernate-types-52</artifactId>
+                      <version>2.17.1</version>
+                    </dependency>
+                  </dependencies>
+                </project>
+                """, spec -> spec.after(actual -> {
+                Matcher matcher = Pattern.compile("<version>(3\\.4\\.\\d+)</version>").matcher(actual);
+                assertTrue(matcher.find());
+                return """
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>demo</artifactId>
+                    <version>0.0.1-SNAPSHOT</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>io.hypersistence</groupId>
+                        <artifactId>hypersistence-utils-hibernate-60</artifactId>
+                        <version>%s</version>
+                      </dependency>
+                    </dependencies>
+                  </project>
+                    """.formatted(matcher.group(1));
+              })
+            ),
+            //language=java
+            srcMainJava(
+              java("""
+                import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+                
+                public class TestApplication {
+                }
+                """, spec -> spec.after(actual -> """
+                import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+                                
+                public class TestApplication {
+                }
+                """)
+              )
+            )
+          )
+        );
+    }
+
+
 }
