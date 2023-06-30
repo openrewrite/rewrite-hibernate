@@ -39,5 +39,5 @@ recipeList:
       oldArtifactId: hypersistence-utils-hibernate-60
       newGroupId: io.hypersistence
       newArtifactId: hypersistence-utils-hibernate-62
-      newVersion: 3.4.x
+      newVersion: 3.5.x
 
