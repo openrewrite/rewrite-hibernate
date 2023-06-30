@@ -1,0 +1,43 @@
+#
+# Copyright 2023 the original author or authors.
+# <p>
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# <p>
+# https://www.apache.org/licenses/LICENSE-2.0
+# <p>
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.MigrateToHibernate62
+displayName: Migrate to Hibernate 6.2.x
+description: >
+  This recipe will apply changes commonly needed when migrating to Hibernate 6.2.x.
+
+recipeList:
+  - org.openrewrite.hibernate.MigrateToHibernate61
+  - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.2
+
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.2
+displayName: Migrate Hibernate Types to Hypersistence Utils 6.2
+description: >
+  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-60` to `io.hypersistence:hypersistence-utils-hibernate-62`. 
+
+recipeList:
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.hypersistence
+      oldArtifactId: hypersistence-utils-hibernate-60
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.5.x
+
