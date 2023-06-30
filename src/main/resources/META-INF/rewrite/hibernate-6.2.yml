@@ -35,9 +35,9 @@ description: >
 
 recipeList:
   - org.openrewrite.java.dependencies.ChangeDependency:
-        oldGroupId: io.hypersistence
-        oldArtifactId: hypersistence-utils-hibernate-60
-        newGroupId: io.hypersistence
-        newArtifactId: hypersistence-utils-hibernate-62
-        newVersion: 3.4.x
+      oldGroupId: io.hypersistence
+      oldArtifactId: hypersistence-utils-hibernate-60
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.4.x
 
