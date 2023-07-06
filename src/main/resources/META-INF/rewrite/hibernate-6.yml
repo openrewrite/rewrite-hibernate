@@ -447,3 +447,4 @@ recipeList:
       oldPackageName: com.vladmihalcea
       newPackageName: io.hypersistence.utils
       recursive: true
+  - org.openrewrite.hibernate.hibernate60.MigrateHypersistenceUtils61Types
