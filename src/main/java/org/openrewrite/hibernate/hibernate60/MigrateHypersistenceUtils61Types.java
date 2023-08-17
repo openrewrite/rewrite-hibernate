@@ -37,13 +37,13 @@ public class MigrateHypersistenceUtils61Types extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Migrate io.hypersistence:hypersistence-utils-hibernate Json type";
+        return "Migrate `io.hypersistence:hypersistence-utils-hibernate` Json type";
     }
 
     @Override
     public String getDescription() {
-        return "When io.hypersistence.utils are being used, " +
-                "removes @org.hibernate.annotations.TypeDefs annotation as it doesn't exist in Hibernate 6 and updates generic JSON type mapping.";
+        return "When `io.hypersistence.utils` are being used, " +
+                "removes `@org.hibernate.annotations.TypeDefs` annotation as it doesn't exist in Hibernate 6 and updates generic JSON type mapping.";
     }
 
     @Override
