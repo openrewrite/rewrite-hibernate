@@ -25,63 +25,57 @@ import static org.openrewrite.java.Assertions.java;
 public class TypeAnnotationParameterTest implements RewriteTest {
 
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new TypeAnnotationParameter()).parser(JavaParser.fromJavaVersion().classpath("hibernate-core"));;
+        spec.recipe(new TypeAnnotationParameter()).parser(JavaParser.fromJavaVersion().classpath("hibernate-core"));
     }
 
     @Test
     void onlyOneParameter() {
         rewriteRun(
-              java("""
-                import org.hibernate.annotations.Type;
-                
-                public class TestApplication {
-                
-                    @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
-                    Object a;
-                    
-                }
-                """,
-                """
-                import org.hibernate.annotations.Type;
-                
-                import java.util.concurrent.atomic.AtomicBoolean;
-                
-                public class TestApplication {
-                
-                    @Type(AtomicBoolean.class)
-                    Object a;
-                    
-                }
-                """
-              )
-          );
+          //language=java
+          java("""
+              import org.hibernate.annotations.Type;
+              
+              public class TestApplication {
+                  @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
+                  Object a;
+              }
+              """,
+            """
+              import org.hibernate.annotations.Type;
+              
+              import java.util.concurrent.atomic.AtomicBoolean;
+              
+              public class TestApplication {
+                  @Type(AtomicBoolean.class)
+                  Object a;
+              }
+              """
+          )
+        );
     }
 
     @Test
     void multipleParameters() {
         rewriteRun(
+          //language=java
           java("""
-                import org.hibernate.annotations.Type;
-                
-                public class TestApplication {
-                
-                    @Type(type = "java.util.concurrent.atomic.AtomicBoolean", parameters = {})
-                    Object a;
-                    
-                }
-                """,
+              import org.hibernate.annotations.Type;
+              
+              class TestApplication {
+                  @Type(type = "java.util.concurrent.atomic.AtomicBoolean", parameters = {})
+                  Object a;
+              }
+              """,
             """
-            import org.hibernate.annotations.Type;
-            
-            import java.util.concurrent.atomic.AtomicBoolean;
-            
-            public class TestApplication {
-            
-                @Type(value = AtomicBoolean.class, parameters = {})
-                Object a;
-                
-            }
-            """
+              import org.hibernate.annotations.Type;
+                          
+              import java.util.concurrent.atomic.AtomicBoolean;
+                          
+              class TestApplication {
+                  @Type(value = AtomicBoolean.class, parameters = {})
+                  Object a;
+              }
+              """
           )
         );
     }
