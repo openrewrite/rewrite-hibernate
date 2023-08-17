@@ -36,7 +36,7 @@ class MigrateToHibernate61Test implements RewriteTest {
           .scanRuntimeClasspath("org.openrewrite.hibernate", "org.openrewrite.java.migrate.jakarta")
           .build()
           .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"))
-          .parser(JavaParser.fromJavaVersion().classpath("hibernate-core"));
+          .parser(JavaParser.fromJavaVersion().classpath("hibernate-core", "javax.persistence-api"));
     }
 
     @Test
@@ -161,7 +161,6 @@ class MigrateToHibernate61Test implements RewriteTest {
     @Test
     void hypersistenceUtilsTypesMigrated() {
         rewriteRun(
-          spec -> spec.typeValidationOptions(TypeValidation.none()),
           mavenProject(
             "Sample",
             //language=xml
@@ -287,11 +286,11 @@ class MigrateToHibernate61Test implements RewriteTest {
     @Test
     void typeDefsAnnotationIsNotRemovedWhenHypersistenceUtilsAreNotBeingUsed() {
         rewriteRun(
-          spec -> spec.typeValidationOptions(TypeValidation.none()),
           mavenProject(
             "Sample",
             //language=java
             srcMainJava(
+              java("class SomeCustomClass {}"),
               java("""
                     import org.hibernate.annotations.Type;
                     import org.hibernate.annotations.TypeDef;
