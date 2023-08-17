@@ -20,10 +20,12 @@ import org.openrewrite.Recipe;
 import org.openrewrite.Tree;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
+import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
+import java.time.Duration;
 import java.util.Collections;
 
 public class TypeAnnotationParameter extends Recipe {
@@ -41,6 +43,11 @@ public class TypeAnnotationParameter extends Recipe {
     }
 
     @Override
+    public @Nullable Duration getEstimatedEffortPerOccurrence() {
+        return Duration.ofMinutes(1);
+    }
+
+    @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
@@ -50,32 +57,31 @@ public class TypeAnnotationParameter extends Recipe {
                 if (type != null && FQN_TYPE_ANNOTATION.equals(type.getFullyQualifiedName())) {
                     final boolean isOnlyParameter = a.getArguments().size() == 1;
                     a = a.withArguments(ListUtils.map(a.getArguments(), arg -> {
-                       if (arg instanceof J.Assignment) {
-                           J.Assignment assignment = (J.Assignment) arg;
-                           if (assignment.getVariable() instanceof J.Identifier && "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName())
-                                && assignment.getAssignment() instanceof J.Literal) {
-                               J.Identifier paramName = (J.Identifier) assignment.getVariable();
-                               String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
-                               String simpleTypeName = getSimpleName(fqTypeName);
-                               JavaType typeOfNewValue = JavaType.buildType(fqTypeName);
-                               J.FieldAccess fa = new J.FieldAccess(
-                                       Tree.randomId(),
-                                       isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
-                                       assignment.getAssignment().getMarkers(),
-                                       new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), simpleTypeName, typeOfNewValue, null),
-                                       JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
-                                       JavaType.buildType("java.lang.Class")
-                               );
-                               maybeAddImport(fqTypeName);
-                               autoFormat(assignment, executionContext);
-                               if (isOnlyParameter) {
-                                   return fa;
-                               } else {
-                                   return assignment.withVariable(paramName.withSimpleName("value")).withAssignment(fa);
-                               }
-                           }
-                       }
-                       return arg;
+                        if (arg instanceof J.Assignment) {
+                            J.Assignment assignment = (J.Assignment) arg;
+                            if (assignment.getVariable() instanceof J.Identifier
+                                    && "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName())
+                                    && assignment.getAssignment() instanceof J.Literal) {
+                                J.Identifier paramName = (J.Identifier) assignment.getVariable();
+                                String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
+                                String simpleTypeName = getSimpleName(fqTypeName);
+                                JavaType typeOfNewValue = JavaType.buildType(fqTypeName);
+                                J.FieldAccess fa = new J.FieldAccess(
+                                        Tree.randomId(),
+                                        isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
+                                        assignment.getAssignment().getMarkers(),
+                                        new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), simpleTypeName, typeOfNewValue, null),
+                                        JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
+                                        JavaType.buildType("java.lang.Class")
+                                );
+                                maybeAddImport(fqTypeName);
+                                if (isOnlyParameter) {
+                                    return fa;
+                                }
+                                return assignment.withVariable(paramName.withSimpleName("value")).withAssignment(fa);
+                            }
+                        }
+                        return arg;
                     }));
                 }
                 return a;
