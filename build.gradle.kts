@@ -19,4 +19,7 @@ dependencies {
     testImplementation("org.openrewrite:rewrite-maven")
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine:latest.release")
+
+    testRuntimeOnly("org.hibernate:hibernate-core:5.6.15.Final")
+
 }
