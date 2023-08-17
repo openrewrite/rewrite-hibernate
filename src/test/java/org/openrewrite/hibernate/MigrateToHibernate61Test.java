@@ -17,6 +17,7 @@ package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.config.Environment;
+import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 import org.openrewrite.test.TypeValidation;
@@ -34,7 +35,8 @@ class MigrateToHibernate61Test implements RewriteTest {
         spec.recipe(Environment.builder()
           .scanRuntimeClasspath("org.openrewrite.hibernate", "org.openrewrite.java.migrate.jakarta")
           .build()
-          .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"));
+          .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"))
+          .parser(JavaParser.fromJavaVersion().classpath("hibernate-core"));
     }
 
     @Test

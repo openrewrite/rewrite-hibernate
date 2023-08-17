@@ -22,7 +22,7 @@ import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.search.FindImports;
+import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
@@ -47,18 +47,14 @@ public class MigrateHypersistenceUtils61Types extends Recipe {
     }
 
     @Override
-    public Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(5);
-    }
-
-    @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(Preconditions.and(
-                new FindImports("org.hibernate.annotations.Type").getVisitor(),
-                Preconditions.or(
-                        new FindImports("com.vladmihalcea..*").getVisitor(),
-                        new FindImports("io.hypersistence.utils..*").getVisitor()
-                )), new MigrateHibernateAnnotationType());
+        return Preconditions.check(
+                Preconditions.and(
+                        new UsesType<>("org.hibernate.annotations.Type", true),
+                        Preconditions.or(
+                                new UsesType<>("com.vladmihalcea..*", true),
+                                new UsesType<>("io.hypersistence.utils..*", true))),
+                new MigrateHibernateAnnotationType());
     }
 
     private static class MigrateHibernateAnnotationType extends JavaIsoVisitor<ExecutionContext> {
