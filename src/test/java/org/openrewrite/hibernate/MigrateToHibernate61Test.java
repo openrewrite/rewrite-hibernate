@@ -20,7 +20,6 @@ import org.openrewrite.config.Environment;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-import org.openrewrite.test.TypeValidation;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,9 +32,9 @@ class MigrateToHibernate61Test implements RewriteTest {
 
     public void defaults(RecipeSpec spec) {
         spec.recipe(Environment.builder()
-          .scanRuntimeClasspath("org.openrewrite.hibernate", "org.openrewrite.java.migrate.jakarta")
-          .build()
-          .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"))
+            .scanRuntimeClasspath("org.openrewrite.hibernate", "org.openrewrite.java.migrate.jakarta")
+            .build()
+            .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"))
           .parser(JavaParser.fromJavaVersion().classpath("hibernate-core", "javax.persistence-api"));
     }
 

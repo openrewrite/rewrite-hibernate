@@ -15,13 +15,14 @@
  */
 package org.openrewrite.hibernate;
 
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Recipe;
+import org.openrewrite.Tree;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.JavaVisitor;
-import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
@@ -57,13 +58,12 @@ public class TypeAnnotationParameter extends Recipe {
     private static class TypeAnnotationParameterVisitor extends JavaVisitor<ExecutionContext> {
         @Override
         public J visitAnnotation(J.Annotation annotation, ExecutionContext executionContext) {
-            System.out.println("getting here");
-            J.Annotation a = (J.Annotation)super.visitAnnotation(annotation, executionContext);
+            J.Annotation a = (J.Annotation) super.visitAnnotation(annotation, executionContext);
             JavaType.FullyQualified type = TypeUtils.asFullyQualified(a.getType());
             if (type != null) {
                 if (FQN_TYPE_ANNOTATION.matches(a)) {
                     return visitTypeAnnotation(a);
-                }else if (TYPE_DEF_MATCHER.matches(a) || TYPE_DEFS_MATCHER.matches(a)) {
+                } else if (TYPE_DEF_MATCHER.matches(a) || TYPE_DEFS_MATCHER.matches(a)) {
                     // TODO: figure out way to check ahead of time if code contains @Type. If it does, this code shouldn't run
                     maybeRemoveImport("org.hibernate.annotations.TypeDef");
                     maybeRemoveImport("org.hibernate.annotations.TypeDefs");

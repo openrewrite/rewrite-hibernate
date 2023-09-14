@@ -27,7 +27,6 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,7 +42,7 @@ public class MigrateHypersistenceUtils61Types extends Recipe {
     @Override
     public String getDescription() {
         return "When `io.hypersistence.utils` are being used, " +
-                "removes `@org.hibernate.annotations.TypeDefs` annotation as it doesn't exist in Hibernate 6 and updates generic JSON type mapping.";
+               "removes `@org.hibernate.annotations.TypeDefs` annotation as it doesn't exist in Hibernate 6 and updates generic JSON type mapping.";
     }
 
     @Override
@@ -68,17 +67,17 @@ public class MigrateHypersistenceUtils61Types extends Recipe {
 
         private static boolean isHibernateTypeAnnotation(J.Annotation annotation) {
             return annotation.getAnnotationType() instanceof J.Identifier
-                    && "Type".equals(((J.Identifier) annotation.getAnnotationType()).getSimpleName())
-                    && annotation.getArguments() != null;
+                   && "Type".equals(((J.Identifier) annotation.getAnnotationType()).getSimpleName())
+                   && annotation.getArguments() != null;
         }
 
         private static boolean isTypeJsonArgument(Expression arg) {
             return arg instanceof J.Assignment
-                    && ((J.Assignment) arg).getVariable() instanceof J.Identifier
-                    && ((J.Assignment) arg).getAssignment() instanceof J.Literal
-                    && "type".equals(((J.Identifier) ((J.Assignment) arg).getVariable()).getSimpleName())
-                    && ((J.Literal) ((J.Assignment) arg).getAssignment()).getValue() != null
-                    && ((J.Literal) ((J.Assignment) arg).getAssignment()).getValue().toString().contains("json");
+                   && ((J.Assignment) arg).getVariable() instanceof J.Identifier
+                   && ((J.Assignment) arg).getAssignment() instanceof J.Literal
+                   && "type".equals(((J.Identifier) ((J.Assignment) arg).getVariable()).getSimpleName())
+                   && ((J.Literal) ((J.Assignment) arg).getAssignment()).getValue() != null
+                   && ((J.Literal) ((J.Assignment) arg).getAssignment()).getValue().toString().contains("json");
         }
 
         @Override
