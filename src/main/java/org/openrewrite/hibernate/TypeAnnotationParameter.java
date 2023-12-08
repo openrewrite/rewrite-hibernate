@@ -51,8 +51,8 @@ public class TypeAnnotationParameter extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
-            public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext executionContext) {
-                J.Annotation a = super.visitAnnotation(annotation, executionContext);
+            public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                J.Annotation a = super.visitAnnotation(annotation, ctx);
                 JavaType.FullyQualified type = TypeUtils.asFullyQualified(a.getType());
                 if (type != null && FQN_TYPE_ANNOTATION.equals(type.getFullyQualifiedName())) {
                     final boolean isOnlyParameter = a.getArguments().size() == 1;

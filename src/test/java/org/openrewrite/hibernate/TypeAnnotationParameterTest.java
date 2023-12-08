@@ -32,7 +32,8 @@ public class TypeAnnotationParameterTest implements RewriteTest {
     void onlyOneParameter() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
               import org.hibernate.annotations.Type;
               
               public class TestApplication {
@@ -58,7 +59,8 @@ public class TypeAnnotationParameterTest implements RewriteTest {
     void multipleParameters() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
               import org.hibernate.annotations.Type;
               
               class TestApplication {
