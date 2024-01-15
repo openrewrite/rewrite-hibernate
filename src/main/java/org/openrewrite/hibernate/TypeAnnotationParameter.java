@@ -26,7 +26,10 @@ import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TypeAnnotationParameter extends Recipe {
 
@@ -47,6 +50,12 @@ public class TypeAnnotationParameter extends Recipe {
         return Duration.ofMinutes(1);
     }
 
+    private Set<String> IGNORED_FQNS = new HashSet<>(Arrays.asList(
+            "org.hibernate.type.EnumType",
+            "org.hibernate.type.SerializableType",
+            "org.hibernate.type.SerializableToBlobType",
+            "org.hibernate.type.TextType"));
+
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
@@ -64,6 +73,10 @@ public class TypeAnnotationParameter extends Recipe {
                                     && assignment.getAssignment() instanceof J.Literal) {
                                 J.Identifier paramName = (J.Identifier) assignment.getVariable();
                                 String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
+                                if (IGNORED_FQNS.contains(fqTypeName)) {
+                                    return arg;
+                                }
+
                                 String simpleTypeName = getSimpleName(fqTypeName);
                                 JavaType typeOfNewValue = JavaType.buildType(fqTypeName);
                                 J.FieldAccess fa = new J.FieldAccess(
