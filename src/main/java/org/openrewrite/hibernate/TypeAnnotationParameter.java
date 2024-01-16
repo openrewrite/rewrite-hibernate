@@ -50,7 +50,7 @@ public class TypeAnnotationParameter extends Recipe {
         return Duration.ofMinutes(1);
     }
 
-    private Set<String> IGNORED_FQNS = new HashSet<>(Arrays.asList(
+    private static final Set<String> IGNORED_FQNS = new HashSet<>(Arrays.asList(
             "org.hibernate.type.EnumType",
             "org.hibernate.type.SerializableType",
             "org.hibernate.type.SerializableToBlobType",
