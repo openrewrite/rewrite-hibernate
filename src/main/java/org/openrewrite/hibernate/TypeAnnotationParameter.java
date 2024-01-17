@@ -50,7 +50,7 @@ public class TypeAnnotationParameter extends Recipe {
         return Duration.ofMinutes(1);
     }
 
-    private static final Set<String> IGNORED_FQNS = new HashSet<>(Arrays.asList(
+    private static final Set<String> REMOVED_FQNS = new HashSet<>(Arrays.asList(
             "org.hibernate.type.EnumType",
             "org.hibernate.type.SerializableType",
             "org.hibernate.type.SerializableToBlobType",
@@ -73,8 +73,8 @@ public class TypeAnnotationParameter extends Recipe {
                                     && assignment.getAssignment() instanceof J.Literal) {
                                 J.Identifier paramName = (J.Identifier) assignment.getVariable();
                                 String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
-                                if (IGNORED_FQNS.contains(fqTypeName)) {
-                                    return arg;
+                                if (REMOVED_FQNS.contains(fqTypeName)) {
+                                    return null;
                                 }
 
                                 String simpleTypeName = getSimpleName(fqTypeName);
