@@ -21,8 +21,12 @@ import org.openrewrite.Tree;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.tree.*;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JLeftPadded;
+import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.java.tree.Space;
 import org.openrewrite.marker.Markers;
 
 import java.time.Duration;
@@ -33,7 +37,7 @@ import java.util.Set;
 
 public class TypeAnnotationParameter extends Recipe {
 
-    private static final String FQN_TYPE_ANNOTATION = "org.hibernate.annotations.Type";
+    private static final AnnotationMatcher FQN_TYPE_ANNOTATION = new AnnotationMatcher("@org.hibernate.annotations.Type");
 
     @Override
     public String getDisplayName() {
@@ -62,28 +66,46 @@ public class TypeAnnotationParameter extends Recipe {
             @Override
             public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation a = super.visitAnnotation(annotation, ctx);
-                JavaType.FullyQualified type = TypeUtils.asFullyQualified(a.getType());
-                if (type != null && FQN_TYPE_ANNOTATION.equals(type.getFullyQualifiedName())) {
+                if (FQN_TYPE_ANNOTATION.matches(a)) {
+                    // Remove entire annotation if type is one of the removed types
+                    if (a.getArguments().stream().anyMatch(arg -> {
+                        if (arg instanceof J.Assignment) {
+                            J.Assignment assignment = (J.Assignment) arg;
+                            if (assignment.getVariable() instanceof J.Identifier
+                                && "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName())
+                                && assignment.getAssignment() instanceof J.Literal) {
+                                String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
+                                return REMOVED_FQNS.contains(fqTypeName);
+                            }
+                        }
+                        return false;
+                    })) {
+                        maybeRemoveImport("org.hibernate.annotations.Type");
+                        return null;
+                    }
+
                     final boolean isOnlyParameter = a.getArguments().size() == 1;
+                    // Replace type parameter with value parameter
                     a = a.withArguments(ListUtils.map(a.getArguments(), arg -> {
                         if (arg instanceof J.Assignment) {
                             J.Assignment assignment = (J.Assignment) arg;
                             if (assignment.getVariable() instanceof J.Identifier
                                     && "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName())
                                     && assignment.getAssignment() instanceof J.Literal) {
-                                J.Identifier paramName = (J.Identifier) assignment.getVariable();
                                 String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
-                                if (REMOVED_FQNS.contains(fqTypeName)) {
-                                    return null;
-                                }
-
-                                String simpleTypeName = getSimpleName(fqTypeName);
-                                JavaType typeOfNewValue = JavaType.buildType(fqTypeName);
+                                J.Identifier identifier = new J.Identifier(
+                                        Tree.randomId(),
+                                        Space.EMPTY,
+                                        Markers.EMPTY,
+                                        Collections.emptyList(),
+                                        getSimpleName(fqTypeName),
+                                        JavaType.buildType(fqTypeName),
+                                        null);
                                 J.FieldAccess fa = new J.FieldAccess(
                                         Tree.randomId(),
                                         isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
                                         assignment.getAssignment().getMarkers(),
-                                        new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), simpleTypeName, typeOfNewValue, null),
+                                        identifier,
                                         JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
                                         JavaType.buildType("java.lang.Class")
                                 );
@@ -91,7 +113,7 @@ public class TypeAnnotationParameter extends Recipe {
                                 if (isOnlyParameter) {
                                     return fa;
                                 }
-                                return assignment.withVariable(paramName.withSimpleName("value")).withAssignment(fa);
+                                return assignment.withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value")).withAssignment(fa);
                             }
                         }
                         return arg;

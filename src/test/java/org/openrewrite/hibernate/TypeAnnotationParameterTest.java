@@ -22,8 +22,8 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class TypeAnnotationParameterTest implements RewriteTest {
-
+class TypeAnnotationParameterTest implements RewriteTest {
+    @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new TypeAnnotationParameter()).parser(JavaParser.fromJavaVersion().classpath("hibernate-core"));
     }
@@ -33,7 +33,7 @@ public class TypeAnnotationParameterTest implements RewriteTest {
         rewriteRun(
           //language=java
           java(
-                """
+            """
               import org.hibernate.annotations.Type;
               
               public class TestApplication {
@@ -43,9 +43,9 @@ public class TypeAnnotationParameterTest implements RewriteTest {
               """,
             """
               import org.hibernate.annotations.Type;
-              
+                  
               import java.util.concurrent.atomic.AtomicBoolean;
-              
+                  
               public class TestApplication {
                   @Type(AtomicBoolean.class)
                   Object a;
@@ -60,7 +60,7 @@ public class TypeAnnotationParameterTest implements RewriteTest {
         rewriteRun(
           //language=java
           java(
-                """
+            """
               import org.hibernate.annotations.Type;
               
               class TestApplication {
@@ -70,11 +70,34 @@ public class TypeAnnotationParameterTest implements RewriteTest {
               """,
             """
               import org.hibernate.annotations.Type;
-                          
+                
               import java.util.concurrent.atomic.AtomicBoolean;
-                          
+                
               class TestApplication {
                   @Type(value = AtomicBoolean.class, parameters = {})
+                  Object a;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void removedParameter() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.Type;
+              
+              public class TestApplication {
+                  @Type(type = "org.hibernate.type.TextType")
+                  Object a;
+              }
+              """,
+            """
+              public class TestApplication {
+                 \s
                   Object a;
               }
               """
