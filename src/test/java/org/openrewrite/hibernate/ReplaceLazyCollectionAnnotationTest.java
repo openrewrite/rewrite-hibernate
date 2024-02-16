@@ -138,39 +138,39 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
           // LazyCollectionOption
           java(
             """
-              import org.hibernate.annotations.LazyCollection;
-              import org.hibernate.annotations.LazyCollectionOption;
-              import jakarta.persistence.FetchType;
-              import jakarta.persistence.ManyToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                              
-                  private Set<Object> items = new HashSet<>();
-                                              
-                  @LazyCollection(LazyCollectionOption.FALSE)
-                  @ManyToMany(fetch = FetchType.LAZY)
-                  public Set<Object> getItems() {
-                      return items;
-                  }
-              }
-              import jakarta.persistence.FetchType;
-              import jakarta.persistence.ManyToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                              
-                  private Set<Object> items = new HashSet<>();
-                                              
-                  @ManyToMany(fetch = FetchType.LAZY)
-                  public Set<Object> getItems() {
-                      return items;
-                  }
-              }
+                      import org.hibernate.annotations.LazyCollection;
+                      import org.hibernate.annotations.LazyCollectionOption;
+                      import jakarta.persistence.FetchType;
+                      import jakarta.persistence.ManyToMany;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                      
+                          private Set<Object> items = new HashSet<>();
+                                                      
+                          @LazyCollection(LazyCollectionOption.FALSE)
+                          @ManyToMany(fetch = FetchType.LAZY)
+                          public Set<Object> getItems() {
+                              return items;
+                          }
+                      }
+              """,
+            """
+                      import jakarta.persistence.FetchType;
+                      import jakarta.persistence.ManyToMany;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                      
+                          private Set<Object> items = new HashSet<>();
+                                                      
+                          @ManyToMany(fetch = FetchType.LAZY)
+                          public Set<Object> getItems() {
+                              return items;
                           }
                       }
               """
@@ -186,31 +186,31 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
           // LazyCollectionOption
           java(
             """
-              import org.hibernate.annotations.LazyCollection;
-              import org.hibernate.annotations.LazyCollectionOption;
-              import jakarta.persistence.ElementCollection;
-              import jakarta.persistence.FetchType;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                                                                                              
-                  @LazyCollection(LazyCollectionOption.FALSE)
-                  @ElementCollection(fetch = FetchType.LAZY)
-                  private Set<Object> items;
-              }
-              import jakarta.persistence.ElementCollection;
-              import jakarta.persistence.FetchType;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                                                                                              
-                  @ElementCollection(fetch = FetchType.LAZY)
-                  private Set<Object> items;
-              }
+                      import org.hibernate.annotations.LazyCollection;
+                      import org.hibernate.annotations.LazyCollectionOption;
+                      import jakarta.persistence.ElementCollection;
+                      import jakarta.persistence.FetchType;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                                                                                      
+                          @LazyCollection(LazyCollectionOption.FALSE)
+                          @ElementCollection(fetch = FetchType.LAZY)
+                          private Set<Object> items;
+                      }
+              """,
+            """
+                      import jakarta.persistence.ElementCollection;
+                      import jakarta.persistence.FetchType;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                                                                                      
+                          @ElementCollection(fetch = FetchType.LAZY)
                           private Set<Object> items;
                       }
               """
@@ -223,23 +223,23 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-              import org.hibernate.annotations.LazyCollection;
-              import org.hibernate.annotations.LazyCollectionOption;
-              import jakarta.persistence.ElementCollection;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                  
-                  private Set<Object> items;
-                                                                                                              
-                  @LazyCollection(LazyCollectionOption.EXTRA)
-                  @ElementCollection
-                  public Set<Object> getItems() {
-                      return items;
-                  }
-              }
+                      import org.hibernate.annotations.LazyCollection;
+                      import org.hibernate.annotations.LazyCollectionOption;
+                      import jakarta.persistence.ElementCollection;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                          
+                          private Set<Object> items;
+                                                                                                                      
+                          @LazyCollection(LazyCollectionOption.EXTRA)
+                          @ElementCollection
+                          public Set<Object> getItems() {
+                              return items;
+                          }
+                      }
               """
           )
         );
@@ -250,19 +250,19 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-              import org.hibernate.annotations.LazyCollection;
-              import org.hibernate.annotations.LazyCollectionOption;
-              import jakarta.persistence.ElementCollection;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                                                                                              
-                  @LazyCollection(LazyCollectionOption.EXTRA)
-                  @ElementCollection
-                  private Set<Object> items;
-              }
+                      import org.hibernate.annotations.LazyCollection;
+                      import org.hibernate.annotations.LazyCollectionOption;
+                      import jakarta.persistence.ElementCollection;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                                                                                      
+                          @LazyCollection(LazyCollectionOption.EXTRA)
+                          @ElementCollection
+                          private Set<Object> items;
+                      }
               """
           )
         );
@@ -274,40 +274,40 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-              import org.hibernate.annotations.LazyCollection;
-              import org.hibernate.annotations.LazyCollectionOption;
-              import jakarta.persistence.CascadeType;
-              import jakarta.persistence.OneToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                              
-                  private Set<Object> items = new HashSet<>();
-                                              
-                  @LazyCollection(LazyCollectionOption.FALSE)
-                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
-                  public Set<Object> getItems() {
-                      return items;
-                  }
-              }
-              import jakarta.persistence.CascadeType;
-              import jakarta.persistence.FetchType;
-              import jakarta.persistence.OneToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                              
-                  private Set<Object> items = new HashSet<>();
-                                              
-                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
-                  public Set<Object> getItems() {
-                      return items;
-                  }
-              }
+                      import org.hibernate.annotations.LazyCollection;
+                      import org.hibernate.annotations.LazyCollectionOption;
+                      import jakarta.persistence.CascadeType;
+                      import jakarta.persistence.OneToMany;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                      
+                          private Set<Object> items = new HashSet<>();
+                                                      
+                          @LazyCollection(LazyCollectionOption.FALSE)
+                          @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
+                          public Set<Object> getItems() {
+                              return items;
+                          }
+                      }
+              """,
+            """
+                      import jakarta.persistence.CascadeType;
+                      import jakarta.persistence.FetchType;
+                      import jakarta.persistence.OneToMany;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                      
+                          private Set<Object> items = new HashSet<>();
+                                                      
+                          @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
+                          public Set<Object> getItems() {
+                              return items;
                           }
                       }
               """
@@ -320,31 +320,31 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-              import org.hibernate.annotations.LazyCollection;
-              import org.hibernate.annotations.LazyCollectionOption;
-              import jakarta.persistence.CascadeType;
-              import jakarta.persistence.OneToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                                                              
-                  @LazyCollection(LazyCollectionOption.FALSE)
-                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
-                  private Set<Object> items = new HashSet<>();
-              }
-              import jakarta.persistence.CascadeType;
-              import jakarta.persistence.FetchType;
-              import jakarta.persistence.OneToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-                                              
-              public class SomeClass {
-                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
-                  private Set<Object> items = new HashSet<>();
-              }
+                      import org.hibernate.annotations.LazyCollection;
+                      import org.hibernate.annotations.LazyCollectionOption;
+                      import jakarta.persistence.CascadeType;
+                      import jakarta.persistence.OneToMany;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+                                                                      
+                          @LazyCollection(LazyCollectionOption.FALSE)
+                          @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
+                          private Set<Object> items = new HashSet<>();
+                      }
+              """,
+            """
+                      import jakarta.persistence.CascadeType;
+                      import jakarta.persistence.FetchType;
+                      import jakarta.persistence.OneToMany;
+                      
+                      import java.util.HashSet;
+                      import java.util.Set;
+                                                      
+                      public class SomeClass {
+
                           @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
                           private Set<Object> items = new HashSet<>();
                       }
