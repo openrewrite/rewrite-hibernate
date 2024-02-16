@@ -11,6 +11,7 @@ dependencies {
     implementation("org.openrewrite:rewrite-java")
     implementation("org.openrewrite.recipe:rewrite-migrate-java:$rewriteVersion")
     implementation("org.openrewrite.recipe:rewrite-java-dependencies:$rewriteVersion")
+    implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
 
     testImplementation("org.openrewrite:rewrite-java-17")
     testImplementation("org.openrewrite:rewrite-test")
