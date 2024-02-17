@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openrewrite.hibernate;
 
 import jakarta.persistence.FetchType;
@@ -54,14 +53,14 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
             @Override
             public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-                final List<J.Annotation> annotations = removeLazyCollectionAnnotation(method.getLeadingAnnotations());
+                List<J.Annotation> annotations = removeLazyCollectionAnnotation(method.getLeadingAnnotations());
                 return super.visitMethodDeclaration(method.withLeadingAnnotations(annotations), ctx);
             }
 
             @Override
             public J.VariableDeclarations visitVariableDeclarations(J.VariableDeclarations multiVariable,
                                                                     ExecutionContext ctx) {
-                final List<J.Annotation> annotations = removeLazyCollectionAnnotation(multiVariable.getLeadingAnnotations());
+                List<J.Annotation> annotations = removeLazyCollectionAnnotation(multiVariable.getLeadingAnnotations());
                 return super.visitVariableDeclarations(multiVariable.withLeadingAnnotations(annotations), ctx);
             }
 
@@ -69,7 +68,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
             public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation ann = super.visitAnnotation(annotation, ctx);
 
-                final JavaType annType = ann.getType();
+                JavaType annType = ann.getType();
                 if (!(TypeUtils.isOfClassType(annType, "jakarta.persistence.ElementCollection") ||
                       TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToOne") ||
                       TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToMany") ||
@@ -79,9 +78,9 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                     return ann;
                 }
 
-                final List<Expression> currentArgs = ann.getArguments();
+                List<Expression> currentArgs = ann.getArguments();
 
-                final boolean fetchArgumentPresent = currentArgs != null && currentArgs.stream()
+                boolean fetchArgumentPresent = currentArgs != null && currentArgs.stream()
                         .anyMatch(arg -> {
                             if (arg instanceof J.Assignment) {
                                 return ((J.Identifier) ((J.Assignment) arg).getVariable()).getSimpleName().equals("fetch");
@@ -94,7 +93,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                     return ann;
                 }
 
-                final J.FieldAccess fetchType = getCursor().getParentOrThrow().getMessage("fetchType");
+                J.FieldAccess fetchType = getCursor().getParentOrThrow().getMessage("fetchType");
                 if (fetchType == null) {
                     // no mapping found
                     return ann;
@@ -113,9 +112,9 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 );
             }
 
-            private List<J.Annotation> removeLazyCollectionAnnotation(final List<J.Annotation> annotations) {
+            private List<J.Annotation> removeLazyCollectionAnnotation(List<J.Annotation> annotations) {
 
-                final J.Annotation lazyCollectionAnnotation = annotations.stream()
+                J.Annotation lazyCollectionAnnotation = annotations.stream()
                         .filter(a -> a.getSimpleName().equals("LazyCollection"))
                         .findFirst()
                         .orElse(null);
@@ -124,7 +123,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                     return annotations;
                 }
 
-                final List<Expression> arguments = lazyCollectionAnnotation.getArguments();
+                List<Expression> arguments = lazyCollectionAnnotation.getArguments();
                 if (arguments == null || arguments.isEmpty()) {
                     // default is LazyCollectionOption.TRUE
                     storeFetchType(FetchType.LAZY);
@@ -146,6 +145,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
             }
 
             private void storeFetchType(FetchType fetchType) {
+                JavaType fetchTypeType = JavaType.buildType("jakarta.persistence.FetchType");
                 getCursor().putMessage("fetchType", new J.FieldAccess(
                                 Tree.randomId(),
                                 Space.EMPTY,
@@ -156,7 +156,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                                         Markers.EMPTY,
                                         Collections.emptyList(),
                                         "FetchType",
-                                        JavaType.buildType("jakarta.persistence.FetchType"),
+                                        fetchTypeType,
                                         null
                                 ),
                                 new JLeftPadded<>(
@@ -167,17 +167,17 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                                                 Markers.EMPTY,
                                                 Collections.emptyList(),
                                                 fetchType.name(),
-                                                JavaType.buildType("jakarta.persistence.FetchType"),
+                                                fetchTypeType,
                                                 null),
                                         Markers.EMPTY),
-                                JavaType.buildType("jakarta.persistence.FetchType")
+                        fetchTypeType
                         )
                 );
             }
 
             private List<J.Annotation> removeAnnotation(List<J.Annotation> annotations, J.Annotation target) {
                 int index = annotations.indexOf(target);
-                final List<J.Annotation> newLeadingAnnotations = new ArrayList<>();
+                List<J.Annotation> newLeadingAnnotations = new ArrayList<>();
                 if (index == 0) {
                     // copy prefix of the removed annotation to the next to retain formatting:
                     newLeadingAnnotations.add(annotations.get(1).withPrefix(target.getPrefix()));
