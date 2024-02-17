@@ -18,14 +18,12 @@ package org.openrewrite.hibernate;
 import jakarta.persistence.FetchType;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.*;
+import org.openrewrite.java.search.FindAnnotations;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ReplaceLazyCollectionAnnotation extends Recipe {
     @Override
@@ -50,15 +48,15 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
             @Override
             public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-                List<J.Annotation> annotations = removeLazyCollectionAnnotation(method.getLeadingAnnotations());
-                return super.visitMethodDeclaration(method.withLeadingAnnotations(annotations), ctx);
+                J.MethodDeclaration j = removeLazyCollectionAnnotation(method, ctx);
+                return super.visitMethodDeclaration(j, ctx);
             }
 
             @Override
             public J.VariableDeclarations visitVariableDeclarations(J.VariableDeclarations multiVariable,
                                                                     ExecutionContext ctx) {
-                List<J.Annotation> annotations = removeLazyCollectionAnnotation(multiVariable.getLeadingAnnotations());
-                return super.visitVariableDeclarations(multiVariable.withLeadingAnnotations(annotations), ctx);
+                J.VariableDeclarations j = removeLazyCollectionAnnotation(multiVariable, ctx);
+                return super.visitVariableDeclarations(j, ctx);
             }
 
             @Override
@@ -111,18 +109,15 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 );
             }
 
-            private List<J.Annotation> removeLazyCollectionAnnotation(List<J.Annotation> annotations) {
-
-                J.Annotation lazyCollectionAnnotation = annotations.stream()
-                        .filter(a -> a.getSimpleName().equals("LazyCollection"))
-                        .findFirst()
-                        .orElse(null);
-
-                if (lazyCollectionAnnotation == null) {
-                    return annotations;
+            private <T extends J> T removeLazyCollectionAnnotation(T tree, ExecutionContext ctx) {
+                Optional<J.Annotation> lazyAnnotation = FindAnnotations.find(tree, "org.hibernate.annotations.LazyCollection")
+                        .stream().findFirst();
+                if (!lazyAnnotation.isPresent()) {
+                    return tree;
                 }
 
-                List<Expression> arguments = lazyCollectionAnnotation.getArguments();
+                // Capture the FetchType from the LazyCollectionOption
+                List<Expression> arguments = lazyAnnotation.get().getArguments();
                 if (arguments == null || arguments.isEmpty()) {
                     // default is LazyCollectionOption.TRUE
                     getCursor().putMessage("fetchType", FetchType.LAZY);
@@ -136,26 +131,12 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                             break;
                         default:
                             // EXTRA can't be mapped to a FetchType; requires refactoring
-                            return annotations;
+                            return tree;
                     }
                 }
-
-                return removeAnnotation(annotations, lazyCollectionAnnotation);
-            }
-
-            private List<J.Annotation> removeAnnotation(List<J.Annotation> annotations, J.Annotation target) {
-                int index = annotations.indexOf(target);
-                List<J.Annotation> newLeadingAnnotations = new ArrayList<>();
-                if (index == 0) {
-                    // copy prefix of the removed annotation to the next to retain formatting:
-                    newLeadingAnnotations.add(annotations.get(1).withPrefix(target.getPrefix()));
-                }
-                for (int i = (index == 0) ? 2 : 0; i < annotations.size(); i++) {
-                    if (i != index) {
-                        newLeadingAnnotations.add(annotations.get(i));
-                    }
-                }
-                return newLeadingAnnotations;
+                //noinspection unchecked
+                return (T) new RemoveAnnotationVisitor(new AnnotationMatcher("@org.hibernate.annotations.LazyCollection"))
+                        .visit(tree, ctx, getCursor());
             }
         });
     }
