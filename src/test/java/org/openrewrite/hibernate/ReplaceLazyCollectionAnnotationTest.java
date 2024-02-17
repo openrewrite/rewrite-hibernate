@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
@@ -26,8 +25,7 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
-public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
-
+class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new ReplaceLazyCollectionAnnotation())
@@ -57,7 +55,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                                               
@@ -75,7 +73,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                                               
@@ -109,7 +107,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
                                               
               import java.util.List;
 
-              public class SomeClass {
+              class SomeClass {
 
                   @LazyCollection(%2$s)
                   @%1$s
@@ -122,7 +120,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
                                               
               import java.util.List;
                                               
-              public class SomeClass {
+              class SomeClass {
 
                   @%1$s(fetch = %2$s)
                   private List<Object> items;
@@ -149,7 +147,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                                               
@@ -167,7 +165,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                                               
@@ -198,7 +196,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                                                                                               
                   @LazyCollection(LazyCollectionOption.FALSE)
                   @ElementCollection(fetch = FetchType.LAZY)
@@ -212,7 +210,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                                                                                               
                   @ElementCollection(fetch = FetchType.LAZY)
                   private Set<Object> items;
@@ -235,7 +233,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                   
                   private Set<Object> items;
                                                                                                               
@@ -263,7 +261,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                                                                                               
                   @LazyCollection(LazyCollectionOption.EXTRA)
                   @ElementCollection
@@ -289,7 +287,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                                               
@@ -308,7 +306,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                                               
@@ -336,7 +334,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                                               
                   @LazyCollection(LazyCollectionOption.FALSE)
                   @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
@@ -351,7 +349,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
 
                   @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
                   private Set<Object> items = new HashSet<>();
@@ -375,7 +373,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                   
                   private Set<Object> items1;
                   private Set<Object> items2;
@@ -411,7 +409,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                   
                   private Set<Object> items1;
                   private Set<Object> items2;
@@ -455,7 +453,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                   
@@ -479,7 +477,7 @@ public class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import java.util.HashSet;
               import java.util.Set;
                                               
-              public class SomeClass {
+              class SomeClass {
                                               
                   private Set<Object> items = new HashSet<>();
                   

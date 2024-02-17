@@ -16,19 +16,13 @@
 
 package org.openrewrite.hibernate;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.Tree;
-import org.openrewrite.TreeVisitor;
+import jakarta.persistence.FetchType;
+import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.tree.Expression;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JLeftPadded;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.Space;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.search.UsesType;
+import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.util.ArrayList;
@@ -37,21 +31,19 @@ import java.util.List;
 import java.util.Objects;
 
 public class ReplaceLazyCollectionAnnotation extends Recipe {
-
     @Override
     public String getDisplayName() {
-        return "Replace @LazyCollection with jakarta.persistence.FetchType";
+        return "Replace `@LazyCollection` with `jakarta.persistence.FetchType`";
     }
 
     @Override
     public String getDescription() {
-        return "Adds the FetchType to jakarta annotations and deletes @LazyCollection.";
+        return "Adds the `FetchType` to jakarta annotations and deletes `@LazyCollection`.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new JavaIsoVisitor<ExecutionContext>() {
-
+        return Preconditions.check(new UsesType<>("org.hibernate.annotations.LazyCollection", true), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext ctx) {
                 maybeAddImport("jakarta.persistence.FetchType");
@@ -68,7 +60,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
             @Override
             public J.VariableDeclarations visitVariableDeclarations(J.VariableDeclarations multiVariable,
-                    ExecutionContext ctx) {
+                                                                    ExecutionContext ctx) {
                 final List<J.Annotation> annotations = removeLazyCollectionAnnotation(multiVariable.getLeadingAnnotations());
                 return super.visitVariableDeclarations(multiVariable.withLeadingAnnotations(annotations), ctx);
             }
@@ -79,10 +71,10 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
                 final JavaType annType = ann.getType();
                 if (!(TypeUtils.isOfClassType(annType, "jakarta.persistence.ElementCollection") ||
-                        TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToOne") ||
-                        TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToMany") ||
-                        TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToOne") ||
-                        TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToMany"))) {
+                      TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToOne") ||
+                      TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToMany") ||
+                      TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToOne") ||
+                      TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToMany"))) {
                     // recipe does not apply
                     return ann;
                 }
@@ -135,15 +127,14 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 final List<Expression> arguments = lazyCollectionAnnotation.getArguments();
                 if (arguments == null || arguments.isEmpty()) {
                     // default is LazyCollectionOption.TRUE
-                    storeFetchType(jakarta.persistence.FetchType.LAZY);
-                }
-                else {
+                    storeFetchType(FetchType.LAZY);
+                } else {
                     switch (arguments.get(0).toString()) {
                         case "LazyCollectionOption.FALSE":
-                            storeFetchType(jakarta.persistence.FetchType.EAGER);
+                            storeFetchType(FetchType.EAGER);
                             break;
                         case "LazyCollectionOption.TRUE":
-                            storeFetchType(jakarta.persistence.FetchType.LAZY);
+                            storeFetchType(FetchType.LAZY);
                             break;
                         default:
                             // EXTRA can't be mapped to a FetchType; requires refactoring
@@ -154,7 +145,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 return removeAnnotation(annotations, lazyCollectionAnnotation);
             }
 
-            private void storeFetchType(jakarta.persistence.FetchType fetchType) {
+            private void storeFetchType(FetchType fetchType) {
                 getCursor().putMessage("fetchType", new J.FieldAccess(
                                 Tree.randomId(),
                                 Space.EMPTY,
@@ -198,8 +189,6 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 }
                 return newLeadingAnnotations;
             }
-        };
-
+        });
     }
-
 }
