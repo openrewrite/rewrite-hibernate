@@ -15,7 +15,6 @@
  */
 package org.openrewrite.hibernate;
 
-import jakarta.persistence.FetchType;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.*;
@@ -88,7 +87,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                     return ann;
                 }
 
-                FetchType fetchType = getCursor().getParentOrThrow().getMessage("fetchType");
+                String fetchType = getCursor().getParentOrThrow().getMessage("fetchType");
                 if (fetchType == null) {
                     // no mapping found
                     return ann;
@@ -96,7 +95,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
                 maybeAddImport("jakarta.persistence.FetchType", false);
                 J.Assignment assignment = (J.Assignment)
-                        Objects.requireNonNull(((J.Annotation) JavaTemplate.builder("fetch = FetchType." + fetchType.name())
+                        Objects.requireNonNull(((J.Annotation) JavaTemplate.builder("fetch = " + fetchType)
                                 .imports("jakarta.persistence.FetchType")
                                 .contextSensitive()
                                 .build()
@@ -120,14 +119,14 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 List<Expression> arguments = lazyAnnotation.get().getArguments();
                 if (arguments == null || arguments.isEmpty()) {
                     // default is LazyCollectionOption.TRUE
-                    getCursor().putMessage("fetchType", FetchType.LAZY);
+                    getCursor().putMessage("fetchType", "FetchType.LAZY");
                 } else {
                     switch (arguments.get(0).toString()) {
                         case "LazyCollectionOption.FALSE":
-                            getCursor().putMessage("fetchType", FetchType.EAGER);
+                            getCursor().putMessage("fetchType", "FetchType.EAGER");
                             break;
                         case "LazyCollectionOption.TRUE":
-                            getCursor().putMessage("fetchType", FetchType.LAZY);
+                            getCursor().putMessage("fetchType", "FetchType.LAZY");
                             break;
                         default:
                             // EXTRA can't be mapped to a FetchType; requires refactoring

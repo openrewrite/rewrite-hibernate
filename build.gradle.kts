@@ -11,7 +11,6 @@ dependencies {
     implementation("org.openrewrite:rewrite-java")
     implementation("org.openrewrite.recipe:rewrite-migrate-java:$rewriteVersion")
     implementation("org.openrewrite.recipe:rewrite-java-dependencies:$rewriteVersion")
-    implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
 
     testImplementation("org.openrewrite:rewrite-java-17")
     testImplementation("org.openrewrite:rewrite-test")
@@ -21,4 +20,5 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
     testRuntimeOnly("org.hibernate:hibernate-core:5.6.15.Final")
+    testRuntimeOnly("jakarta.persistence:jakarta.persistence-api:3.1.0")
 }
