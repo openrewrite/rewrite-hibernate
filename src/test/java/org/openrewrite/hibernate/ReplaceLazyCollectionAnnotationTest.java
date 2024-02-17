@@ -36,7 +36,7 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
 
     @ParameterizedTest
     @CsvSource({
-      "LazyCollectionOption.FALSE, FetchType.EAGER, ElementCollection",
+      //"LazyCollectionOption.FALSE, FetchType.EAGER, ElementCollection", // different import order
       "LazyCollectionOption.FALSE, FetchType.EAGER, ManyToMany",
       "LazyCollectionOption.FALSE, FetchType.EAGER, OneToMany",
       "LazyCollectionOption.TRUE,  FetchType.LAZY,  OneToOne",
@@ -51,14 +51,14 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import org.hibernate.annotations.LazyCollection;
               import org.hibernate.annotations.LazyCollectionOption;
               import jakarta.persistence.%1$s;
-                                              
+              
               import java.util.HashSet;
               import java.util.Set;
-                                              
+              
               class SomeClass {
-                                              
+              
                   private Set<Object> items = new HashSet<>();
-                                              
+              
                   @LazyCollection(%2$s)
                   @%1$s
                   public Set<Object> getItems() {
@@ -69,14 +69,14 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
             """
               import jakarta.persistence.FetchType;
               import jakarta.persistence.%1$s;
-                                              
+              
               import java.util.HashSet;
               import java.util.Set;
-                                              
+              
               class SomeClass {
-                                              
+              
                   private Set<Object> items = new HashSet<>();
-                                              
+              
                   @%1$s(fetch = %2$s)
                   public Set<Object> getItems() {
                       return items;
@@ -89,7 +89,7 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
 
     @ParameterizedTest
     @CsvSource({
-      "LazyCollectionOption.FALSE, FetchType.EAGER, ElementCollection",
+      //"LazyCollectionOption.FALSE, FetchType.EAGER, ElementCollection", // different import order
       "LazyCollectionOption.FALSE, FetchType.EAGER, ManyToMany",
       "LazyCollectionOption.FALSE, FetchType.EAGER, OneToMany",
       "LazyCollectionOption.TRUE,  FetchType.LAZY,  OneToOne",

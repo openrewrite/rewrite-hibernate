@@ -22,10 +22,8 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
-import org.openrewrite.marker.Markers;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,7 +43,6 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
         return Preconditions.check(new UsesType<>("org.hibernate.annotations.LazyCollection", true), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext ctx) {
-                maybeAddImport("jakarta.persistence.FetchType");
                 maybeRemoveImport("org.hibernate.annotations.LazyCollection");
                 maybeRemoveImport("org.hibernate.annotations.LazyCollectionOption");
                 return super.visitCompilationUnit(cu, ctx);
@@ -93,17 +90,19 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                     return ann;
                 }
 
-                J.FieldAccess fetchType = getCursor().getParentOrThrow().getMessage("fetchType");
+                FetchType fetchType = getCursor().getParentOrThrow().getMessage("fetchType");
                 if (fetchType == null) {
                     // no mapping found
                     return ann;
                 }
 
+                maybeAddImport("jakarta.persistence.FetchType", false);
                 J.Assignment assignment = (J.Assignment)
-                        Objects.requireNonNull(((J.Annotation) JavaTemplate.builder("fetch = #{any(jakarta.persistence.FetchType)}")
+                        Objects.requireNonNull(((J.Annotation) JavaTemplate.builder("fetch = FetchType." + fetchType.name())
+                                .imports("jakarta.persistence.FetchType")
                                 .contextSensitive()
                                 .build()
-                                .apply(getCursor(), ann.getCoordinates().replaceArguments(), fetchType)
+                                .apply(getCursor(), ann.getCoordinates().replaceArguments())
                         ).getArguments()).get(0);
 
                 return ann.withArguments(ListUtils.concat(
@@ -126,14 +125,14 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 List<Expression> arguments = lazyCollectionAnnotation.getArguments();
                 if (arguments == null || arguments.isEmpty()) {
                     // default is LazyCollectionOption.TRUE
-                    storeFetchType(FetchType.LAZY);
+                    getCursor().putMessage("fetchType", FetchType.LAZY);
                 } else {
                     switch (arguments.get(0).toString()) {
                         case "LazyCollectionOption.FALSE":
-                            storeFetchType(FetchType.EAGER);
+                            getCursor().putMessage("fetchType", FetchType.EAGER);
                             break;
                         case "LazyCollectionOption.TRUE":
-                            storeFetchType(FetchType.LAZY);
+                            getCursor().putMessage("fetchType", FetchType.LAZY);
                             break;
                         default:
                             // EXTRA can't be mapped to a FetchType; requires refactoring
@@ -142,37 +141,6 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 }
 
                 return removeAnnotation(annotations, lazyCollectionAnnotation);
-            }
-
-            private void storeFetchType(FetchType fetchType) {
-                JavaType fetchTypeType = JavaType.buildType("jakarta.persistence.FetchType");
-                getCursor().putMessage("fetchType", new J.FieldAccess(
-                                Tree.randomId(),
-                                Space.EMPTY,
-                                Markers.EMPTY,
-                                new J.Identifier(
-                                        Tree.randomId(),
-                                        Space.SINGLE_SPACE,
-                                        Markers.EMPTY,
-                                        Collections.emptyList(),
-                                        "FetchType",
-                                        fetchTypeType,
-                                        null
-                                ),
-                                new JLeftPadded<>(
-                                        Space.EMPTY,
-                                        new J.Identifier(
-                                                Tree.randomId(),
-                                                Space.EMPTY,
-                                                Markers.EMPTY,
-                                                Collections.emptyList(),
-                                                fetchType.name(),
-                                                fetchTypeType,
-                                                null),
-                                        Markers.EMPTY),
-                        fetchTypeType
-                        )
-                );
             }
 
             private List<J.Annotation> removeAnnotation(List<J.Annotation> annotations, J.Annotation target) {
