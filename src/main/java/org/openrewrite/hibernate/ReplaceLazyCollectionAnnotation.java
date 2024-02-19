@@ -15,14 +15,21 @@
  */
 package org.openrewrite.hibernate;
 
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.*;
+import org.openrewrite.java.AnnotationMatcher;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.RemoveAnnotationVisitor;
 import org.openrewrite.java.search.FindAnnotations;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class ReplaceLazyCollectionAnnotation extends Recipe {
     @Override
@@ -74,38 +81,34 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
                 List<Expression> currentArgs = ann.getArguments();
 
-                boolean fetchArgumentPresent = currentArgs != null && currentArgs.stream()
-                        .anyMatch(arg -> {
-                            if (arg instanceof J.Assignment) {
-                                return ((J.Identifier) ((J.Assignment) arg).getVariable()).getSimpleName().equals("fetch");
-                            }
-                            return false;
-                        });
-
-                if (fetchArgumentPresent) {
-                    // fetch is already set, don't update it
+                // Do not update existing fetch value
+                if (currentArgs != null && currentArgs.stream()
+                        .filter(arg -> arg instanceof J.Assignment)
+                        .map(J.Assignment.class::cast)
+                        .anyMatch(arg -> ((J.Identifier) arg.getVariable()).getSimpleName().equals("fetch"))) {
                     return ann;
                 }
 
-                String fetchType = getCursor().getParentOrThrow().getMessage("fetchType");
+                // Retrieve FetchType set from LazyCollectionOption
+                String fetchType = getCursor().getNearestMessage("fetchType");
                 if (fetchType == null) {
                     // no mapping found
                     return ann;
                 }
 
                 maybeAddImport("jakarta.persistence.FetchType", false);
-                J.Assignment assignment = (J.Assignment)
-                        Objects.requireNonNull(((J.Annotation) JavaTemplate.builder("fetch = " + fetchType)
-                                .imports("jakarta.persistence.FetchType")
-                                .contextSensitive()
-                                .build()
-                                .apply(getCursor(), ann.getCoordinates().replaceArguments())
-                        ).getArguments()).get(0);
-
-                return ann.withArguments(ListUtils.concat(
-                        currentArgs,
-                        assignment.withPrefix((currentArgs == null || currentArgs.isEmpty()) ? Space.EMPTY : Space.SINGLE_SPACE))
-                );
+                J.Annotation annotationWithFetch = JavaTemplate.builder("fetch = " + fetchType)
+                        .imports("jakarta.persistence.FetchType")
+                        .contextSensitive()
+                        .build()
+                        .apply(getCursor(), ann.getCoordinates().replaceArguments());
+                JavaType fetchTypeType = JavaType.buildType("jakarta.persistence.FetchType");
+                J.Assignment assignment = (J.Assignment) annotationWithFetch.getArguments().get(0);
+                assignment = assignment
+                        .withPrefix(currentArgs == null || currentArgs.isEmpty() ? Space.EMPTY : Space.SINGLE_SPACE)
+                        .withAssignment(assignment.getAssignment().withType(fetchTypeType))
+                        .withType(fetchTypeType);
+                return ann.withArguments(ListUtils.concat(currentArgs, assignment));
             }
 
             private <T extends J> T removeLazyCollectionAnnotation(T tree, ExecutionContext ctx) {
