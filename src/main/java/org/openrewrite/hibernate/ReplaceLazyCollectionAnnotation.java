@@ -83,9 +83,9 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
                 // Do not update existing fetch value
                 if (currentArgs != null && currentArgs.stream()
-                        .filter(arg -> arg instanceof J.Assignment)
+                        .filter(J.Assignment.class::isInstance)
                         .map(J.Assignment.class::cast)
-                        .anyMatch(arg -> ((J.Identifier) arg.getVariable()).getSimpleName().equals("fetch"))) {
+                        .anyMatch(arg -> "fetch".equals(((J.Identifier) arg.getVariable()).getSimpleName()))) {
                     return ann;
                 }
 
