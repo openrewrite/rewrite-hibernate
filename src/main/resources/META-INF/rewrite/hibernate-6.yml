@@ -25,6 +25,7 @@ description: >
 
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernateDependencies61
+  - org.openrewrite.hibernate.MigrateBooleanMappings
   - org.openrewrite.hibernate.TypeAnnotationParameter
   - org.openrewrite.hibernate.TypeDescriptorToType
   - org.openrewrite.java.migrate.jakarta.JavaxPersistenceToJakartaPersistence
