@@ -16,28 +16,28 @@
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.hibernate.MigrateToHibernate62
-displayName: Migrate to Hibernate 6.2.x
+name: org.openrewrite.hibernate.MigrateToHibernate63
+displayName: Migrate to Hibernate 6.3.x
 description: >
-  This recipe will apply changes commonly needed when migrating to Hibernate 6.2.x.
+  This recipe will apply changes commonly needed when migrating to Hibernate 6.3.x.
 
 recipeList:
-  - org.openrewrite.hibernate.MigrateToHibernate61
   - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.2
+  - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.3
 
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.2
-displayName: Migrate Hibernate Types to Hypersistence Utils 6.2
+name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.3
+displayName: Migrate Hibernate Types to Hypersistence Utils 6.3
 description: >
-  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-60` to `io.hypersistence:hypersistence-utils-hibernate-62`. 
+  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-62` to `io.hypersistence:hypersistence-utils-hibernate-63`. 
 
 recipeList:
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.hypersistence
-      oldArtifactId: hypersistence-utils-hibernate-60
+      oldArtifactId: hypersistence-utils-hibernate-62
       newGroupId: io.hypersistence
-      newArtifactId: hypersistence-utils-hibernate-62
+      newArtifactId: hypersistence-utils-hibernate-63
       newVersion: 3.7.x
 
