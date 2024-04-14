@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
@@ -43,38 +42,38 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                import jakarta.persistence.Column;
-                import org.hibernate.annotations.Type;
-                                                
-                public class SomeClass {
-                    
-                    @Column(name = "IS_SOMETHING")
-                    @Type(type = "true_false")
-                    private boolean isSomething;
-                    
-                    @Column(name = "IS_SOMETHING_ELSE")
-                    @Type(type = "org.hibernate.type.YesNoBooleanType")
-                    private boolean isSomethingElse;
-                                                
-                }
+              import jakarta.persistence.Column;
+              import org.hibernate.annotations.Type;
+              
+              public class SomeClass {
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Type(type = "true_false")
+                  private boolean isSomething;
+              
+                  @Column(name = "IS_SOMETHING_ELSE")
+                  @Type(type = "org.hibernate.type.YesNoBooleanType")
+                  private boolean isSomethingElse;
+              
+              }
               """,
             """
-                import jakarta.persistence.Column;
-                import jakarta.persistence.Convert;
-                import org.hibernate.type.TrueFalseConverter;
-                import org.hibernate.type.YesNoConverter;
-                                                
-                public class SomeClass {
-                           
-                    @Column(name = "IS_SOMETHING")
-                    @Convert(converter = TrueFalseConverter.class)
-                    private boolean isSomething;
-                    
-                    @Column(name = "IS_SOMETHING_ELSE")
-                    @Convert(converter = YesNoConverter.class)
-                    private boolean isSomethingElse;
-                    
-                }
+              import jakarta.persistence.Column;
+              import jakarta.persistence.Convert;
+              import org.hibernate.type.TrueFalseConverter;
+              import org.hibernate.type.YesNoConverter;
+              
+              public class SomeClass {
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Convert(converter = TrueFalseConverter.class)
+                  private boolean isSomething;
+              
+                  @Column(name = "IS_SOMETHING_ELSE")
+                  @Convert(converter = YesNoConverter.class)
+                  private boolean isSomethingElse;
+              
+              }
               """
           )
         );
@@ -94,35 +93,35 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                import jakarta.persistence.Column;
-                import org.hibernate.annotations.Type;
-                                                
-                public class SomeClass {
-                                                
-                    private boolean isSomething;
-                                                
-                    @Column(name = "IS_SOMETHING")
-                    @Type(type = "%s")
-                    public boolean isSomething() {
-                        return isSomething;
-                    }
-                }
+              import jakarta.persistence.Column;
+              import org.hibernate.annotations.Type;
+              
+              public class SomeClass {
+              
+                  private boolean isSomething;
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Type(type = "%s")
+                  public boolean isSomething() {
+                      return isSomething;
+                  }
+              }
               """.formatted(usertype),
             """
-                import jakarta.persistence.Column;
-                import jakarta.persistence.Convert;
-                import org.hibernate.type.%1$s;
-                                                
-                public class SomeClass {
-                                                
-                    private boolean isSomething;
-                                                
-                    @Column(name = "IS_SOMETHING")
-                    @Convert(converter = %1$s.class)
-                    public boolean isSomething() {
-                        return isSomething;
-                    }
-                }
+              import jakarta.persistence.Column;
+              import jakarta.persistence.Convert;
+              import org.hibernate.type.%1$s;
+              
+              public class SomeClass {
+              
+                  private boolean isSomething;
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Convert(converter = %1$s.class)
+                  public boolean isSomething() {
+                      return isSomething;
+                  }
+              }
               """.formatted(converter)
           )
         );
@@ -142,35 +141,35 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                import jakarta.persistence.Column;
-                import org.hibernate.annotations.Type;
-                                                
-                public class SomeClass {
-                    
-                    @Column(name = "IS_SOMETHING")
-                    @Type(type = "%s")
-                    private boolean isSomething;
-                                                
-                    public boolean isSomething() {
-                        return isSomething;
-                    }
-                }
+              import jakarta.persistence.Column;
+              import org.hibernate.annotations.Type;
+              
+              public class SomeClass {
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Type(type = "%s")
+                  private boolean isSomething;
+              
+                  public boolean isSomething() {
+                      return isSomething;
+                  }
+              }
               """.formatted(usertype),
             """
-                import jakarta.persistence.Column;
-                import jakarta.persistence.Convert;
-                import org.hibernate.type.%1$s;
-                                                
-                public class SomeClass {
-                    
-                    @Column(name = "IS_SOMETHING")
-                    @Convert(converter = %1$s.class)
-                    private boolean isSomething;
-                                                
-                    public boolean isSomething() {
-                        return isSomething;
-                    }
-                }
+              import jakarta.persistence.Column;
+              import jakarta.persistence.Convert;
+              import org.hibernate.type.%1$s;
+              
+              public class SomeClass {
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Convert(converter = %1$s.class)
+                  private boolean isSomething;
+              
+                  public boolean isSomething() {
+                      return isSomething;
+                  }
+              }
               """.formatted(converter)
           )
         );
@@ -182,50 +181,50 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                import org.hibernate.annotations.Type;
-                import jakarta.persistence.Column;
-                                                
-                public class SomeClass {
-                                                
-                    private boolean isSomething;
-                    private Object someObject;
-                                                
-                    @Column(name = "IS_SOMETHING")
-                    @Type(type = "true_false")
-                    public boolean isSomething() {
-                        return isSomething;
-                    }
-                    
-                    @Column(name = "SOME_OBJECT")
-                    @Type(type = Object.class)
-                    public Object getSomeObject() {
-                        return someObject;
-                    }
-                }
+              import org.hibernate.annotations.Type;
+              import jakarta.persistence.Column;
+              
+              public class SomeClass {
+              
+                  private boolean isSomething;
+                  private Object someObject;
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Type(type = "true_false")
+                  public boolean isSomething() {
+                      return isSomething;
+                  }
+              
+                  @Column(name = "SOME_OBJECT")
+                  @Type(type = Object.class)
+                  public Object getSomeObject() {
+                      return someObject;
+                  }
+              }
               """,
             """
-                import jakarta.persistence.Convert;
-                import org.hibernate.annotations.Type;
-                import org.hibernate.type.TrueFalseConverter;
-                import jakarta.persistence.Column;
-                                                
-                public class SomeClass {
-                                                
-                    private boolean isSomething;
-                    private Object someObject;
-                                                
-                    @Column(name = "IS_SOMETHING")
-                    @Convert(converter = TrueFalseConverter.class)
-                    public boolean isSomething() {
-                        return isSomething;
-                    }
-                    
-                    @Column(name = "SOME_OBJECT")
-                    @Type(type = Object.class)
-                    public Object getSomeObject() {
-                        return someObject;
-                    }
-                }
+              import jakarta.persistence.Convert;
+              import org.hibernate.annotations.Type;
+              import org.hibernate.type.TrueFalseConverter;
+              import jakarta.persistence.Column;
+              
+              public class SomeClass {
+              
+                  private boolean isSomething;
+                  private Object someObject;
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Convert(converter = TrueFalseConverter.class)
+                  public boolean isSomething() {
+                      return isSomething;
+                  }
+              
+                  @Column(name = "SOME_OBJECT")
+                  @Type(type = Object.class)
+                  public Object getSomeObject() {
+                      return someObject;
+                  }
+              }
               """
           )
         );
@@ -237,19 +236,19 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                import org.hibernate.annotations.Type;
-                import jakarta.persistence.Column;
-                                                
-                public class SomeClass {
-                                                
-                    private Object someObject;
-                    
-                    @Column(name = "SOME_OBJECT")
-                    @Type(type = Object.class) // we just need some class, it is not checked
-                    public Object getSomeObject() {
-                        return someObject;
-                    }
-                }
+              import org.hibernate.annotations.Type;
+              import jakarta.persistence.Column;
+              
+              public class SomeClass {
+              
+                  private Object someObject;
+              
+                  @Column(name = "SOME_OBJECT")
+                  @Type(type = Object.class) // we just need some class, it is not checked
+                  public Object getSomeObject() {
+                      return someObject;
+                  }
+              }
               """
           )
         );
@@ -261,19 +260,19 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           java(
             """
-                import org.hibernate.annotations.Type;
-                import jakarta.persistence.Column;
-                                                
-                public class SomeClass {
-                                                
-                    private Object someObject;
-                    
-                    @Column(name = "SOME_OBJECT")
-                    @Type(type = "java.lang.Object") // we just need some class name, it is not checked
-                    public Object getSomeObject() {
-                        return someObject;
-                    }
-                }
+              import org.hibernate.annotations.Type;
+              import jakarta.persistence.Column;
+              
+              public class SomeClass {
+              
+                  private Object someObject;
+              
+                  @Column(name = "SOME_OBJECT")
+                  @Type(type = "java.lang.Object") // we just need some class name, it is not checked
+                  public Object getSomeObject() {
+                      return someObject;
+                  }
+              }
               """
           )
         );
