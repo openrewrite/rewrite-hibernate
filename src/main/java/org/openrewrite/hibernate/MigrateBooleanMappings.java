@@ -59,55 +59,54 @@ public class MigrateBooleanMappings extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(new UsesType<>("org.hibernate.annotations.Type", true),
                 new JavaIsoVisitor<ExecutionContext>() {
-
                     @Override
                     public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                         J.Annotation ann = super.visitAnnotation(annotation, ctx);
-
                         if (!TypeUtils.isOfClassType(ann.getType(), "org.hibernate.annotations.Type")) {
                             return ann;
                         }
 
                         List<Expression> args = ann.getArguments();
+                        if (args == null) {
+                            return ann;
+                        }
 
-                        if (args != null) {
-                            Object type = args.stream()
-                                    .filter(exp -> {
-                                        if (exp instanceof J.Assignment) {
-                                            J.Identifier variable = (J.Identifier) ((J.Assignment) exp).getVariable();
-                                            return variable.getSimpleName().equals("type");
-                                        }
-                                        return false;
-                                    })
-                                    .findFirst()
-                                    .map(exp -> {
-                                        Expression value = ((J.Assignment) exp).getAssignment();
-                                        if (value instanceof J.Literal) {
-                                            return ((J.Literal) value).getValue();
-                                        }
-                                        return null;
-                                    })
-                                    .orElse(null);
+                        Object type = args.stream()
+                                .filter(exp -> {
+                                    if (exp instanceof J.Assignment) {
+                                        J.Identifier variable = (J.Identifier) ((J.Assignment) exp).getVariable();
+                                        return "type".equals(variable.getSimpleName());
+                                    }
+                                    return false;
+                                })
+                                .findFirst()
+                                .map(exp -> {
+                                    Expression value = ((J.Assignment) exp).getAssignment();
+                                    if (value instanceof J.Literal) {
+                                        return ((J.Literal) value).getValue();
+                                    }
+                                    return null;
+                                })
+                                .orElse(null);
 
-                            if (type instanceof String && REPLACEMENTS.containsKey((String) type)) {
-                                String converter = REPLACEMENTS.get((String) type);
+                        if (type instanceof String && REPLACEMENTS.containsKey((String) type)) {
+                            String converterName = REPLACEMENTS.get((String) type);
+                            String converterFQN = String.format("org.hibernate.type.%s", converterName);
 
-                                ann = JavaTemplate.builder(String.format("@Convert(converter = %s.class)", converter))
-                                        .javaParser(JavaParser.fromJavaVersion().classpath("hibernate-core", "jakarta.persistence-api"))
-                                        .imports(String.format("org.hibernate.type.%s", converter),
-                                                "jakarta.persistence.Convert")
-                                        .contextSensitive()
-                                        .build().apply(getCursor(), ann.getCoordinates().replace());
+                            ann = JavaTemplate.builder(String.format("@Convert(converter = %s.class)", converterName))
+                                    .javaParser(JavaParser.fromJavaVersion().classpath("hibernate-core", "jakarta.persistence-api"))
+                                    .imports(converterFQN, "jakarta.persistence.Convert")
+                                    .contextSensitive()
+                                    .build().apply(getCursor(), ann.getCoordinates().replace());
 
-                                maybeAddImport("jakarta.persistence.Convert");
-                                maybeAddImport(String.format("org.hibernate.type.%s", converter));
-                                maybeRemoveImport("org.hibernate.annotations.Type");
-                            }
+                            maybeAddImport("jakarta.persistence.Convert");
+                            maybeAddImport(converterFQN);
+                            maybeRemoveImport("org.hibernate.annotations.Type");
                         }
 
                         return ann;
                     }
-
-                });
+                }
+        );
     }
 }
