@@ -42,7 +42,7 @@ public class MigrateBooleanMappings extends Recipe {
         REPLACEMENTS.put("org.hibernate.type.YesNoBooleanType", "YesNoConverter");
         REPLACEMENTS.put("yes_no", "YesNoConverter");
         REPLACEMENTS.put("org.hibernate.type.NumericBooleanType", "NumericBooleanConverter");
-        REPLACEMENTS.put("boolean", "NumericBooleanConverter");
+        REPLACEMENTS.put("numeric_boolean", "NumericBooleanConverter");
     }
 
     @Override

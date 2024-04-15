@@ -81,7 +81,7 @@ class MigrateBooleanMappingsTest implements RewriteTest {
 
     @ParameterizedTest
     @CsvSource(textBlock = """
-      boolean                                 , NumericBooleanConverter
+      numeric_boolean                         , NumericBooleanConverter
       true_false                              , TrueFalseConverter
       yes_no                                  , YesNoConverter
       org.hibernate.type.YesNoBooleanType     , YesNoConverter
@@ -129,7 +129,7 @@ class MigrateBooleanMappingsTest implements RewriteTest {
 
     @ParameterizedTest
     @CsvSource(textBlock = """
-      boolean                                 , NumericBooleanConverter
+      numeric_boolean                         , NumericBooleanConverter
       true_false                              , TrueFalseConverter
       yes_no                                  , YesNoConverter
       org.hibernate.type.YesNoBooleanType     , YesNoConverter
@@ -272,6 +272,26 @@ class MigrateBooleanMappingsTest implements RewriteTest {
                   public Object getSomeObject() {
                       return someObject;
                   }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void noChange_shouldBeMade_whenTypeIsBoolean() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import jakarta.persistence.Column;
+              import org.hibernate.annotations.Type;
+              
+              public class SomeClass {
+              
+                  @Column(name = "IS_SOMETHING")
+                  @Type(type = "boolean")
+                  private boolean isSomething;
               }
               """
           )
