@@ -94,7 +94,7 @@ public class MigrateBooleanMappings extends Recipe {
                             String converterFQN = String.format("org.hibernate.type.%s", converterName);
 
                             ann = JavaTemplate.builder(String.format("@Convert(converter = %s.class)", converterName))
-                                    .javaParser(JavaParser.fromJavaVersion().classpath("hibernate-core", "jakarta.persistence-api"))
+                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core", "jakarta.persistence-api"))
                                     .imports(converterFQN, "jakarta.persistence.Convert")
                                     .contextSensitive()
                                     .build().apply(getCursor(), ann.getCoordinates().replace());

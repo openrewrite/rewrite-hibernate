@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -30,7 +31,7 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipe(new ReplaceLazyCollectionAnnotation())
           .parser(JavaParser.fromJavaVersion()
-            .classpath("hibernate-core", "jakarta.persistence-api")
+            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core", "jakarta.persistence-api")
           );
     }
 
@@ -51,14 +52,14 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
               import org.hibernate.annotations.LazyCollection;
               import org.hibernate.annotations.LazyCollectionOption;
               import jakarta.persistence.%1$s;
-              
+                            
               import java.util.HashSet;
               import java.util.Set;
-              
+                            
               class SomeClass {
-              
+                            
                   private Set<Object> items = new HashSet<>();
-              
+                            
                   @LazyCollection(%2$s)
                   @%1$s
                   public Set<Object> getItems() {
@@ -69,14 +70,14 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
             """
               import jakarta.persistence.FetchType;
               import jakarta.persistence.%1$s;
-              
+                            
               import java.util.HashSet;
               import java.util.Set;
-              
+                            
               class SomeClass {
-              
+                            
                   private Set<Object> items = new HashSet<>();
-              
+                            
                   @%1$s(fetch = %2$s)
                   public Set<Object> getItems() {
                       return items;

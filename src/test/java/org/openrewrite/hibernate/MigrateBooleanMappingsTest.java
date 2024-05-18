@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -31,7 +32,7 @@ class MigrateBooleanMappingsTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateBooleanMappings())
           .parser(JavaParser.fromJavaVersion()
-            .classpath("hibernate-core", "jakarta.persistence-api")
+            .classpathFromResources(new InMemoryExecutionContext(),"hibernate-core", "jakarta.persistence-api")
           );
     }
 
