@@ -6,7 +6,7 @@ group = "org.openrewrite.recipe"
 description = "Hibernate ORM Migration"
 
 recipeDependencies {
-    parserClasspath("javax.persistence:javax.persistence-api:2.+")
+    parserClasspath("jakarta.persistence:jakarta.persistence-api:latest.release")
     parserClasspath("org.hibernate.orm:hibernate-core:6.5.1.Final")
 }
 
