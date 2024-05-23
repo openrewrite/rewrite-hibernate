@@ -16,6 +16,7 @@
 package org.openrewrite.hibernate.validator;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -28,6 +29,7 @@ class HibernateValidator80Test implements RewriteTest {
         spec.recipeFromResources("org.openrewrite.hibernate.validator.HibernateValidator_8_0");
     }
 
+    @DocumentExample
     @Test
     void changeDependency() {
         rewriteRun(
