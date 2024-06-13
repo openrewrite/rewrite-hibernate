@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Value
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class MigrateHypersistenceUtils61Types extends Recipe {
 
     @Override
