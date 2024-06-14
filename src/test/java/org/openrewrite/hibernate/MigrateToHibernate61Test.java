@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2024 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
-import org.openrewrite.config.Environment;
+import org.openrewrite.DocumentExample;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-import org.openrewrite.test.TypeValidation;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,17 +30,21 @@ import static org.openrewrite.java.Assertions.*;
 import static org.openrewrite.maven.Assertions.pomXml;
 
 class MigrateToHibernate61Test implements RewriteTest {
-
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(Environment.builder()
-          .scanRuntimeClasspath("org.openrewrite.hibernate", "org.openrewrite.java.migrate.jakarta")
-          .build()
-          .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"))
-          .parser(JavaParser.fromJavaVersion().classpath("hibernate-core", "javax.persistence-api"));
+        spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate61")
+          .parser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(),
+              "hibernate-annotations",
+              "hibernate-core",
+              "hibernate-types",
+              "javax.persistence-api"
+            )
+          );
     }
 
     @Test
+    @DocumentExample
     void groupIdHibernateOrmRenamed() {
         rewriteRun(
           mavenProject(
@@ -137,19 +141,19 @@ class MigrateToHibernate61Test implements RewriteTest {
                         </dependency>
                       </dependencies>
                     </project>
-                      """.formatted(matcher.group(1));
+                    """.formatted(matcher.group(1));
               })
             ),
             //language=java
             srcMainJava(
               java("""
                 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
-                                
+                
                 public class TestApplication {
                 }
                 """, """
                 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
-                                
+                
                 public class TestApplication {
                 }
                 """
@@ -252,7 +256,7 @@ class MigrateToHibernate61Test implements RewriteTest {
                 """
                     import io.hypersistence.utils.hibernate.type.json.JsonType;
                     import org.hibernate.annotations.Type;
-                      
+                  
                     import jakarta.persistence.Basic;
                     import jakarta.persistence.Column;
                     import jakarta.persistence.Entity;
@@ -260,7 +264,7 @@ class MigrateToHibernate61Test implements RewriteTest {
                     import jakarta.persistence.Table;
                     import java.io.Serializable;
                     import java.util.Map;
-                      
+                  
                     @Entity
                     @Table(name = "schema_revisions")
                     public class SchemaRevisionEntity implements Serializable {
@@ -268,11 +272,11 @@ class MigrateToHibernate61Test implements RewriteTest {
                         @Basic(optional = false)
                         @Column(name = "name", nullable = false, updatable = false)
                         private String name;
-                      
+                  
                         @Type(value = JsonType.class)
                         @Column(name = "schema_metadata", nullable = false)
                         private SchemaRevisionMetadataEntity metadata;
-                      
+                  
                         public static class SchemaRevisionMetadataEntity implements Serializable {
                             private Map<String, String> userMetadata;
                         }
