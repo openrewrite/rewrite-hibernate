@@ -17,6 +17,7 @@ package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -26,7 +27,7 @@ import static org.openrewrite.java.Assertions.java;
 class TypeAnnotationParameterTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new TypeAnnotationParameter()).parser(JavaParser.fromJavaVersion().classpath("hibernate-core"));
+        spec.recipe(new TypeAnnotationParameter()).parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core"));
     }
 
     @DocumentExample
@@ -37,7 +38,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
           java(
             """
               import org.hibernate.annotations.Type;
-              
+                            
               public class TestApplication {
                   @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
                   Object a;
@@ -64,7 +65,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
           java(
             """
               import org.hibernate.annotations.Type;
-              
+                            
               class TestApplication {
                   @Type(type = "java.util.concurrent.atomic.AtomicBoolean", parameters = {})
                   Object a;
@@ -91,7 +92,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
           java(
             """
               import org.hibernate.annotations.Type;
-              
+                            
               public class TestApplication {
                   @Type(type = "org.hibernate.type.TextType")
                   Object a;
