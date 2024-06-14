@@ -362,4 +362,3 @@ class MigrateToHibernate61Test implements RewriteTest {
         );
     }
 }
-
