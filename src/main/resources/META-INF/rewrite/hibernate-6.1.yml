@@ -226,6 +226,19 @@ recipeList:
   - org.openrewrite.java.dependencies.RemoveDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
+  # Account for jaxb-runtime becoming `runtime` vs `compile` dependency
+  # Add the jakarta JAXB artifact if it is missing but a project uses types in java.xml.bind
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: jakarta.xml.bind
+      artifactId: jakarta.xml.bind-api
+      version: 3.0.x
+      onlyIfUsing: javax.xml.bind..*
+      acceptTransitive: true
+  # If a project already had the jakarta api, make sure it is at the latest version.
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: jakarta.xml.bind
+      artifactId: jakarta.xml.bind-api
+      newVersion: 3.0.x
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
