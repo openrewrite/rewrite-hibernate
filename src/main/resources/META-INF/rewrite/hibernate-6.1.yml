@@ -18,7 +18,7 @@
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHibernate61
 displayName: Migrate to Hibernate 6.1.x
-description: >
+description: >-
   This recipe will apply changes commonly needed when migrating to Hibernate 6.1.x. The hibernate dependencies will  
   be updated to use the new org.hibernate.orm group ID and the recipe will make changes necessary to use Hibernate
   with Jakarta EE 9.0.
@@ -36,7 +36,7 @@ recipeList:
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHibernateDependencies61
 displayName: Migrate Hibernate dependencies to 6.1.x
-description: >
+description: >-
   This recipe will migrate any existing dependencies on Hibernate 5.x to the latest 6.1.x release. This migration will
   include the adjustment to the new `org.hibernate.orm` group ID. It accounts for artifacts names that both do and do
   not include the `jakarta` suffix and it will change both dependencies and managed dependencies.
@@ -226,12 +226,25 @@ recipeList:
   - org.openrewrite.java.dependencies.RemoveDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
+  # Account for jaxb-runtime becoming `runtime` vs `compile` dependency
+  # Add the jakarta JAXB artifact if it is missing but a project uses types in java.xml.bind
+  - org.openrewrite.java.dependencies.AddDependency:
+      groupId: jakarta.xml.bind
+      artifactId: jakarta.xml.bind-api
+      version: 3.0.x
+      onlyIfUsing: javax.xml.bind..*
+      acceptTransitive: true
+  # If a project already had the jakarta api, make sure it is at the latest version.
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: jakarta.xml.bind
+      artifactId: jakarta.xml.bind-api
+      newVersion: 3.0.x
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.TypeDescriptorToType
 displayName: Rename `JavaTypeDescriptor` and `SqlTypeDescriptor` to `JavaType` and `SqlType`
-description: >
+description: >-
   Rename `JavaTypeDescriptor` and `SqlTypeDescriptor` to `JavaType` and `SqlType` respectively.
   See https://github.com/hibernate/hibernate-orm/blob/6.0/migration-guide.adoc#type-system
 
@@ -247,7 +260,7 @@ recipeList:
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.0
 displayName: Migrate Hibernate Types to Hypersistence Utils 6.0
-description: >
+description: >-
   This recipe will migrate any existing dependencies on `com.vladmihalcea:hibernate-types` to `io.hypersistence:hypersistence-utils-hibernate-60`. 
   This migration will include the adjustment from `com.vladmihalcea` to `io.hypersistence.utils` package name.
 

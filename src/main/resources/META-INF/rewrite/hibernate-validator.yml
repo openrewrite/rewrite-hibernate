@@ -18,7 +18,7 @@
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.validator.HibernateValidator_8_0
 displayName: Migrate to Hibernate Validator 8.0.x
-description: >
+description: >-
   This recipe will apply changes commonly needed when migrating to Hibernate Validator 8.0.x.
 
 recipeList:
