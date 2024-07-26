@@ -6,8 +6,12 @@ group = "org.openrewrite.recipe"
 description = "Hibernate ORM Migration"
 
 recipeDependencies {
+    parserClasspath("javax.persistence:javax.persistence-api:latest.release")
     parserClasspath("jakarta.persistence:jakarta.persistence-api:latest.release")
+    parserClasspath("org.hibernate:hibernate-annotations:latest.release")
     parserClasspath("org.hibernate.orm:hibernate-core:6.5.1.Final")
+    parserClasspath("com.vladmihalcea:hibernate-types-55:2.+")
+
 }
 
 val rewriteVersion = rewriteRecipe.rewriteVersion.get()
@@ -25,5 +29,4 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
     testRuntimeOnly("javax.xml.bind:jaxb-api:2.3.1")
-    testRuntimeOnly("jakarta.persistence:jakarta.persistence-api:3.1.0")
 }
