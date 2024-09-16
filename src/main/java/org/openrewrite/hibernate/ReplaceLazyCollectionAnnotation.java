@@ -26,7 +26,11 @@ import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.RemoveAnnotationVisitor;
 import org.openrewrite.java.search.FindAnnotations;
 import org.openrewrite.java.search.UsesType;
-import org.openrewrite.java.tree.*;
+import org.openrewrite.java.tree.Expression;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.java.tree.Space;
+import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.List;
 import java.util.Optional;
