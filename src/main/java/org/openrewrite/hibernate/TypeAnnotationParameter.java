@@ -71,9 +71,9 @@ public class TypeAnnotationParameter extends Recipe {
                     if (a.getArguments().stream().anyMatch(arg -> {
                         if (arg instanceof J.Assignment) {
                             J.Assignment assignment = (J.Assignment) arg;
-                            if (assignment.getVariable() instanceof J.Identifier
-                                && "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName())
-                                && assignment.getAssignment() instanceof J.Literal) {
+                            if (assignment.getVariable() instanceof J.Identifier &&
+                                "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                                assignment.getAssignment() instanceof J.Literal) {
                                 String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
                                 return REMOVED_FQNS.contains(fqTypeName);
                             }
@@ -89,9 +89,9 @@ public class TypeAnnotationParameter extends Recipe {
                     a = a.withArguments(ListUtils.map(a.getArguments(), arg -> {
                         if (arg instanceof J.Assignment) {
                             J.Assignment assignment = (J.Assignment) arg;
-                            if (assignment.getVariable() instanceof J.Identifier
-                                    && "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName())
-                                    && assignment.getAssignment() instanceof J.Literal) {
+                            if (assignment.getVariable() instanceof J.Identifier &&
+                                    "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                                    assignment.getAssignment() instanceof J.Literal) {
                                 String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
                                 J.Identifier identifier = new J.Identifier(
                                         Tree.randomId(),
