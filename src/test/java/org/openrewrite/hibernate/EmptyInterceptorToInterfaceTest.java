@@ -131,5 +131,4 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
             )
         );
     }
-
 }
