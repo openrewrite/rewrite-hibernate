@@ -15,9 +15,9 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new EmptyInterceptorToInterface())
-          .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core")
-          );
+                .parser(JavaParser.fromJavaVersion()
+                        .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core")
+                );
     }
 
     @DocumentExample
@@ -25,30 +25,31 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
     void shouldChangeEmptyInterceptor() {
         //language=java
         rewriteRun(
-          java(
-            """
-            import org.hibernate.EmptyInterceptor;
-            
-            class MyInterceptor extends EmptyInterceptor {
-            
-                @Override
-                public String onPrepareStatement(String sql) {
-                    return sql;
+            java(
+                """
+                import org.hibernate.EmptyInterceptor;
+
+                class MyInterceptor extends EmptyInterceptor {
+
+                    @Override
+                    public String onPrepareStatement(String sql) {
+                        return sql;
+                    }
                 }
-            }
-            """,
-            """
-            import org.hibernate.Interceptor;
-            import org.hibernate.resource.jdbc.spi.StatementInspector;
-            
-            class MyInterceptor implements Interceptor, StatementInspector {
-            
-                @Override
-                public String inspect(String sql) {
-                    return sql;
+                """,
+                """
+                import org.hibernate.Interceptor;
+                import org.hibernate.resource.jdbc.spi.StatementInspector;
+
+                class MyInterceptor implements Interceptor, StatementInspector {
+
+                    @Override
+                    public String inspect(String sql) {
+                        return sql;
+                    }
                 }
-            }"""
-          )
+                """
+            )
         );
     }
 
@@ -56,39 +57,40 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
     void shouldChangeEmptyInterceptorAlreadyImplements() {
         //language=java
         rewriteRun(
-          java(
-            """
-            package com.example;
-            public interface MyInterface { }
-            """,
-            SourceSpec::skip
-          ),
-          java(
-            """
-            import com.example.MyInterface;
-            import org.hibernate.EmptyInterceptor;
-            
-            class MyInterceptor extends EmptyInterceptor implements MyInterface {
-            
-                @Override
-                public String onPrepareStatement(String sql) {
-                    return sql;
+            java(
+                """
+                package com.example;
+                public interface MyInterface { }
+                """,
+                SourceSpec::skip
+            ),
+            java(
+                """
+                import com.example.MyInterface;
+                import org.hibernate.EmptyInterceptor;
+    
+                class MyInterceptor extends EmptyInterceptor implements MyInterface {
+    
+                    @Override
+                    public String onPrepareStatement(String sql) {
+                        return sql;
+                    }
                 }
-            }
-            """,
-            """
-            import com.example.MyInterface;
-            import org.hibernate.Interceptor;
-            import org.hibernate.resource.jdbc.spi.StatementInspector;
-            
-            class MyInterceptor implements MyInterface, Interceptor, StatementInspector {
-            
-                @Override
-                public String inspect(String sql) {
-                    return sql;
+                """,
+                """
+                import com.example.MyInterface;
+                import org.hibernate.Interceptor;
+                import org.hibernate.resource.jdbc.spi.StatementInspector;
+    
+                class MyInterceptor implements MyInterface, Interceptor, StatementInspector {
+    
+                    @Override
+                    public String inspect(String sql) {
+                        return sql;
+                    }
                 }
-            }"""
-          )
+                """
+            )
         );
     }
 
@@ -96,21 +98,22 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
     void shouldChangeEmptyInterceptorNoPrepareStatement() {
         //language=java
         rewriteRun(
-          java(
-            """
-            import org.hibernate.EmptyInterceptor;
-            
-            class MyInterceptor extends EmptyInterceptor {
-            
-            }
-            """,
-            """
-            import org.hibernate.Interceptor;
-            
-            class MyInterceptor implements Interceptor {
-            
-            }"""
-          )
+            java(
+                """
+                import org.hibernate.EmptyInterceptor;
+
+                class MyInterceptor extends EmptyInterceptor {
+
+                }
+                """,
+                """
+                import org.hibernate.Interceptor;
+
+                class MyInterceptor implements Interceptor {
+
+                }
+                """
+            )
         );
     }
 

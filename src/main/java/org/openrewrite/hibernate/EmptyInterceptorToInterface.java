@@ -37,12 +37,12 @@ public class EmptyInterceptorToInterface extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Replace boolean type mappings with converters";
+        return "Replace `extends EmptyInterceptor` with `implements Interceptor` and potentially `StatementInspector`";
     }
 
     @Override
     public String getDescription() {
-        return "Replaces type mapping of booleans with appropriate attribute converters.";
+        return "In Hibernate 6.0 the `Interceptor` interface received default implementations therefore the NOOP implementation that could be extended was no longer needed.";
     }
 
     @Override
