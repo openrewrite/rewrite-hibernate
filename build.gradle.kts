@@ -8,6 +8,7 @@ description = "Hibernate ORM Migration"
 recipeDependencies {
     parserClasspath("jakarta.persistence:jakarta.persistence-api:latest.release")
     parserClasspath("org.hibernate.orm:hibernate-core:6.5.1.Final")
+    parserClasspath("org.hibernate.orm:hibernate-core:5.6.15.Final")
 }
 
 val rewriteVersion = rewriteRecipe.rewriteVersion.get()

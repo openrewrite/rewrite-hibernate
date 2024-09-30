@@ -31,7 +31,7 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipe(new ReplaceLazyCollectionAnnotation())
           .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core", "jakarta.persistence-api")
+            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6+", "jakarta.persistence-api")
           );
     }
 

@@ -27,7 +27,7 @@ import static org.openrewrite.java.Assertions.java;
 class TypeAnnotationParameterTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new TypeAnnotationParameter()).parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core"));
+        spec.recipe(new TypeAnnotationParameter()).parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6+"));
     }
 
     @DocumentExample
