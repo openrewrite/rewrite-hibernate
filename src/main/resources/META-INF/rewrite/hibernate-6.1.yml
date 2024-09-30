@@ -29,4 +29,3 @@ recipeList:
       groupId: org.hibernate.orm
       artifactId: '*'
       newVersion: 6.1.x
-
