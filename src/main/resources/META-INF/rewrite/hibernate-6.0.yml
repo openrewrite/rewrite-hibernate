@@ -48,7 +48,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-agroal
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-agroal
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -61,7 +60,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-c3p0
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-c3p0
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -74,7 +72,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-community-dialects
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-community-dialects
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -87,7 +84,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-core
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-core
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -100,7 +96,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-envers
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-envers
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -113,7 +108,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-graalvm
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-graalvm
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -126,7 +120,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-hikaricp
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-hikaricp
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -139,7 +132,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-jcache
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-jcache
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -152,7 +144,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-jpamodelgen
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-jpamodelgen
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -165,7 +156,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-micrometer
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-micrometer
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -178,7 +168,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-proxool
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-proxool
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -191,7 +180,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-spatial
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-spatial
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -204,7 +192,6 @@ recipeList:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-testing
       newGroupId: org.hibernate.orm
-      newArtifactId: hibernate-testing
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
