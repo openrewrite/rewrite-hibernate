@@ -69,6 +69,37 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
     }
 
     @Test
+    void shouldChangeWhenOverrideAnnotationMissing() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import org.hibernate.EmptyInterceptor;
+              
+              class MyInterceptor extends EmptyInterceptor {
+              
+                  public String onPrepareStatement(String sql) {
+                      return sql;
+                  }
+              }
+              """,
+            """
+              import org.hibernate.Interceptor;
+              import org.hibernate.resource.jdbc.spi.StatementInspector;
+              
+              class MyInterceptor implements Interceptor, StatementInspector {
+              
+                  @Override
+                  public String inspect(String sql) {
+                      return sql;
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void shouldChangeEmptyInterceptorAlreadyImplements() {
         //language=java
         rewriteRun(

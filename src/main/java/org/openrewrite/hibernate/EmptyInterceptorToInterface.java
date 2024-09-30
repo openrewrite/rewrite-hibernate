@@ -45,7 +45,8 @@ public class EmptyInterceptorToInterface extends Recipe {
 
     @Override
     public String getDescription() {
-        return "In Hibernate 6.0 the `Interceptor` interface received default implementations therefore the NOOP implementation that could be extended was no longer needed.";
+        return "In Hibernate 6.0 the `Interceptor` interface received default implementations therefore the NOOP implementation that could be extended was no longer needed. " +
+               "This recipe migrates 5.x `Interceptor#onPrepareStatement(String)` to 6.0 `StatementInspector#inspect()`.";
     }
 
     @Override
