@@ -21,17 +21,27 @@ import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaVisitor;
+import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesType;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.TypeTree;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.tree.*;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 public class MigrateUserType extends Recipe {
 
     private static final String USER_TYPE = "org.hibernate.usertype.UserType";
+    private static final MethodMatcher RETURNED_CLASS = new MethodMatcher("* returnedClass()");
+    private static final MethodMatcher EQUALS = new MethodMatcher("* equals(java.lang.Object, java.lang.Object)");
+    private static final MethodMatcher HASHCODE = new MethodMatcher("* hashCode(java.lang.Object)");
+    private static final MethodMatcher NULL_SAFE_GET_RESULT_SET = new MethodMatcher("* hashcode(java.lang.Object)");
+    private static final MethodMatcher NULL_SAFE_GET_PREPARED_STATEMENT = new MethodMatcher("* hashcode(java.lang.Object)");
+    private static final MethodMatcher DEEP_COPY = new MethodMatcher("* deepCopy(java.lang.Object)");
+    private static final MethodMatcher DISASSEMBLE = new MethodMatcher("* disassemble(java.lang.Object)");
+    private static final MethodMatcher ASSEMBLE = new MethodMatcher("* assemble(java.io.Serializable, java.lang.Object)");
+    private static final MethodMatcher REPLACE = new MethodMatcher("* replace(java.lang.Object, java.lang.Object, java.lang.Object)");
     private static J.FieldAccess parameterizedType = null;
 
     @Override
@@ -58,7 +68,7 @@ public class MigrateUserType extends Recipe {
                         cd = cd.withImplements(ListUtils.map(cd.getImplements(), impl -> {
                             if (TypeUtils.isAssignableTo(USER_TYPE, impl.getType())) {
                                 System.out.println(impl);
-                                return TypeTree.build("UserType<" + parameterizedType.getTarget() + ">").withType(JavaType.buildType(USER_TYPE));
+                                return TypeTree.build("UserType<" + parameterizedType.getTarget() + ">").withType(JavaType.buildType(USER_TYPE)).withPrefix(Space.SINGLE_SPACE);
                             }
                             return impl;
                         }));
@@ -69,12 +79,60 @@ public class MigrateUserType extends Recipe {
 
                     @Override
                     public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-                        J.MethodDeclaration md = method;
-                        super.visitMethodDeclaration(method, ctx);
-                        if (md.getSimpleName().equals("returnedClass")) {
-                            md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">"));
+                        J.MethodDeclaration md = (J.MethodDeclaration) super.visitMethodDeclaration(method, ctx);
+                        J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
+                        if (cd != null) {
+                            if (RETURNED_CLASS.matches(md, cd)) {
+                                md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">").withPrefix(md.getReturnTypeExpression().getPrefix()));
+                            }
+                            if (EQUALS.matches(md, cd)) {
+                                md = changeParameterTypes(md, Arrays.asList("x", "y"));
+                            }
+                            if (HASHCODE.matches(md, cd)) {
+                                md = changeParameterTypes(md, Collections.singletonList("x"));
+                            }
+                            if (NULL_SAFE_GET_RESULT_SET.matches(md, cd)) {
+                            }
+                            if (NULL_SAFE_GET_PREPARED_STATEMENT.matches(md, cd)) {
+                            }
+                            if (DEEP_COPY.matches(md, cd)) {
+                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE)).withPrefix(md.getReturnTypeExpression().getPrefix());
+                                md = changeParameterTypes(md, Collections.singletonList("value"));
+                            }
+                            if (DISASSEMBLE.matches(md, cd)) {
+                                md = changeParameterTypes(md, Collections.singletonList("value"));
+                            }
+                            if (ASSEMBLE.matches(md, cd)) {
+                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE)).withPrefix(md.getReturnTypeExpression().getPrefix());
+                            }
+                            if (REPLACE.matches(md, cd)) {
+                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE)).withPrefix(md.getReturnTypeExpression().getPrefix());
+                                md = changeParameterTypes(md, Arrays.asList("original", "target"));
+                            }
                         }
-                        return md;
+                        return maybeAutoFormat(method, md, ctx);
+                    }
+
+                    private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<String> paramNames){
+                        JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
+                                (index, type) -> {
+                                    if (paramNames.contains(md.getMethodType().getParameterNames().get(index))) {
+                                        type = TypeUtils.isOfType(JavaType.buildType("java.lang.Object"), type) ? parameterizedType.getTarget().getType() : type;
+                                    }
+                                    return type;
+                                }));
+                        return md.withParameters(ListUtils.map(md.getParameters(), param -> {
+                            if (param instanceof J.VariableDeclarations) {
+                                param = ((J.VariableDeclarations) param).withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget());
+                                param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
+                                    if (paramNames.contains(var.getSimpleName())) {
+                                        var = var.withType(parameterizedType.getTarget().getType()).withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
+                                    }
+                                    return var;
+                                }));
+                            }
+                            return param;
+                        }));
                     }
                 });
     }
