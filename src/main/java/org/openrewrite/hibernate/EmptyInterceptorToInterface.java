@@ -21,22 +21,20 @@ import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.FindImplementations;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.Space;
-import org.openrewrite.java.tree.TypeTree;
-import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.java.tree.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class EmptyInterceptorToInterface extends Recipe {
 
     private final String EMPTY_INTERCEPTOR = "org.hibernate.EmptyInterceptor";
     private final String INTERCEPTOR = "org.hibernate.Interceptor";
     private final String STATEMENT_INSPECTOR = "org.hibernate.resource.jdbc.spi.StatementInspector";
     private static final AnnotationMatcher OVERRIDE_ANNOTATION_MATCHER = new AnnotationMatcher("java.lang.Override");
+    private static final MethodMatcher ON_PREPARE_STATEMENT = new MethodMatcher("* onPrepareStatement(java.lang.String)");
 
     @Override
     public String getDisplayName() {
@@ -66,13 +64,17 @@ public class EmptyInterceptorToInterface extends Recipe {
                             maybeAddImport(STATEMENT_INSPECTOR);
                             maybeRemoveImport(EMPTY_INTERCEPTOR);
                         }
-                        return autoFormat(cd, ctx);
+                        if (cd.getPadding().getImplements() != null) {
+                            cd = cd.getPadding().withImplements(cd.getPadding().getImplements().withBefore(Space.SINGLE_SPACE));
+                        }
+                        return cd;
                     }
 
                     @Override
                     public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
                         J.MethodDeclaration md = super.visitMethodDeclaration(method, ctx);
-                        if (md.getLeadingAnnotations().stream().anyMatch(OVERRIDE_ANNOTATION_MATCHER::matches) && md.getSimpleName().equals("onPrepareStatement")) {
+                        J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
+                        if (cd != null && ON_PREPARE_STATEMENT.matches(md, cd)) {
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, "prepareStatementFound", true);
                             String template = "@Override\n" +
                                               "public String inspect() {\n" +
@@ -81,7 +83,11 @@ public class EmptyInterceptorToInterface extends Recipe {
                                     .javaParser(JavaParser.fromJavaVersion())
                                     .build()
                                     .apply(getCursor(), md.getCoordinates().replace());
-                            md = inspect.withBody(md.getBody()).withModifiers(md.getModifiers()).withLeadingAnnotations(md.getLeadingAnnotations()).withParameters(md.getParameters());
+                            List<J.Annotation> annotations = new ArrayList<>(md.getLeadingAnnotations());
+                            if (annotations.stream().noneMatch(OVERRIDE_ANNOTATION_MATCHER::matches)) {
+                                annotations.addAll(inspect.getLeadingAnnotations());
+                            }
+                            md = inspect.withBody(md.getBody()).withLeadingAnnotations(annotations).withParameters(md.getParameters());
                         }
                         return md;
                     }
