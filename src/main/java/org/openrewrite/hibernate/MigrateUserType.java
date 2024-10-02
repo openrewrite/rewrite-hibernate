@@ -15,10 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Preconditions;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
@@ -26,12 +23,15 @@ import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
+import org.openrewrite.marker.Markers;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static org.openrewrite.Tree.randomId;
 
 public class MigrateUserType extends Recipe {
 
@@ -196,11 +196,37 @@ public class MigrateUserType extends Recipe {
                             }
                             if (DISASSEMBLE.matches(md, cd)) {
                                 md = changeParameterTypes(md, Collections.singletonList("value"));
+                                if (md.getBody() != null) {
+                                    md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
+                                        if (stmt instanceof J.Return) {
+                                            J.Return r = (J.Return) stmt;
+                                            if (r.getExpression() instanceof J.TypeCast) {
+                                                J.TypeCast tc = (J.TypeCast) r.getExpression();
+                                                if (parameterizedType != null && TypeUtils.isOfType(parameterizedType.getTarget().getType(), tc.getClazz().getType())) {
+                                                    return r.withExpression(tc.getExpression());
+                                                }
+                                            }
+                                        }
+                                        return stmt;
+                                    })));
+                                }
                             }
                             if (ASSEMBLE.matches(md, cd) && parameterizedType != null) {
                                 md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                                 if (md.getReturnTypeExpression() != null) {
                                     md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
+                                }
+                                if (md.getBody() != null) {
+                                    md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
+                                        if (stmt instanceof J.Return) {
+                                            J.Return r = (J.Return) stmt;
+                                            if (r.getExpression() != null && !TypeUtils.isOfType(parameterizedType.getTarget().getType(), r.getExpression().getType())) {
+                                                return r.withExpression(new J.TypeCast(randomId(), Space.EMPTY, Markers.EMPTY, new J.ControlParentheses<>(randomId(), Space.EMPTY, Markers.EMPTY,
+                                                        new JRightPadded<>(TypeTree.build("BigDecimal").withType(parameterizedType.getTarget().getType()), Space.EMPTY, Markers.EMPTY)), r.getExpression()));
+                                            }
+                                        }
+                                        return stmt;
+                                    })));
                                 }
                             }
                             if (REPLACE.matches(md, cd) && parameterizedType != null) {
