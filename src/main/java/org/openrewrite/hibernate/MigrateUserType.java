@@ -20,11 +20,14 @@ import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
+import org.openrewrite.java.JavaParser;
+import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.JavaVisitor;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -33,16 +36,21 @@ import java.util.Optional;
 public class MigrateUserType extends Recipe {
 
     private static final String USER_TYPE = "org.hibernate.usertype.UserType";
+    private static final MethodMatcher SQL_TYPES = new MethodMatcher("* sqlTypes()");
     private static final MethodMatcher RETURNED_CLASS = new MethodMatcher("* returnedClass()");
     private static final MethodMatcher EQUALS = new MethodMatcher("* equals(java.lang.Object, java.lang.Object)");
     private static final MethodMatcher HASHCODE = new MethodMatcher("* hashCode(java.lang.Object)");
-    private static final MethodMatcher NULL_SAFE_GET_RESULT_SET = new MethodMatcher("* hashcode(java.lang.Object)");
-    private static final MethodMatcher NULL_SAFE_GET_PREPARED_STATEMENT = new MethodMatcher("* hashcode(java.lang.Object)");
+    private static final MethodMatcher NULL_SAFE_GET_STRING_ARRAY = new MethodMatcher("* nullSafeGet(java.sql.ResultSet, java.lang.String[], org.hibernate.engine.spi.SharedSessionContractImplementor, java.lang.Object)");
+    private static final MethodMatcher NULL_SAFE_GET_INT = new MethodMatcher("* nullSafeGet(java.sql.ResultSet, int, org.hibernate.engine.spi.SharedSessionContractImplementor, java.lang.Object)");
+    private static final MethodMatcher RESULT_SET_STRING_PARAM = new MethodMatcher("java.sql.ResultSet *(java.lang.String)");
+    private static final MethodMatcher NULL_SAFE_SET = new MethodMatcher("* nullSafeSet(java.sql.PreparedStatement, java.lang.Object, int, org.hibernate.engine.spi.SharedSessionContractImplementor)");
     private static final MethodMatcher DEEP_COPY = new MethodMatcher("* deepCopy(java.lang.Object)");
     private static final MethodMatcher DISASSEMBLE = new MethodMatcher("* disassemble(java.lang.Object)");
     private static final MethodMatcher ASSEMBLE = new MethodMatcher("* assemble(java.io.Serializable, java.lang.Object)");
     private static final MethodMatcher REPLACE = new MethodMatcher("* replace(java.lang.Object, java.lang.Object, java.lang.Object)");
+    @Nullable
     private static J.FieldAccess parameterizedType = null;
+    private static String nullSafeGetStringArrayName = "";
 
     @Override
     public String getDisplayName() {
@@ -63,11 +71,16 @@ public class MigrateUserType extends Recipe {
                     public J visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
                         J.ClassDeclaration cd = classDecl;
                         Optional<J.MethodDeclaration> returnedClass = cd.getBody().getStatements().stream().filter(J.MethodDeclaration.class::isInstance).map(J.MethodDeclaration.class::cast).filter(stmt -> stmt.getSimpleName().equals("returnedClass")).findFirst();
-                        returnedClass.ifPresent(retClass -> parameterizedType = (J.FieldAccess) retClass.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).map(J.Return::getExpression).findFirst().get());
+                        returnedClass.ifPresent(retClass -> {
+                            if (retClass.getBody() != null) {
+                                //noinspection DataFlowIssue
+                                parameterizedType = (J.FieldAccess) retClass.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).map(J.Return::getExpression).findFirst().orElse(null);
+                            }
+                        });
+
 
                         cd = cd.withImplements(ListUtils.map(cd.getImplements(), impl -> {
-                            if (TypeUtils.isAssignableTo(USER_TYPE, impl.getType())) {
-                                System.out.println(impl);
+                            if (TypeUtils.isAssignableTo(USER_TYPE, impl.getType()) && parameterizedType != null) {
                                 return TypeTree.build("UserType<" + parameterizedType.getTarget() + ">").withType(JavaType.buildType(USER_TYPE)).withPrefix(Space.SINGLE_SPACE);
                             }
                             return impl;
@@ -79,11 +92,35 @@ public class MigrateUserType extends Recipe {
 
                     @Override
                     public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-                        J.MethodDeclaration md = (J.MethodDeclaration) super.visitMethodDeclaration(method, ctx);
+                        J.MethodDeclaration md = method;
                         J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
                         if (cd != null) {
-                            if (RETURNED_CLASS.matches(md, cd)) {
-                                md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">").withPrefix(md.getReturnTypeExpression().getPrefix()));
+                            if (SQL_TYPES.matches(md, cd)) {
+                                if (md.getBody() != null) {
+                                    Optional<J.Return> ret = md.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).findFirst();
+                                    if (ret.isPresent()) {
+                                        if (ret.get().getExpression() instanceof J.NewArray) {
+                                            J.NewArray newArray = (J.NewArray) ret.get().getExpression();
+                                            if (newArray.getInitializer() != null) {
+                                                String template = "@Override\n" +
+                                                                  "public int getSqlType() {\n" +
+                                                                  "    return #{any()};\n" +
+                                                                  "}";
+                                                md = JavaTemplate.builder(template)
+                                                        .javaParser(JavaParser.fromJavaVersion())
+                                                        .build()
+                                                        .apply(getCursor(), md.getCoordinates().replace(), newArray.getInitializer().get(0)).withId(md.getId());
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
+                            if (RETURNED_CLASS.matches(md, cd) && parameterizedType != null) {
+                                md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">"));
+                                if (md.getReturnTypeExpression() != null) {
+                                    md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
+                                }
                             }
                             if (EQUALS.matches(md, cd)) {
                                 md = changeParameterTypes(md, Arrays.asList("x", "y"));
@@ -91,48 +128,141 @@ public class MigrateUserType extends Recipe {
                             if (HASHCODE.matches(md, cd)) {
                                 md = changeParameterTypes(md, Collections.singletonList("x"));
                             }
-                            if (NULL_SAFE_GET_RESULT_SET.matches(md, cd)) {
+                            if (NULL_SAFE_GET_STRING_ARRAY.matches(md, cd)) {
+                                J.MethodDeclaration finalMd = md;
+                                if (md.getMethodType() != null) {
+
+                                    nullSafeGetStringArrayName = md.getMethodType().getParameterNames().get(1);
+                                    JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
+                                            (index, type) -> {
+                                                if (nullSafeGetStringArrayName.equals(finalMd.getMethodType().getParameterNames().get(index))) {
+                                                    type = (type instanceof JavaType.Array && TypeUtils.isOfType(JavaType.buildType("java.lang.String"), ((JavaType.Array) type).getElemType())) ? JavaType.buildType("int") : type;
+                                                }
+                                                return type;
+                                            })).withParameterNames(ListUtils.map(md.getMethodType().getParameterNames(),
+                                            name -> {
+                                                if (nullSafeGetStringArrayName.equals(name)) {
+                                                    name = "position";
+                                                }
+                                                return name;
+                                            }));
+                                    J.Identifier newName = ((J.VariableDeclarations) md.getParameters().get(1)).getVariables().get(0).getName()
+                                            .withSimpleName("position")
+                                            .withType(JavaType.buildType("int"));
+                                    JavaType.Variable fieldType = ((J.VariableDeclarations) md.getParameters().get(1)).getVariables().get(0).getName().getFieldType();
+                                    if (fieldType != null) {
+                                        newName = newName.withFieldType(fieldType
+                                                .withType(JavaType.buildType("int"))
+                                                .withOwner(met));
+                                    }
+                                    if (parameterizedType != null) {
+                                        md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
+                                        if (md.getReturnTypeExpression() != null) {
+                                            md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
+                                        }
+                                    }
+                                    J.Identifier finalNewName = newName;
+                                    md = md.withParameters(ListUtils.map(md.getParameters(), param -> {
+                                        if (param instanceof J.VariableDeclarations) {
+                                            if (((J.VariableDeclarations) param).getVariables().stream().anyMatch(var -> nullSafeGetStringArrayName.equals(var.getSimpleName()))) {
+                                                param = ((J.VariableDeclarations) param).withType(JavaType.buildType("int")).withTypeExpression(TypeTree.build("int").withType(JavaType.buildType("int")));
+                                                param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
+                                                    if (nullSafeGetStringArrayName.equals(var.getSimpleName())) {
+                                                        var = var.withName(finalNewName).withType(JavaType.buildType("int"));
+                                                        if (var.getVariableType() != null) {
+                                                            var = var.withVariableType(var.getVariableType().withName("position").withType(JavaType.buildType("int")).withOwner(met));
+                                                        }
+                                                    }
+                                                    return var;
+                                                }));
+                                            }
+                                        }
+                                        return param;
+                                    }));
+                                    if (md.getMethodType() != null) {
+                                        md = md.withMethodType(md.getMethodType().withParameterNames(met.getParameterNames()).withParameterTypes(met.getParameterTypes()));
+                                    }
+                                }
                             }
-                            if (NULL_SAFE_GET_PREPARED_STATEMENT.matches(md, cd)) {
+                            if (NULL_SAFE_SET.matches(md, cd)) {
+                                md = changeParameterTypes(md, Collections.singletonList("value"));
                             }
-                            if (DEEP_COPY.matches(md, cd)) {
-                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE)).withPrefix(md.getReturnTypeExpression().getPrefix());
+                            if (DEEP_COPY.matches(md, cd) && parameterizedType != null) {
+                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
+                                if (md.getReturnTypeExpression() != null) {
+                                    md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
+                                }
                                 md = changeParameterTypes(md, Collections.singletonList("value"));
                             }
                             if (DISASSEMBLE.matches(md, cd)) {
                                 md = changeParameterTypes(md, Collections.singletonList("value"));
                             }
-                            if (ASSEMBLE.matches(md, cd)) {
-                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE)).withPrefix(md.getReturnTypeExpression().getPrefix());
+                            if (ASSEMBLE.matches(md, cd) && parameterizedType != null) {
+                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
+                                if (md.getReturnTypeExpression() != null) {
+                                    md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
+                                }
                             }
-                            if (REPLACE.matches(md, cd)) {
-                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE)).withPrefix(md.getReturnTypeExpression().getPrefix());
+                            if (REPLACE.matches(md, cd) && parameterizedType != null) {
+                                md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
+                                if (md.getReturnTypeExpression() != null) {
+                                    md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
+                                }
                                 md = changeParameterTypes(md, Arrays.asList("original", "target"));
                             }
                         }
-                        return maybeAutoFormat(method, md, ctx);
+                        md = maybeAutoFormat(method, md, ctx);
+                        updateCursor(md);
+                        return super.visitMethodDeclaration(md, ctx);
                     }
 
-                    private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<String> paramNames){
-                        JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
-                                (index, type) -> {
-                                    if (paramNames.contains(md.getMethodType().getParameterNames().get(index))) {
-                                        type = TypeUtils.isOfType(JavaType.buildType("java.lang.Object"), type) ? parameterizedType.getTarget().getType() : type;
+                    private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<String> paramNames) {
+                        if (md.getMethodType() != null) {
+                            JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
+                                    (index, type) -> {
+                                        if (paramNames.contains(md.getMethodType().getParameterNames().get(index)) && parameterizedType != null) {
+                                            type = TypeUtils.isOfType(JavaType.buildType("java.lang.Object"), type) ? parameterizedType.getTarget().getType() : type;
+                                        }
+                                        return type;
+                                    }));
+                            return md.withParameters(ListUtils.map(md.getParameters(), param -> {
+                                if (param instanceof J.VariableDeclarations) {
+                                    if (((J.VariableDeclarations) param).getVariables().stream().anyMatch(var -> paramNames.contains(var.getSimpleName()))) {
+                                        if (parameterizedType != null) {
+                                            param = ((J.VariableDeclarations) param).withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget());
+                                            param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
+                                                if (paramNames.contains(var.getSimpleName())) {
+                                                    var = var.withType(parameterizedType.getTarget().getType());
+                                                    if (var.getVariableType() != null && parameterizedType != null && parameterizedType.getTarget().getType() != null) {
+                                                        var = var.withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
+                                                    }
+                                                }
+                                                return var;
+                                            }));
+                                        }
                                     }
-                                    return type;
-                                }));
-                        return md.withParameters(ListUtils.map(md.getParameters(), param -> {
-                            if (param instanceof J.VariableDeclarations) {
-                                param = ((J.VariableDeclarations) param).withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget());
-                                param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
-                                    if (paramNames.contains(var.getSimpleName())) {
-                                        var = var.withType(parameterizedType.getTarget().getType()).withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
-                                    }
-                                    return var;
-                                }));
+
+                                }
+                                return param;
+                            }));
+                        }
+                        return md;
+                    }
+
+                    @Override
+                    public J visitMethodInvocation(J.MethodInvocation method, ExecutionContext executionContext) {
+                        J.MethodInvocation mi = (J.MethodInvocation) super.visitMethodInvocation(method, executionContext);
+                        if (RESULT_SET_STRING_PARAM.matches(mi)) {
+                            J.MethodDeclaration md = getCursor().firstEnclosing(J.MethodDeclaration.class);
+                            J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
+                            if (md != null && cd != null && NULL_SAFE_GET_INT.matches(md, cd)) {
+                                mi = mi.withArguments(Collections.singletonList(((J.VariableDeclarations) md.getParameters().get(1)).getVariables().get(0).getName()));
+                                if (mi.getMethodType() != null) {
+                                    mi = mi.withMethodType(mi.getMethodType().withParameterTypes(Collections.singletonList(JavaType.buildType("int"))));
+                                }
                             }
-                            return param;
-                        }));
+                        }
+                        return mi;
                     }
                 });
     }
