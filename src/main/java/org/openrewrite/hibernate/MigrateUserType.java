@@ -50,7 +50,6 @@ public class MigrateUserType extends Recipe {
     private static final MethodMatcher REPLACE = new MethodMatcher("* replace(java.lang.Object, java.lang.Object, java.lang.Object)");
     @Nullable
     private static J.FieldAccess parameterizedType = null;
-    private static String nullSafeGetStringArrayName = "";
 
     @Override
     public String getDisplayName() {
@@ -129,60 +128,15 @@ public class MigrateUserType extends Recipe {
                                 md = changeParameterTypes(md, Collections.singletonList("x"));
                             }
                             if (NULL_SAFE_GET_STRING_ARRAY.matches(md, cd)) {
-                                J.MethodDeclaration finalMd = md;
-                                if (md.getMethodType() != null) {
-
-                                    nullSafeGetStringArrayName = md.getMethodType().getParameterNames().get(1);
-                                    JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
-                                            (index, type) -> {
-                                                if (nullSafeGetStringArrayName.equals(finalMd.getMethodType().getParameterNames().get(index))) {
-                                                    type = (type instanceof JavaType.Array && TypeUtils.isOfType(JavaType.buildType("java.lang.String"), ((JavaType.Array) type).getElemType())) ? JavaType.buildType("int") : type;
-                                                }
-                                                return type;
-                                            })).withParameterNames(ListUtils.map(md.getMethodType().getParameterNames(),
-                                            name -> {
-                                                if (nullSafeGetStringArrayName.equals(name)) {
-                                                    name = "position";
-                                                }
-                                                return name;
-                                            }));
-                                    J.Identifier newName = ((J.VariableDeclarations) md.getParameters().get(1)).getVariables().get(0).getName()
-                                            .withSimpleName("position")
-                                            .withType(JavaType.buildType("int"));
-                                    JavaType.Variable fieldType = ((J.VariableDeclarations) md.getParameters().get(1)).getVariables().get(0).getName().getFieldType();
-                                    if (fieldType != null) {
-                                        newName = newName.withFieldType(fieldType
-                                                .withType(JavaType.buildType("int"))
-                                                .withOwner(met));
-                                    }
-                                    if (parameterizedType != null) {
-                                        md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
-                                        if (md.getReturnTypeExpression() != null) {
-                                            md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                                        }
-                                    }
-                                    J.Identifier finalNewName = newName;
-                                    md = md.withParameters(ListUtils.map(md.getParameters(), param -> {
-                                        if (param instanceof J.VariableDeclarations) {
-                                            if (((J.VariableDeclarations) param).getVariables().stream().anyMatch(var -> nullSafeGetStringArrayName.equals(var.getSimpleName()))) {
-                                                param = ((J.VariableDeclarations) param).withType(JavaType.buildType("int")).withTypeExpression(TypeTree.build("int").withType(JavaType.buildType("int")));
-                                                param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
-                                                    if (nullSafeGetStringArrayName.equals(var.getSimpleName())) {
-                                                        var = var.withName(finalNewName).withType(JavaType.buildType("int"));
-                                                        if (var.getVariableType() != null) {
-                                                            var = var.withVariableType(var.getVariableType().withName("position").withType(JavaType.buildType("int")).withOwner(met));
-                                                        }
-                                                    }
-                                                    return var;
-                                                }));
-                                            }
-                                        }
-                                        return param;
-                                    }));
-                                    if (md.getMethodType() != null) {
-                                        md = md.withMethodType(md.getMethodType().withParameterNames(met.getParameterNames()).withParameterTypes(met.getParameterTypes()));
-                                    }
-                                }
+                                String template = "@Override\n" +
+                                                  "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
+                                                  "}";
+                                J.MethodDeclaration updatedParam = JavaTemplate.builder(template)
+                                        .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core"))
+                                        .imports("java.math.BigDecimal", "java.sql.ResultSet", "java.sql.SQLException", "org.hibernate.engine.spi.SharedSessionContractImplementor")
+                                        .build()
+                                        .apply(getCursor(), md.getCoordinates().replace());
+                                md = updatedParam.withId(md.getId()).withBody(md.getBody());
                             }
                             if (NULL_SAFE_SET.matches(md, cd)) {
                                 md = changeParameterTypes(md, Collections.singletonList("value"));
@@ -237,9 +191,9 @@ public class MigrateUserType extends Recipe {
                                 md = changeParameterTypes(md, Arrays.asList("original", "target"));
                             }
                         }
-                        md = maybeAutoFormat(method, md, ctx);
                         updateCursor(md);
-                        return super.visitMethodDeclaration(md, ctx);
+                        md = (J.MethodDeclaration) super.visitMethodDeclaration(md, ctx);
+                        return maybeAutoFormat(method, md, ctx);
                     }
 
                     private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<String> paramNames) {
