@@ -45,7 +45,7 @@ class MigrateUserTypeTest implements RewriteTest {
             import org.hibernate.HibernateException;
             import org.hibernate.engine.spi.SharedSessionContractImplementor;
             import org.hibernate.usertype.UserType;
-            
+
             import java.io.Serializable;
             import java.math.BigDecimal;
             import java.sql.PreparedStatement;
@@ -53,35 +53,35 @@ class MigrateUserTypeTest implements RewriteTest {
             import java.sql.SQLException;
             import java.sql.Types;
             import java.util.Objects;
-            
+
             public class BigDecimalAsString implements UserType {
-            
+
                 @Override
                 public int[] sqlTypes() {
                     return new int[]{Types.VARCHAR};
                 }
-            
+
                 @Override
                 public Class returnedClass() {
                     return BigDecimal.class;
                 }
-            
+
                 @Override
                 public boolean equals(Object x, Object y) {
                     return Objects.equals(x, y);
                 }
-            
+
                 @Override
                 public int hashCode(Object x) {
                     return Objects.hashCode(x);
                 }
-            
+
                 @Override
                 public Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner) throws SQLException {
                     String string = rs.getString(names[0]);
                     return string == null || rs.wasNull() ? null : new BigDecimal(string);
                 }
-            
+
                 @Override
                 public void nullSafeSet(PreparedStatement st, Object value, int index, SharedSessionContractImplementor session) throws SQLException {
                     if (value == null) {
@@ -90,27 +90,27 @@ class MigrateUserTypeTest implements RewriteTest {
                         st.setString(index, value.toString());
                     }
                 }
-            
+
                 @Override
                 public Object deepCopy(Object value) {
                     return value;
                 }
-            
+
                 @Override
                 public boolean isMutable() {
                     return false;
                 }
-            
+
                 @Override
                 public Serializable disassemble(Object value) {
                     return (BigDecimal) value;
                 }
-            
+
                 @Override
                 public Object assemble(Serializable cached, Object owner) {
                     return cached;
                 }
-            
+
                 @Override
                 public Object replace(Object original, Object target, Object owner) {
                     return original;
@@ -121,7 +121,7 @@ class MigrateUserTypeTest implements RewriteTest {
             import org.hibernate.HibernateException;
             import org.hibernate.engine.spi.SharedSessionContractImplementor;
             import org.hibernate.usertype.UserType;
-            
+
             import java.io.Serializable;
             import java.math.BigDecimal;
             import java.sql.PreparedStatement;
@@ -129,35 +129,35 @@ class MigrateUserTypeTest implements RewriteTest {
             import java.sql.SQLException;
             import java.sql.Types;
             import java.util.Objects;
-            
+
             public class BigDecimalAsString implements UserType<BigDecimal> {
-            
+
                 @Override
                 public int getSqlType() {
                     return Types.VARCHAR;
                 }
-            
+
                 @Override
                 public Class<BigDecimal> returnedClass() {
                     return BigDecimal.class;
                 }
-            
+
                 @Override
                 public boolean equals(BigDecimal x, BigDecimal y) {
                     return Objects.equals(x, y);
                 }
-            
+
                 @Override
                 public int hashCode(BigDecimal x) {
                     return Objects.hashCode(x);
                 }
-            
+
                 @Override
                 public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
                     String string = rs.getString(position);
                     return string == null || rs.wasNull() ? null : new BigDecimal(string);
                 }
-            
+
                 @Override
                 public void nullSafeSet(PreparedStatement st, BigDecimal value, int index, SharedSessionContractImplementor session) throws SQLException {
                     if (value == null) {
@@ -166,27 +166,27 @@ class MigrateUserTypeTest implements RewriteTest {
                         st.setString(index, value.toString());
                     }
                 }
-            
+
                 @Override
                 public BigDecimal deepCopy(BigDecimal value) {
                     return value;
                 }
-            
+
                 @Override
                 public boolean isMutable() {
                     return false;
                 }
-            
+
                 @Override
                 public Serializable disassemble(BigDecimal value) {
                     return value;
                 }
-            
+
                 @Override
                 public BigDecimal assemble(Serializable cached, Object owner) {
                     return (BigDecimal) cached;
                 }
-            
+
                 @Override
                 public BigDecimal replace(BigDecimal original, BigDecimal target, Object owner) {
                     return original;
