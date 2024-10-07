@@ -192,10 +192,7 @@ class MigrateUserTypeTest implements RewriteTest {
                     return original;
                 }
             }
-            """,
-            after -> after.afterRecipe( spec -> {
-                spec.getMarkers().findFirst(RecipesThatMadeChanges.class);
-            })
+            """
           )
         );
     }
