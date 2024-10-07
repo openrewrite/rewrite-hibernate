@@ -30,7 +30,7 @@ class MigrateUserTypeTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateUserType())
           .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")
+            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core")
           );
     }
 

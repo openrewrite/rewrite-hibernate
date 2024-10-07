@@ -39,21 +39,18 @@ import static org.openrewrite.Tree.randomId;
 public class MigrateUserType extends Recipe {
 
     private static final String USER_TYPE = "org.hibernate.usertype.UserType";
-    private static final MethodMatcher SQL_TYPES = new MethodMatcher("* sqlTypes()");
-    private static final MethodMatcher RETURNED_CLASS = new MethodMatcher("* returnedClass()");
+    private static final MethodMatcher ASSEMBLE = new MethodMatcher("* assemble(java.io.Serializable, java.lang.Object)");
+    private static final MethodMatcher DEEP_COPY = new MethodMatcher("* deepCopy(java.lang.Object)");
+    private static final MethodMatcher DISASSEMBLE = new MethodMatcher("* disassemble(java.lang.Object)");
     private static final MethodMatcher EQUALS = new MethodMatcher("* equals(java.lang.Object, java.lang.Object)");
     private static final MethodMatcher HASHCODE = new MethodMatcher("* hashCode(java.lang.Object)");
     private static final MethodMatcher NULL_SAFE_GET_STRING_ARRAY = new MethodMatcher("* nullSafeGet(java.sql.ResultSet, java.lang.String[], org.hibernate.engine.spi.SharedSessionContractImplementor, java.lang.Object)");
-    private static final MethodMatcher NULL_SAFE_GET_INT = new MethodMatcher("* nullSafeGet(java.sql.ResultSet, int, org.hibernate.engine.spi.SharedSessionContractImplementor, java.lang.Object)");
-    private static final MethodMatcher RESULT_SET_STRING_PARAM = new MethodMatcher("java.sql.ResultSet *(java.lang.String)");
     private static final MethodMatcher NULL_SAFE_SET = new MethodMatcher("* nullSafeSet(java.sql.PreparedStatement, java.lang.Object, int, org.hibernate.engine.spi.SharedSessionContractImplementor)");
-    private static final MethodMatcher DEEP_COPY = new MethodMatcher("* deepCopy(java.lang.Object)");
-    private static final MethodMatcher DISASSEMBLE = new MethodMatcher("* disassemble(java.lang.Object)");
-    private static final MethodMatcher ASSEMBLE = new MethodMatcher("* assemble(java.io.Serializable, java.lang.Object)");
+    private static final MethodMatcher NULL_SAFE_GET_INT = new MethodMatcher("* nullSafeGet(java.sql.ResultSet, int, org.hibernate.engine.spi.SharedSessionContractImplementor, java.lang.Object)");
     private static final MethodMatcher REPLACE = new MethodMatcher("* replace(java.lang.Object, java.lang.Object, java.lang.Object)");
-
-    @Nullable
-    private static J.FieldAccess parameterizedType = null;
+    private static final MethodMatcher RESULT_SET_STRING_PARAM = new MethodMatcher("java.sql.ResultSet *(java.lang.String)");
+    private static final MethodMatcher RETURNED_CLASS = new MethodMatcher("* returnedClass()");
+    private static final MethodMatcher SQL_TYPES = new MethodMatcher("* sqlTypes()");
 
     @Override
     public String getDisplayName() {
@@ -77,11 +74,12 @@ public class MigrateUserType extends Recipe {
                         returnedClass.ifPresent(retClass -> {
                             if (retClass.getBody() != null) {
                                 //noinspection DataFlowIssue
-                                parameterizedType = (J.FieldAccess) retClass.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).map(J.Return::getExpression).findFirst().orElse(null);
+                                getCursor().putMessage("parameterizedType", retClass.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).map(J.Return::getExpression).findFirst().orElse(null));
+
                             }
                         });
 
-
+                        J.FieldAccess parameterizedType = getCursor().getMessage("parameterizedType");
                         cd = cd.withImplements(ListUtils.map(cd.getImplements(), impl -> {
                             if (TypeUtils.isAssignableTo(USER_TYPE, impl.getType()) && parameterizedType != null) {
                                 return TypeTree.build("UserType<" + parameterizedType.getTarget() + ">").withType(JavaType.buildType(USER_TYPE)).withPrefix(Space.SINGLE_SPACE);
@@ -89,6 +87,9 @@ public class MigrateUserType extends Recipe {
                             return impl;
                         }));
                         updateCursor(cd);
+                        if (parameterizedType != null) {
+                            getCursor().putMessage("parameterizedType", parameterizedType);
+                        }
                         return super.visitClassDeclaration(cd, ctx);
                     }
 
@@ -97,6 +98,7 @@ public class MigrateUserType extends Recipe {
                     public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
                         J.MethodDeclaration md = method;
                         J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
+                        J.FieldAccess parameterizedType = getCursor().getNearestMessage("parameterizedType");
                         if (cd != null) {
                             if (SQL_TYPES.matches(md, cd)) {
                                 if (md.getBody() != null) {
@@ -201,6 +203,7 @@ public class MigrateUserType extends Recipe {
                     }
 
                     private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<String> paramNames) {
+                        J.FieldAccess parameterizedType = getCursor().getNearestMessage("parameterizedType");
                         if (md.getMethodType() != null) {
                             JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
                                     (index, type) -> {
