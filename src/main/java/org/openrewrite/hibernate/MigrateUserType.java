@@ -57,12 +57,12 @@ public class MigrateUserType extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Migrate UserType to hibernate 6";
+        return "Migrate `UserType` to Hibernate 6";
     }
 
     @Override
     public String getDescription() {
-        return "With hibernate 6 the UserType interface received a type parameter making it more strictly typed" +
+        return "With Hibernate 6 the `UserType` interface received a type parameter making it more strictly typed. " +
                "This recipe applies the changes required to adhere to this change.";
     }
 
