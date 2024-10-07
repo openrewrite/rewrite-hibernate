@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
+import org.openrewrite.marker.RecipesThatMadeChanges;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -39,7 +40,6 @@ class MigrateUserTypeTest implements RewriteTest {
     void shouldMigrateUserType() {
         //language=java
         rewriteRun(
-          spec -> spec.expectedCyclesThatMakeChanges(2),
           java(
             """
             import org.hibernate.HibernateException;
@@ -192,7 +192,10 @@ class MigrateUserTypeTest implements RewriteTest {
                     return original;
                 }
             }
-            """
+            """,
+            after -> after.afterRecipe( spec -> {
+                spec.getMarkers().findFirst(RecipesThatMadeChanges.class);
+            })
           )
         );
     }
