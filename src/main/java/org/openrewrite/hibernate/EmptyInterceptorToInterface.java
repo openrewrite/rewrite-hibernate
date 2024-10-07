@@ -34,7 +34,7 @@ public class EmptyInterceptorToInterface extends Recipe {
     private final String INTERCEPTOR = "org.hibernate.Interceptor";
     private final String STATEMENT_INSPECTOR = "org.hibernate.resource.jdbc.spi.StatementInspector";
     private static final AnnotationMatcher OVERRIDE_ANNOTATION_MATCHER = new AnnotationMatcher("java.lang.Override");
-    private static final MethodMatcher ON_PREPARE_STATEMENT = new MethodMatcher("* onPrepareStatement(java.lang.String)");
+    private static final MethodMatcher ON_PREPARE_STATEMENT = new MethodMatcher("org.hibernate.Interceptor onPrepareStatement(java.lang.String)", true);
 
     @Override
     public String getDisplayName() {
