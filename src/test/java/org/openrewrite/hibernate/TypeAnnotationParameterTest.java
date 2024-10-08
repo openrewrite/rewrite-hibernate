@@ -38,7 +38,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
           java(
             """
               import org.hibernate.annotations.Type;
-                            
+              
               public class TestApplication {
                   @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
                   Object a;
@@ -46,9 +46,9 @@ class TypeAnnotationParameterTest implements RewriteTest {
               """,
             """
               import org.hibernate.annotations.Type;
-                  
+              
               import java.util.concurrent.atomic.AtomicBoolean;
-                  
+              
               public class TestApplication {
                   @Type(AtomicBoolean.class)
                   Object a;
@@ -65,7 +65,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
           java(
             """
               import org.hibernate.annotations.Type;
-                            
+              
               class TestApplication {
                   @Type(type = "java.util.concurrent.atomic.AtomicBoolean", parameters = {})
                   Object a;
@@ -73,9 +73,9 @@ class TypeAnnotationParameterTest implements RewriteTest {
               """,
             """
               import org.hibernate.annotations.Type;
-                
+              
               import java.util.concurrent.atomic.AtomicBoolean;
-                
+              
               class TestApplication {
                   @Type(value = AtomicBoolean.class, parameters = {})
                   Object a;
@@ -92,7 +92,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
           java(
             """
               import org.hibernate.annotations.Type;
-                            
+              
               public class TestApplication {
                   @Type(type = "org.hibernate.type.TextType")
                   Object a;

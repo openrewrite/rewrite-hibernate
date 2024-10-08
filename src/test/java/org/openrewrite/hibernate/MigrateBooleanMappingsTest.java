@@ -32,7 +32,7 @@ class MigrateBooleanMappingsTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateBooleanMappings())
           .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(),"hibernate-core", "jakarta.persistence-api")
+            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core", "jakarta.persistence-api")
           );
     }
 
