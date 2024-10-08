@@ -230,7 +230,7 @@ public class MigrateUserType extends Recipe {
                                     param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
                                         if (paramNames.contains(var.getSimpleName())) {
                                             var = var.withType(parameterizedType.getTarget().getType());
-                                            if (var.getVariableType() != null && parameterizedType != null && parameterizedType.getTarget().getType() != null) {
+                                            if (var.getVariableType() != null && parameterizedType.getTarget().getType() != null) {
                                                 var = var.withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
                                             }
                                         }
