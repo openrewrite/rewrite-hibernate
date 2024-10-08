@@ -15,15 +15,13 @@
  */
 package org.openrewrite.hibernate;
 
+import org.jetbrains.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.JavaVisitor;
-import org.openrewrite.java.MethodMatcher;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.FindImplementations;
 import org.openrewrite.java.search.FindMethodDeclaration;
 import org.openrewrite.java.tree.*;
@@ -33,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.openrewrite.Tree.randomId;
 
@@ -73,29 +72,37 @@ public class MigrateUserType extends Recipe {
             @Override
             public J visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
                 J.ClassDeclaration cd = classDecl;
-                Optional<J.MethodDeclaration> returnedClass = cd.getBody().getStatements().stream().filter(J.MethodDeclaration.class::isInstance).map(J.MethodDeclaration.class::cast).filter(stmt -> stmt.getSimpleName().equals("returnedClass")).findFirst();
-                returnedClass.ifPresent(retClass -> {
-                    if (retClass.getBody() != null) {
-                        //noinspection DataFlowIssue
-                        getCursor().putMessage("parameterizedType", retClass.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).map(J.Return::getExpression).findFirst().orElse(null));
-
-                    }
-                });
-
-                J.FieldAccess parameterizedType = getCursor().getMessage("parameterizedType");
+                J.FieldAccess parameterizedType = getReturnedClass(cd);
                 cd = cd.withImplements(ListUtils.map(cd.getImplements(), impl -> {
                     if (TypeUtils.isAssignableTo(USER_TYPE, impl.getType()) && parameterizedType != null) {
                         return TypeTree.build("UserType<" + parameterizedType.getTarget() + ">").withType(JavaType.buildType(USER_TYPE)).withPrefix(Space.SINGLE_SPACE);
                     }
                     return impl;
                 }));
-                updateCursor(cd);
                 if (parameterizedType != null) {
                     getCursor().putMessage("parameterizedType", parameterizedType);
                 }
                 return super.visitClassDeclaration(cd, ctx);
             }
 
+            @SuppressWarnings("ConstantConditions")
+            private J.@Nullable FieldAccess getReturnedClass(J.ClassDeclaration cd) {
+                AtomicReference<J.FieldAccess> reference = new AtomicReference<>();
+                new JavaIsoVisitor<AtomicReference<J.FieldAccess>>() {
+                    @Override
+                    public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, AtomicReference<J.FieldAccess> ref) {
+                        // Only visit top level method returnedClass
+                        return RETURNED_CLASS.matches(method, cd) ? super.visitMethodDeclaration(method, ref) : method;
+                    }
+
+                    @Override
+                    public J.Return visitReturn(J.Return _return, AtomicReference<J.FieldAccess> ref) {
+                        ref.set((J.FieldAccess) _return.getExpression());
+                        return _return;
+                    }
+                }.visitNonNull(cd, reference);
+                return reference.get();
+            }
 
             @Override
             public J visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
