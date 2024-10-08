@@ -77,7 +77,6 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
               import org.hibernate.EmptyInterceptor;
               
               class MyInterceptor extends EmptyInterceptor {
-              
                   public String onPrepareStatement(String sql) {
                       return sql;
                   }
@@ -88,8 +87,6 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
               import org.hibernate.resource.jdbc.spi.StatementInspector;
               
               class MyInterceptor implements Interceptor, StatementInspector {
-              
-                  @Override
                   public String inspect(String sql) {
                       return sql;
                   }
@@ -131,6 +128,40 @@ class EmptyInterceptorToInterfaceTest implements RewriteTest {
               class MyInterceptor implements MyInterface, Interceptor, StatementInspector {
               
                   @Override
+                  public String inspect(String sql) {
+                      return sql;
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void shouldRetainOtherAnnotations() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import org.hibernate.EmptyInterceptor;
+              
+              class MyInterceptor extends EmptyInterceptor {
+              
+                  @Override
+                  @SuppressWarnings("ALL")
+                  public String onPrepareStatement(String sql) {
+                      return sql;
+                  }
+              }
+              """,
+            """
+              import org.hibernate.Interceptor;
+              import org.hibernate.resource.jdbc.spi.StatementInspector;
+              
+              class MyInterceptor implements Interceptor, StatementInspector {
+              
+                  @Override
+                  @SuppressWarnings("ALL")
                   public String inspect(String sql) {
                       return sql;
                   }

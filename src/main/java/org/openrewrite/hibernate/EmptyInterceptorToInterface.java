@@ -72,10 +72,15 @@ public class EmptyInterceptorToInterface extends Recipe {
                         J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
                         if (cd != null && ON_PREPARE_STATEMENT.matches(md, cd)) {
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, "prepareStatementFound", true);
-                            J.MethodDeclaration inspect = JavaTemplate.apply(
-                                    "@Override public String inspect(String overriddenBelow) { return overriddenBelow; }",
+                            J.MethodDeclaration inspectMD = JavaTemplate.apply(
+                                    (md.getLeadingAnnotations().isEmpty() ? "" : "@Override ") +
+                                    "public String inspect(String overriddenBelow) { return overriddenBelow; }",
                                     getCursor(), md.getCoordinates().replace());
-                            return inspect.withParameters(md.getParameters()).withBody(md.getBody());
+                            return inspectMD
+                                    .withPrefix(md.getPrefix())
+                                    .withLeadingAnnotations(md.getLeadingAnnotations())
+                                    .withParameters(md.getParameters())
+                                    .withBody(md.getBody());
                         }
                         return md;
                     }
