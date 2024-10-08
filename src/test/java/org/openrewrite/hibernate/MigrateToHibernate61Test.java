@@ -134,19 +134,19 @@ class MigrateToHibernate61Test implements RewriteTest {
                         </dependency>
                       </dependencies>
                     </project>
-                      """.formatted(matcher.group(1));
+                    """.formatted(matcher.group(1));
               })
             ),
             //language=java
             srcMainJava(
               java("""
                 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
-                                
+                
                 public class TestApplication {
                 }
                 """, """
                 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
-                                
+                
                 public class TestApplication {
                 }
                 """
