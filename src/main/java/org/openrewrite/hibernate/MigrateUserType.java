@@ -109,7 +109,7 @@ public class MigrateUserType extends Recipe {
                 J.MethodDeclaration md = method;
                 J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
                 J.FieldAccess parameterizedType = getCursor().getNearestMessage("parameterizedType");
-                if (cd == null) {
+                if (cd == null || parameterizedType == null) {
                     return md;
                 }
                 if (SQL_TYPES.matches(md, cd)) {
@@ -132,7 +132,7 @@ public class MigrateUserType extends Recipe {
 
                         }
                     }
-                } else if (RETURNED_CLASS.matches(md, cd) && parameterizedType != null) {
+                } else if (RETURNED_CLASS.matches(md, cd)) {
                     md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">"));
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
@@ -153,7 +153,7 @@ public class MigrateUserType extends Recipe {
                     md = updatedParam.withId(md.getId()).withBody(md.getBody());
                 } else if (NULL_SAFE_SET.matches(md, cd)) {
                     md = changeParameterTypes(md, Collections.singletonList(1));
-                } else if (DEEP_COPY.matches(md, cd) && parameterizedType != null) {
+                } else if (DEEP_COPY.matches(md, cd)) {
                     md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
@@ -167,7 +167,7 @@ public class MigrateUserType extends Recipe {
                                 J.Return r = (J.Return) stmt;
                                 if (r.getExpression() instanceof J.TypeCast) {
                                     J.TypeCast tc = (J.TypeCast) r.getExpression();
-                                    if (parameterizedType != null && TypeUtils.isOfType(parameterizedType.getTarget().getType(), tc.getClazz().getType())) {
+                                    if (TypeUtils.isOfType(parameterizedType.getTarget().getType(), tc.getClazz().getType())) {
                                         return r.withExpression(tc.getExpression());
                                     }
                                 }
@@ -175,7 +175,7 @@ public class MigrateUserType extends Recipe {
                             return stmt;
                         })));
                     }
-                } else if (ASSEMBLE.matches(md, cd) && parameterizedType != null) {
+                } else if (ASSEMBLE.matches(md, cd)) {
                     md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
@@ -192,7 +192,7 @@ public class MigrateUserType extends Recipe {
                             return stmt;
                         })));
                     }
-                } else if (REPLACE.matches(md, cd) && parameterizedType != null) {
+                } else if (REPLACE.matches(md, cd)) {
                     md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
@@ -206,28 +206,25 @@ public class MigrateUserType extends Recipe {
 
             private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<Integer> paramIndexes) {
                 J.FieldAccess parameterizedType = getCursor().getNearestMessage("parameterizedType");
-                if (md.getMethodType() != null) {
+                if (md.getMethodType() != null && parameterizedType != null) {
                     JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
                             (index, type) -> {
-                                if (paramIndexes.contains(index) && parameterizedType != null) {
+                                if (paramIndexes.contains(index)) {
                                     type = TypeUtils.isOfType(JavaType.buildType("java.lang.Object"), type) ? parameterizedType.getTarget().getType() : type;
                                 }
                                 return type;
                             }));
                     return md.withParameters(ListUtils.map(md.getParameters(), (index, param) -> {
-                        if (param instanceof J.VariableDeclarations) {
-                            if (paramIndexes.contains(index)) {
-                                if (parameterizedType != null) {
-                                    param = ((J.VariableDeclarations) param).withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget());
-                                    param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
+                        if (param instanceof J.VariableDeclarations && paramIndexes.contains(index)) {
+                            param = ((J.VariableDeclarations) param)
+                                    .withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget())
+                                    .withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
                                         var = var.withType(parameterizedType.getTarget().getType());
                                         if (var.getVariableType() != null && parameterizedType.getTarget().getType() != null) {
                                             var = var.withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
                                         }
                                         return var;
                                     }));
-                                }
-                            }
                         }
                         return param;
                     }));
