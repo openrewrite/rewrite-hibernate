@@ -21,19 +21,17 @@ import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.*;
+import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.FindImplementations;
 import org.openrewrite.java.tree.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class EmptyInterceptorToInterface extends Recipe {
 
     private final String EMPTY_INTERCEPTOR = "org.hibernate.EmptyInterceptor";
     private final String INTERCEPTOR = "org.hibernate.Interceptor";
     private final String STATEMENT_INSPECTOR = "org.hibernate.resource.jdbc.spi.StatementInspector";
-    private static final AnnotationMatcher OVERRIDE_ANNOTATION_MATCHER = new AnnotationMatcher("java.lang.Override");
     private static final MethodMatcher ON_PREPARE_STATEMENT = new MethodMatcher("org.hibernate.Interceptor onPrepareStatement(java.lang.String)", true);
 
     @Override
@@ -49,23 +47,21 @@ public class EmptyInterceptorToInterface extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new FindImplementations(EMPTY_INTERCEPTOR),
-                new JavaIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new FindImplementations(EMPTY_INTERCEPTOR), new JavaIsoVisitor<ExecutionContext>() {
                     @Override
                     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
                         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
                         if (cd.getExtends() != null && TypeUtils.isOfClassType(cd.getExtends().getType(), EMPTY_INTERCEPTOR)) {
                             cd = cd.withExtends(null).withImplements(ListUtils.concat(cd.getImplements(), (TypeTree) TypeTree.build("Interceptor").withType(JavaType.buildType(INTERCEPTOR)).withPrefix(Space.SINGLE_SPACE)));
-                            Boolean prepareStatement = getCursor().pollMessage("prepareStatementFound");
-                            if (Boolean.TRUE.equals(prepareStatement)) {
-                                cd = cd.withImplements(ListUtils.concat(cd.getImplements(), (TypeTree) TypeTree.build("StatementInspector").withType(JavaType.buildType(STATEMENT_INSPECTOR)).withPrefix(Space.SINGLE_SPACE)));
-                            }
                             maybeAddImport(INTERCEPTOR);
-                            maybeAddImport(STATEMENT_INSPECTOR);
+                            if (getCursor().pollMessage("prepareStatementFound") != null) {
+                                cd = cd.withImplements(ListUtils.concat(cd.getImplements(), (TypeTree) TypeTree.build("StatementInspector").withType(JavaType.buildType(STATEMENT_INSPECTOR)).withPrefix(Space.SINGLE_SPACE)));
+                                maybeAddImport(STATEMENT_INSPECTOR);
+                            }
                             maybeRemoveImport(EMPTY_INTERCEPTOR);
-                        }
-                        if (cd.getPadding().getImplements() != null) {
-                            cd = cd.getPadding().withImplements(cd.getPadding().getImplements().withBefore(Space.SINGLE_SPACE));
+                            if (cd.getPadding().getImplements() != null) {
+                                cd = cd.getPadding().withImplements(cd.getPadding().getImplements().withBefore(Space.SINGLE_SPACE));
+                            }
                         }
                         return cd;
                     }
@@ -76,18 +72,10 @@ public class EmptyInterceptorToInterface extends Recipe {
                         J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
                         if (cd != null && ON_PREPARE_STATEMENT.matches(md, cd)) {
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, "prepareStatementFound", true);
-                            String template = "@Override\n" +
-                                              "public String inspect() {\n" +
-                                              "}\n";
-                            J.MethodDeclaration inspect = JavaTemplate.builder(template)
-                                    .javaParser(JavaParser.fromJavaVersion())
-                                    .build()
-                                    .apply(getCursor(), md.getCoordinates().replace());
-                            List<J.Annotation> annotations = new ArrayList<>(md.getLeadingAnnotations());
-                            if (annotations.stream().noneMatch(OVERRIDE_ANNOTATION_MATCHER::matches)) {
-                                annotations.addAll(inspect.getLeadingAnnotations());
-                            }
-                            md = inspect.withBody(md.getBody()).withLeadingAnnotations(annotations).withParameters(md.getParameters());
+                            J.MethodDeclaration inspect = JavaTemplate.apply(
+                                    "@Override public String inspect(String overriddenBelow) { return overriddenBelow; }",
+                                    getCursor(), md.getCoordinates().replace());
+                            return inspect.withParameters(md.getParameters()).withBody(md.getBody());
                         }
                         return md;
                     }
