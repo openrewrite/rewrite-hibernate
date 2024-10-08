@@ -109,103 +109,95 @@ public class MigrateUserType extends Recipe {
                 J.MethodDeclaration md = method;
                 J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
                 J.FieldAccess parameterizedType = getCursor().getNearestMessage("parameterizedType");
-                if (cd != null) {
-                    if (SQL_TYPES.matches(md, cd)) {
-                        if (md.getBody() != null) {
-                            Optional<J.Return> ret = md.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).findFirst();
-                            if (ret.isPresent()) {
-                                if (ret.get().getExpression() instanceof J.NewArray) {
-                                    J.NewArray newArray = (J.NewArray) ret.get().getExpression();
-                                    if (newArray.getInitializer() != null) {
-                                        String template = "@Override\n" +
-                                                          "public int getSqlType() {\n" +
-                                                          "    return #{any()};\n" +
-                                                          "}";
-                                        md = JavaTemplate.builder(template)
-                                                .javaParser(JavaParser.fromJavaVersion())
-                                                .build()
-                                                .apply(getCursor(), md.getCoordinates().replace(), newArray.getInitializer().get(0)).withId(md.getId());
-                                    }
+                if (cd == null) {
+                    return md;
+                }
+                if (SQL_TYPES.matches(md, cd)) {
+                    if (md.getBody() != null) {
+                        Optional<J.Return> ret = md.getBody().getStatements().stream().filter(J.Return.class::isInstance).map(J.Return.class::cast).findFirst();
+                        if (ret.isPresent()) {
+                            if (ret.get().getExpression() instanceof J.NewArray) {
+                                J.NewArray newArray = (J.NewArray) ret.get().getExpression();
+                                if (newArray.getInitializer() != null) {
+                                    String template = "@Override\n" +
+                                                      "public int getSqlType() {\n" +
+                                                      "    return #{any()};\n" +
+                                                      "}";
+                                    md = JavaTemplate.builder(template)
+                                            .javaParser(JavaParser.fromJavaVersion())
+                                            .build()
+                                            .apply(getCursor(), md.getCoordinates().replace(), newArray.getInitializer().get(0)).withId(md.getId());
                                 }
-
                             }
+
                         }
                     }
-                    if (RETURNED_CLASS.matches(md, cd) && parameterizedType != null) {
-                        md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">"));
-                        if (md.getReturnTypeExpression() != null) {
-                            md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                        }
+                } else if (RETURNED_CLASS.matches(md, cd) && parameterizedType != null) {
+                    md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">"));
+                    if (md.getReturnTypeExpression() != null) {
+                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
-                    if (EQUALS.matches(md, cd)) {
-                        md = changeParameterTypes(md, Arrays.asList("x", "y"));
+                } else if (EQUALS.matches(md, cd)) {
+                    md = changeParameterTypes(md, Arrays.asList("x", "y"));
+                } else if (HASHCODE.matches(md, cd)) {
+                    md = changeParameterTypes(md, Collections.singletonList("x"));
+                } else if (NULL_SAFE_GET_STRING_ARRAY.matches(md, cd)) {
+                    String template = "@Override\n" +
+                                      "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
+                                      "}";
+                    J.MethodDeclaration updatedParam = JavaTemplate.builder(template)
+                            .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core"))
+                            .imports("java.math.BigDecimal", "java.sql.ResultSet", "java.sql.SQLException", "org.hibernate.engine.spi.SharedSessionContractImplementor")
+                            .build()
+                            .apply(getCursor(), md.getCoordinates().replace());
+                    md = updatedParam.withId(md.getId()).withBody(md.getBody());
+                } else if (NULL_SAFE_SET.matches(md, cd)) {
+                    md = changeParameterTypes(md, Collections.singletonList("value"));
+                } else if (DEEP_COPY.matches(md, cd) && parameterizedType != null) {
+                    md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
+                    if (md.getReturnTypeExpression() != null) {
+                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
-                    if (HASHCODE.matches(md, cd)) {
-                        md = changeParameterTypes(md, Collections.singletonList("x"));
-                    }
-                    if (NULL_SAFE_GET_STRING_ARRAY.matches(md, cd)) {
-                        String template = "@Override\n" +
-                                          "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
-                                          "}";
-                        J.MethodDeclaration updatedParam = JavaTemplate.builder(template)
-                                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core"))
-                                .imports("java.math.BigDecimal", "java.sql.ResultSet", "java.sql.SQLException", "org.hibernate.engine.spi.SharedSessionContractImplementor")
-                                .build()
-                                .apply(getCursor(), md.getCoordinates().replace());
-                        md = updatedParam.withId(md.getId()).withBody(md.getBody());
-                    }
-                    if (NULL_SAFE_SET.matches(md, cd)) {
-                        md = changeParameterTypes(md, Collections.singletonList("value"));
-                    }
-                    if (DEEP_COPY.matches(md, cd) && parameterizedType != null) {
-                        md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
-                        if (md.getReturnTypeExpression() != null) {
-                            md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                        }
-                        md = changeParameterTypes(md, Collections.singletonList("value"));
-                    }
-                    if (DISASSEMBLE.matches(md, cd)) {
-                        md = changeParameterTypes(md, Collections.singletonList("value"));
-                        if (md.getBody() != null) {
-                            md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
-                                if (stmt instanceof J.Return) {
-                                    J.Return r = (J.Return) stmt;
-                                    if (r.getExpression() instanceof J.TypeCast) {
-                                        J.TypeCast tc = (J.TypeCast) r.getExpression();
-                                        if (parameterizedType != null && TypeUtils.isOfType(parameterizedType.getTarget().getType(), tc.getClazz().getType())) {
-                                            return r.withExpression(tc.getExpression());
-                                        }
+                    md = changeParameterTypes(md, Collections.singletonList("value"));
+                } else if (DISASSEMBLE.matches(md, cd)) {
+                    md = changeParameterTypes(md, Collections.singletonList("value"));
+                    if (md.getBody() != null) {
+                        md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
+                            if (stmt instanceof J.Return) {
+                                J.Return r = (J.Return) stmt;
+                                if (r.getExpression() instanceof J.TypeCast) {
+                                    J.TypeCast tc = (J.TypeCast) r.getExpression();
+                                    if (parameterizedType != null && TypeUtils.isOfType(parameterizedType.getTarget().getType(), tc.getClazz().getType())) {
+                                        return r.withExpression(tc.getExpression());
                                     }
                                 }
-                                return stmt;
-                            })));
-                        }
+                            }
+                            return stmt;
+                        })));
                     }
-                    if (ASSEMBLE.matches(md, cd) && parameterizedType != null) {
-                        md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
-                        if (md.getReturnTypeExpression() != null) {
-                            md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                        }
-                        if (md.getBody() != null) {
-                            md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
-                                if (stmt instanceof J.Return) {
-                                    J.Return r = (J.Return) stmt;
-                                    if (r.getExpression() != null && !TypeUtils.isOfType(parameterizedType.getTarget().getType(), r.getExpression().getType())) {
-                                        return r.withExpression(new J.TypeCast(randomId(), Space.EMPTY, Markers.EMPTY, new J.ControlParentheses<>(randomId(), Space.EMPTY, Markers.EMPTY,
-                                                new JRightPadded<>(TypeTree.build("BigDecimal").withType(parameterizedType.getTarget().getType()), Space.EMPTY, Markers.EMPTY)), r.getExpression()));
-                                    }
+                } else if (ASSEMBLE.matches(md, cd) && parameterizedType != null) {
+                    md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
+                    if (md.getReturnTypeExpression() != null) {
+                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
+                    }
+                    if (md.getBody() != null) {
+                        md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
+                            if (stmt instanceof J.Return) {
+                                J.Return r = (J.Return) stmt;
+                                if (r.getExpression() != null && !TypeUtils.isOfType(parameterizedType.getTarget().getType(), r.getExpression().getType())) {
+                                    return r.withExpression(new J.TypeCast(randomId(), Space.EMPTY, Markers.EMPTY, new J.ControlParentheses<>(randomId(), Space.EMPTY, Markers.EMPTY,
+                                            new JRightPadded<>(TypeTree.build("BigDecimal").withType(parameterizedType.getTarget().getType()), Space.EMPTY, Markers.EMPTY)), r.getExpression()));
                                 }
-                                return stmt;
-                            })));
-                        }
+                            }
+                            return stmt;
+                        })));
                     }
-                    if (REPLACE.matches(md, cd) && parameterizedType != null) {
-                        md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
-                        if (md.getReturnTypeExpression() != null) {
-                            md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                        }
-                        md = changeParameterTypes(md, Arrays.asList("original", "target"));
+                } else if (REPLACE.matches(md, cd) && parameterizedType != null) {
+                    md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
+                    if (md.getReturnTypeExpression() != null) {
+                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
+                    md = changeParameterTypes(md, Arrays.asList("original", "target"));
                 }
                 updateCursor(md);
                 md = (J.MethodDeclaration) super.visitMethodDeclaration(md, ctx);
