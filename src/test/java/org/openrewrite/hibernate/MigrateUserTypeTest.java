@@ -91,8 +91,8 @@ class MigrateUserTypeTest implements RewriteTest {
                 }
 
                 @Override
-                public Object deepCopy(Object value) {
-                    return value;
+                public Object deepCopy(Object value1) {
+                    return value1;
                 }
 
                 @Override
@@ -167,8 +167,8 @@ class MigrateUserTypeTest implements RewriteTest {
                 }
 
                 @Override
-                public BigDecimal deepCopy(BigDecimal value) {
-                    return value;
+                public BigDecimal deepCopy(BigDecimal value1) {
+                    return value1;
                 }
 
                 @Override
