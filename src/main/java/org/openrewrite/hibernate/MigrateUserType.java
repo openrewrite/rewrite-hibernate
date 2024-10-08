@@ -138,9 +138,9 @@ public class MigrateUserType extends Recipe {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
                 } else if (EQUALS.matches(md, cd)) {
-                    md = changeParameterTypes(md, Arrays.asList("x", "y"));
+                    md = changeParameterTypes(md, Arrays.asList(0, 1));
                 } else if (HASHCODE.matches(md, cd)) {
-                    md = changeParameterTypes(md, Collections.singletonList("x"));
+                    md = changeParameterTypes(md, Collections.singletonList(0));
                 } else if (NULL_SAFE_GET_STRING_ARRAY.matches(md, cd)) {
                     String template = "@Override\n" +
                                       "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
@@ -152,15 +152,15 @@ public class MigrateUserType extends Recipe {
                             .apply(getCursor(), md.getCoordinates().replace());
                     md = updatedParam.withId(md.getId()).withBody(md.getBody());
                 } else if (NULL_SAFE_SET.matches(md, cd)) {
-                    md = changeParameterTypes(md, Collections.singletonList("value"));
+                    md = changeParameterTypes(md, Collections.singletonList(1));
                 } else if (DEEP_COPY.matches(md, cd) && parameterizedType != null) {
                     md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
-                    md = changeParameterTypes(md, Collections.singletonList("value"));
+                    md = changeParameterTypes(md, Collections.singletonList(0));
                 } else if (DISASSEMBLE.matches(md, cd)) {
-                    md = changeParameterTypes(md, Collections.singletonList("value"));
+                    md = changeParameterTypes(md, Collections.singletonList(0));
                     if (md.getBody() != null) {
                         md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
                             if (stmt instanceof J.Return) {
@@ -197,40 +197,37 @@ public class MigrateUserType extends Recipe {
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
-                    md = changeParameterTypes(md, Arrays.asList("original", "target"));
+                    md = changeParameterTypes(md, Arrays.asList(0, 1));
                 }
                 updateCursor(md);
                 md = (J.MethodDeclaration) super.visitMethodDeclaration(md, ctx);
                 return maybeAutoFormat(method, md, ctx);
             }
 
-            private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<String> paramNames) {
+            private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<Integer> paramIndexes) {
                 J.FieldAccess parameterizedType = getCursor().getNearestMessage("parameterizedType");
                 if (md.getMethodType() != null) {
                     JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
                             (index, type) -> {
-                                if (paramNames.contains(md.getMethodType().getParameterNames().get(index)) && parameterizedType != null) {
+                                if (paramIndexes.contains(index) && parameterizedType != null) {
                                     type = TypeUtils.isOfType(JavaType.buildType("java.lang.Object"), type) ? parameterizedType.getTarget().getType() : type;
                                 }
                                 return type;
                             }));
-                    return md.withParameters(ListUtils.map(md.getParameters(), param -> {
+                    return md.withParameters(ListUtils.map(md.getParameters(), (index, param) -> {
                         if (param instanceof J.VariableDeclarations) {
-                            if (((J.VariableDeclarations) param).getVariables().stream().anyMatch(var -> paramNames.contains(var.getSimpleName()))) {
+                            if (paramIndexes.contains(index)) {
                                 if (parameterizedType != null) {
                                     param = ((J.VariableDeclarations) param).withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget());
                                     param = ((J.VariableDeclarations) param).withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
-                                        if (paramNames.contains(var.getSimpleName())) {
-                                            var = var.withType(parameterizedType.getTarget().getType());
-                                            if (var.getVariableType() != null && parameterizedType.getTarget().getType() != null) {
-                                                var = var.withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
-                                            }
+                                        var = var.withType(parameterizedType.getTarget().getType());
+                                        if (var.getVariableType() != null && parameterizedType.getTarget().getType() != null) {
+                                            var = var.withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
                                         }
                                         return var;
                                     }));
                                 }
                             }
-
                         }
                         return param;
                     }));
