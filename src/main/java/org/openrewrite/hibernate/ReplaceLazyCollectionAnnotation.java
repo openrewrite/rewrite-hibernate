@@ -138,7 +138,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 }
                 //noinspection unchecked
                 return (T) new RemoveAnnotationVisitor(new AnnotationMatcher("@org.hibernate.annotations.LazyCollection"))
-                        .visit(tree, ctx, getCursor());
+                        .visit(tree, ctx, getCursor().getParentOrThrow());
             }
         });
     }
