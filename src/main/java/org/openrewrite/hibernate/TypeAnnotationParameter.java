@@ -23,6 +23,8 @@ import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaParser;
+import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JLeftPadded;
 import org.openrewrite.java.tree.JavaType;
@@ -34,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class TypeAnnotationParameter extends Recipe {
 
@@ -64,62 +67,101 @@ public class TypeAnnotationParameter extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
-            public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+            public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation a = super.visitAnnotation(annotation, ctx);
-                if (FQN_TYPE_ANNOTATION.matches(a)) {
-                    // Remove entire annotation if type is one of the removed types
-                    if (a.getArguments().stream().anyMatch(arg -> {
-                        if (arg instanceof J.Assignment) {
-                            J.Assignment assignment = (J.Assignment) arg;
-                            if (assignment.getVariable() instanceof J.Identifier &&
-                                "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
-                                assignment.getAssignment() instanceof J.Literal) {
-                                String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
-                                return REMOVED_FQNS.contains(fqTypeName);
-                            }
-                        }
-                        return false;
-                    })) {
-                        maybeRemoveImport("org.hibernate.annotations.Type");
-                        return null;
-                    }
-
-                    final boolean isOnlyParameter = a.getArguments().size() == 1;
-                    // Replace type parameter with value parameter
-                    a = a.withArguments(ListUtils.map(a.getArguments(), arg -> {
-                        if (arg instanceof J.Assignment) {
-                            J.Assignment assignment = (J.Assignment) arg;
-                            if (assignment.getVariable() instanceof J.Identifier &&
-                                "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
-                                assignment.getAssignment() instanceof J.Literal) {
-                                String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
-                                J.Identifier identifier = new J.Identifier(
-                                        Tree.randomId(),
-                                        Space.EMPTY,
-                                        Markers.EMPTY,
-                                        Collections.emptyList(),
-                                        getSimpleName(fqTypeName),
-                                        JavaType.buildType(fqTypeName),
-                                        null);
-                                J.FieldAccess fa = new J.FieldAccess(
-                                        Tree.randomId(),
-                                        isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
-                                        assignment.getAssignment().getMarkers(),
-                                        identifier,
-                                        JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
-                                        JavaType.buildType("java.lang.Class")
-                                );
-                                maybeAddImport(fqTypeName);
-                                if (isOnlyParameter) {
-                                    return fa;
-                                }
-                                return assignment.withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value")).withAssignment(fa);
-                            }
-                        }
-                        return arg;
-                    }));
+                if (!FQN_TYPE_ANNOTATION.matches(a)) {
+                    return a;
                 }
-                return a;
+
+                // Remove entire annotation if type is one of the removed types
+                if (a.getArguments().stream().anyMatch(arg -> {
+                    if (arg instanceof J.Assignment) {
+                        J.Assignment assignment = (J.Assignment) arg;
+                        if (assignment.getVariable() instanceof J.Identifier &&
+                            "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                            assignment.getAssignment() instanceof J.Literal) {
+                            String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
+                            return REMOVED_FQNS.contains(fqTypeName);
+                        }
+                    }
+                    return false;
+                })) {
+                    maybeRemoveImport("org.hibernate.annotations.Type");
+                    return null;
+                }
+
+                // Replace with Temporal if applicable
+                AtomicReference<String> temporalType = getTemporalTypeArgument(a);
+                //noinspection ConstantValue
+                if (temporalType.get() != null) {
+                    maybeAddImport("jakarta.persistence.Temporal");
+                    maybeAddImport("jakarta.persistence.TemporalType");
+                    maybeRemoveImport("org.hibernate.annotations.Type");
+                    return JavaTemplate.builder("@Temporal(TemporalType." + temporalType.get().toUpperCase() + ")")
+                            .doBeforeParseTemplate(System.out::println)
+                            .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))
+                            .imports("jakarta.persistence.Temporal", "jakarta.persistence.TemporalType")
+                            .build()
+                            .apply(getCursor(), a.getCoordinates().replace());
+                }
+
+                // Replace argument with .class reference to the same type
+                return replaceArgumentWithClass(a);
+            }
+
+            private AtomicReference<String> getTemporalTypeArgument(J.Annotation a) {
+                AtomicReference<String> temporalType = new AtomicReference<>();
+                new JavaIsoVisitor<AtomicReference<String>>() {
+                    @Override
+                    public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<String> ref) {
+                        J.Assignment as = super.visitAssignment(assignment, ref);
+                        if (J.Literal.isLiteralValue(as.getAssignment(), "date") ||
+                            J.Literal.isLiteralValue(as.getAssignment(), "time") ||
+                            J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
+                            //noinspection DataFlowIssue
+                            ref.set((String) ((J.Literal) as.getAssignment()).getValue());
+                        }
+                        return as;
+                    }
+                }.visitNonNull(a, temporalType);
+                return temporalType;
+            }
+
+            private J.Annotation replaceArgumentWithClass(J.Annotation a) {
+                final boolean isOnlyParameter = a.getArguments().size() == 1;
+                // Replace type parameter with value parameter
+                return a.withArguments(ListUtils.map(a.getArguments(), arg -> {
+                    if (arg instanceof J.Assignment) {
+                        J.Assignment assignment = (J.Assignment) arg;
+                        if (assignment.getVariable() instanceof J.Identifier &&
+                            "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                            assignment.getAssignment() instanceof J.Literal) {
+                            String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
+                            J.Identifier identifier = new J.Identifier(
+                                    Tree.randomId(),
+                                    Space.EMPTY,
+                                    Markers.EMPTY,
+                                    Collections.emptyList(),
+                                    getSimpleName(fqTypeName),
+                                    JavaType.buildType(fqTypeName),
+                                    null);
+                            J.FieldAccess fa = new J.FieldAccess(
+                                    Tree.randomId(),
+                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
+                                    assignment.getAssignment().getMarkers(),
+                                    identifier,
+                                    JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
+                                    JavaType.buildType("java.lang.Class")
+                            );
+                            maybeAddImport(fqTypeName);
+                            if (isOnlyParameter) {
+                                return fa;
+                            }
+                            return assignment.withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value")).withAssignment(fa);
+                        }
+                    }
+                    return arg;
+                }));
             }
         };
     }
