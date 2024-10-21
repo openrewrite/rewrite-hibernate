@@ -107,4 +107,33 @@ class TypeAnnotationParameterTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void temporalTypesConvertedSeparately() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import java.util.Date;
+              import org.hibernate.annotations.Type;
+              
+              public class TestApplication {
+                  @Type(type = "timestamp")
+                  Date a;
+              }
+              """,
+            """
+              import java.util.Date;
+              
+              import jakarta.persistence.Temporal;
+              import jakarta.persistence.TemporalType;
+              
+              public class TestApplication {
+                  @Temporal(TemporalType.TIMESTAMP)
+                  Date a;
+              }
+              """
+          )
+        );
+    }
 }
