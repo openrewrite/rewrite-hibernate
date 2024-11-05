@@ -15,85 +15,57 @@
  */
 package org.openrewrite.hibernate;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.stream.Stream;
+
 import static org.openrewrite.java.Assertions.java;
 
 class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
 
+    static Stream<String[]> generateTestParameters() {
+        return Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll").map(annotation -> new String[][]{
+                new String[]{annotation, "ResultCheckStyle.NONE", "Expectation.None.class"},
+                new String[]{annotation, "ResultCheckStyle.COUNT", "Expectation.RowCount.class"},
+                new String[]{annotation, "ResultCheckStyle.PARAM", "Expectation.OutParameter.class"}
+        }).flatMap(Stream::of);
+    }
+
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new RemoveInvalidHibernateGeneratedValueAnnotation())
-          .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+")
-          );
+                .parser(JavaParser.fromJavaVersion()
+                        .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+")
+                );
     }
 
     @DocumentExample
-    @Test
-    void migrateSqlInsertNoneToExpectationNone() {
+    @ParameterizedTest
+    @MethodSource("generateTestParameters")
+    void shouldMigrateResultCheckStyleToExpectationNone(String annotation, String oldResultCheckStyleValue, String newExpectationValue) {
         // language=java
         rewriteRun(
           java(
-          """
+            """
+            import org.hibernate.annotations.%1$s;
             import org.hibernate.engine.spi.ResultCheckStyle;
 
-            @SQLInsert(check = ResultCheckStyle.NONE)
+            @%1$s(check = %2$s)
             class A {}
-            """, """
-            import org.hibernate.annotations.SQLInsert;
+            """.formatted(annotation, oldResultCheckStyleValue), """
+            import org.hibernate.annotations.%1$s;
             import org.hibernate.jdbc.Expectation;
 
-            @SQLInsert(verify = Expectation.None.class, sql = "")
+            @%1$s(verify = %2$s, sql = "")
             class A {}
-            """
-          ));
-    }
-
-    @Test
-    void migrateSqlInsertCountToExpectationRowCount() {
-        // language=java
-        rewriteRun(
-          java(
-          """
-            import org.hibernate.annotations.SQLInsert;
-            import org.hibernate.engine.spi.ResultCheckStyle;
-
-            @SQLInsert(check = ResultCheckStyle.COUNT, sql = "")
-            class A {}
-            """, """
-            import org.hibernate.annotations.SQLInsert;
-            import org.hibernate.jdbc.Expectation;
-
-            @SQLInsert(verify = Expectation.RowCount.class, sql = "")
-            class A {}
-            """
-          ));
-    }
-
-    @Test
-    void migrateSqlInsertParamToExpectationOutParameter() {
-        // language=java
-        rewriteRun(
-          java(
-          """
-            import org.hibernate.annotations.SQLInsert;
-            import org.hibernate.engine.spi.ResultCheckStyle;
-
-            @SQLInsert(check = ResultCheckStyle.PARAM, sql = "")
-            class A {}
-            """, """
-            import org.hibernate.annotations.SQLInsert;
-            import org.hibernate.jdbc.Expectation;
-
-            @SQLInsert(verify = Expectation.OutParameter.class, sql = "")
-            class A {}
-            """
-          ));
+            """.formatted(annotation, newExpectationValue)
+          )
+        );
     }
 }
