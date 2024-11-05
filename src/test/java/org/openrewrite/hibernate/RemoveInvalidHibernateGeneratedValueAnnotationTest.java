@@ -39,7 +39,8 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
     void removeIncorrectlyPlacedGenerateValue() {
         //language=java
         rewriteRun(
-          java("""
+          java(
+          """
             import jakarta.persistence.Entity;
             import jakarta.persistence.GeneratedValue;
             import jakarta.persistence.Id;
@@ -69,7 +70,8 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
     void shouldNotRemoveCorrectlyPlacedGenerateValue() {
         //language=java
         rewriteRun(
-          java("""
+          java(
+          """
             import jakarta.persistence.Entity;
             import jakarta.persistence.GeneratedValue;
             import jakarta.persistence.Id;
@@ -88,7 +90,8 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
     void shouldOnlyRemoveIncorreclyPlacedGenerateValueButPreserveOthers() {
         //language=java
         rewriteRun(
-          java("""
+          java(
+          """
             import jakarta.persistence.Entity;
             import jakarta.persistence.GeneratedValue;
             import jakarta.persistence.Id;

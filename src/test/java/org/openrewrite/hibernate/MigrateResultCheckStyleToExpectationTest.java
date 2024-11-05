@@ -16,6 +16,7 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
@@ -57,7 +58,8 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
     void migrateSqlInsertCountToExpectationRowCount() {
         // language=java
         rewriteRun(
-          java("""
+          java(
+          """
             import org.hibernate.annotations.SQLInsert;
             import org.hibernate.engine.spi.ResultCheckStyle;
 
@@ -77,7 +79,8 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
     void migrateSqlInsertParamToExpectationOutParameter() {
         // language=java
         rewriteRun(
-          java("""
+          java(
+          """
             import org.hibernate.annotations.SQLInsert;
             import org.hibernate.engine.spi.ResultCheckStyle;
 
