@@ -16,7 +16,6 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
-import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
@@ -38,8 +37,8 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
     void migrateSqlInsertNoneToExpectationNone() {
         // language=java
         rewriteRun(
-          java("""
-            import org.hibernate.annotations.SQLInsert;
+          java(
+          """
             import org.hibernate.engine.spi.ResultCheckStyle;
 
             @SQLInsert(check = ResultCheckStyle.NONE)
