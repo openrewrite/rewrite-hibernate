@@ -22,7 +22,7 @@ description: >-
   This recipe will apply changes commonly needed when migrating to Hibernate 6.5.x.
 
 recipeList:
-  - org.openrewrite.hibernate.MigrateToHibernate63
+  - org.openrewrite.hibernate.MigrateToHibernate64
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
       groupId: org.hibernate.orm
       artifactId: '*'
