@@ -45,7 +45,6 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
             import jakarta.persistence.GeneratedValue;
             import jakarta.persistence.Id;
 
-            @Entity
             class A {
                 @Id
                 Integer id;
@@ -56,7 +55,6 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
             import jakarta.persistence.Entity;
             import jakarta.persistence.Id;
 
-            @Entity
             class A {
                 @Id
                 Integer id;
@@ -76,7 +74,6 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
             import jakarta.persistence.GeneratedValue;
             import jakarta.persistence.Id;
 
-            @Entity
             class A {
                 @Id
                 @GeneratedValue
@@ -96,7 +93,6 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
             import jakarta.persistence.GeneratedValue;
             import jakarta.persistence.Id;
 
-            @Entity
             class A {
                 @Id
                 @GeneratedValue
@@ -109,7 +105,6 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
             import jakarta.persistence.GeneratedValue;
             import jakarta.persistence.Id;
 
-            @Entity
             class A {
                 @Id
                 @GeneratedValue
