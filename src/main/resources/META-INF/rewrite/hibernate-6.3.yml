@@ -34,7 +34,7 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.3
 displayName: Migrate Hibernate Types to Hypersistence Utils 6.3
 description: >-
-  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-62` to `io.hypersistence:hypersistence-utils-hibernate-63`. 
+  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-62` to `io.hypersistence:hypersistence-utils-hibernate-63`.
 
 recipeList:
   - org.openrewrite.java.dependencies.ChangeDependency:
@@ -42,5 +42,5 @@ recipeList:
       oldArtifactId: hypersistence-utils-hibernate-62
       newGroupId: io.hypersistence
       newArtifactId: hypersistence-utils-hibernate-63
-      newVersion: 3.7.x
+      newVersion: 3.8.x
 

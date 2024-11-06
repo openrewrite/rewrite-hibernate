@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.DocumentExample;
@@ -39,7 +40,7 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new RemoveInvalidHibernateGeneratedValueAnnotation())
+        spec.recipe(new MigrateResultCheckStyleToExpectation())
                 .parser(JavaParser.fromJavaVersion()
                         .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+")
                 );
@@ -54,9 +55,9 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
           java(
             """
             import org.hibernate.annotations.%1$s;
-            import org.hibernate.engine.spi.ResultCheckStyle;
+            import org.hibernate.annotations.ResultCheckStyle;
 
-            @%1$s(check = %2$s)
+            @%1$s(check = %2$s, sql = "")
             class A {}
             """.formatted(annotation, oldResultCheckStyleValue), """
             import org.hibernate.annotations.%1$s;
