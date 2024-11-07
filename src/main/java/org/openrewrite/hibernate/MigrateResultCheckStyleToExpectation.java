@@ -61,8 +61,8 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
         return new JavaIsoVisitor<ExecutionContext>() {
 
             @Override
-            public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext executionContext) {
-                doAfterVisit(new ShortenFullyQualifiedTypeReferences().getVisitor());
+            public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext ctx) {
+                return super.visitCompilationUnit(cu, ctx);
                 return super.visitCompilationUnit(cu, executionContext);
             }
 

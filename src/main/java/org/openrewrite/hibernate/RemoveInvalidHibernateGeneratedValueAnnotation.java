@@ -49,7 +49,7 @@ public class RemoveInvalidHibernateGeneratedValueAnnotation extends Recipe {
                 new UsesType<>("jakarta.persistence.GeneratedValue", false),
                 new JavaIsoVisitor<ExecutionContext>() {
                     @Override
-                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext executionContext) {
+                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                         if (MATCHER_GENERATED_VALUE_ANNOTATION.matches(annotation) && !containsBoth()) {
                             doAfterVisit(new RemoveAnnotationVisitor(getAnnotationMatcher(annotation)));
                         }
