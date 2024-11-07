@@ -59,13 +59,6 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
-
-            @Override
-            public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext ctx) {
-                return super.visitCompilationUnit(cu, ctx);
-                return super.visitCompilationUnit(cu, executionContext);
-            }
-
             @Override
             public J.Annotation visitAnnotation(J.Annotation annotationn, ExecutionContext ctx) {
                 if (ANNOTATION_MATCHERS.stream().anyMatch(m -> m.matches(annotationn))) {
@@ -92,7 +85,7 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
 
                                     maybeAddImport("org.hibernate.jdbc.Expectation");
                                     maybeRemoveImport("org.hibernate.annotations.ResultCheckStyle");
-                                    new ShortenFullyQualifiedTypeReferences().getVisitor().visit(a, ctx);
+                                    doAfterVisit(new ShortenFullyQualifiedTypeReferences().getVisitor());
                                     return a;
                                 }
                             }
