@@ -22,7 +22,6 @@ import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.*;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
 
 import java.util.HashMap;
 import java.util.List;
@@ -68,9 +67,9 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
             }
 
             @Override
-            public J.Annotation visitAnnotation(J.Annotation annotationn, ExecutionContext executionContext) {
+            public J.Annotation visitAnnotation(J.Annotation annotationn, ExecutionContext ctx) {
                 if (ANNOTATION_MATCHERS.stream().anyMatch(m -> m.matches(annotationn))) {
-                    J.Annotation a = super.visitAnnotation(annotationn, executionContext);
+                    J.Annotation a = super.visitAnnotation(annotationn, ctx);
                     List<Expression> arguments = a.getArguments();
 
                     for (int i = 0; i < arguments.size(); i++) {
@@ -86,11 +85,14 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
                                 String map = getMappingForResultCheck(assignment);
                                 if (map != null) {
                                     a = JavaTemplate.builder("verify = #{}")
+                                            .javaParser(JavaParser.fromJavaVersion().dependsOn(
+                                                    "package org.hibernate.jdbc;public class Expectation { public static class None {} }"))
                                             .build()
                                             .apply(getCursor(), assignment.getCoordinates().replace(), map);
 
-                                    maybeAddImport(map);
-                                    doAfterVisit(new ShortenFullyQualifiedTypeReferences().getVisitor());
+                                    maybeAddImport("org.hibernate.jdbc.Expectation");
+                                    maybeRemoveImport("org.hibernate.annotations.ResultCheckStyle");
+                                    new ShortenFullyQualifiedTypeReferences().getVisitor().visit(a, ctx);
                                     return a;
                                 }
                             }
@@ -100,7 +102,7 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
                 return annotationn;
             }
 
-            private @Nullable  String getMappingForResultCheck(J.Assignment assignment) {
+            private @Nullable String getMappingForResultCheck(J.Assignment assignment) {
                 for (Map.Entry<String, String> entry : MAPPING.entrySet()) {
                     if (assignment.getAssignment().toString().contains(entry.getKey())) {
                         return entry.getValue();

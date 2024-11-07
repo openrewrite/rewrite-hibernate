@@ -15,7 +15,6 @@
  */
 package org.openrewrite.hibernate;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.DocumentExample;
@@ -32,18 +31,18 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
 
     static Stream<String[]> generateTestParameters() {
         return Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll").map(annotation -> new String[][]{
-                new String[]{annotation, "ResultCheckStyle.NONE", "Expectation.None.class"},
-                new String[]{annotation, "ResultCheckStyle.COUNT", "Expectation.RowCount.class"},
-                new String[]{annotation, "ResultCheckStyle.PARAM", "Expectation.OutParameter.class"}
+          new String[]{annotation, "ResultCheckStyle.NONE", "Expectation.None.class"},
+          new String[]{annotation, "ResultCheckStyle.COUNT", "Expectation.RowCount.class"},
+          new String[]{annotation, "ResultCheckStyle.PARAM", "Expectation.OutParameter.class"}
         }).flatMap(Stream::of);
     }
 
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateResultCheckStyleToExpectation())
-                .parser(JavaParser.fromJavaVersion()
-                        .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+")
-                );
+          .parser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+")
+          );
     }
 
     @DocumentExample
@@ -54,19 +53,18 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
         rewriteRun(
           java(
             """
-            import org.hibernate.annotations.%1$s;
-            import org.hibernate.annotations.ResultCheckStyle;
+              import org.hibernate.annotations.%1$s;
+              import org.hibernate.annotations.ResultCheckStyle;
 
-            @%1$s(check = %2$s, sql = "")
-            class A {}
-            """.formatted(annotation, oldResultCheckStyleValue), """
-            import org.hibernate.annotations.%1$s;
-            import org.hibernate.jdbc.Expectation;
+              @%1$s(check = %2$s, sql = "")
+              class A {}
+              """.formatted(annotation, oldResultCheckStyleValue), """
+              import org.hibernate.annotations.%1$s;
+              import org.hibernate.jdbc.Expectation;
 
-            @%1$s(verify = %2$s, sql = "")
-            class A {}
-            """.formatted(annotation, newExpectationValue)
-          )
-        );
+              @%1$s(verify = %2$s, sql = "")
+              class A {}
+              """.formatted(annotation, newExpectationValue)
+          ));
     }
 }
