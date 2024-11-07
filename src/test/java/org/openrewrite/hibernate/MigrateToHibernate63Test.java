@@ -60,7 +60,7 @@ class MigrateToHibernate63Test implements RewriteTest {
                   </dependencies>
                 </project>
                 """, spec -> spec.after(actual -> {
-                  Matcher matcher = Pattern.compile("<version>(3\\.7\\.\\d+)</version>").matcher(actual);
+                  Matcher matcher = Pattern.compile("<version>(3\\.8\\.\\d+)</version>").matcher(actual);
                   assertTrue(matcher.find());
                   return """
                     <?xml version="1.0" encoding="UTF-8"?>
