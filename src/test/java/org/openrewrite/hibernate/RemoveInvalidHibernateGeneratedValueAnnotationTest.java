@@ -51,7 +51,8 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
                 @GeneratedValue
                 String name;
             }
-            """, """
+            """,
+            """
             import jakarta.persistence.Entity;
             import jakarta.persistence.Id;
 

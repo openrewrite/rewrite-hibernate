@@ -52,13 +52,14 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
         // language=java
         rewriteRun(
           java(
-            """
+              """
               import org.hibernate.annotations.%1$s;
               import org.hibernate.annotations.ResultCheckStyle;
 
               @%1$s(check = %2$s, sql = "")
               class A {}
-              """.formatted(annotation, oldResultCheckStyleValue), """
+              """.formatted(annotation, oldResultCheckStyleValue),
+              """
               import org.hibernate.annotations.%1$s;
               import org.hibernate.jdbc.Expectation;
 
