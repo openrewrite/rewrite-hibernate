@@ -17,15 +17,18 @@ package org.openrewrite.hibernate;
 
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.*;
+import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toSet;
 
 public class MigrateResultCheckStyleToExpectation extends Recipe {
 
@@ -37,31 +40,35 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
         MAPPING.put("ResultCheckStyle.COUNT", "org.hibernate.jdbc.Expectation.RowCount.class");
         MAPPING.put("ResultCheckStyle.PARAM", "org.hibernate.jdbc.Expectation.OutParameter.class");
 
-        ANNOTATION_MATCHERS = Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll").map(annotationName ->
-                        new AnnotationMatcher("@org.hibernate.annotations." + annotationName, true))
-                .collect(Collectors.toSet());
+        ANNOTATION_MATCHERS =
+                Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll")
+                .map(annotationName -> new AnnotationMatcher("@org.hibernate.annotations." + annotationName, true))
+                .collect(toSet());
     }
 
     @Override
     public String getDisplayName() {
-        return "Migration of ResultCheckStyle to Expectation";
+        return "Migration of `ResultCheckStyle` to `Expectation`";
     }
 
     @Override
     public String getDescription() {
         return "Will migrate the usage of `org.hibernate.annotations.ResultCheckStyle` to `org.hibernate.jdbc.Expectation`" +
-               "in the `@SQLInsert` annotation.";
+               " in `@SQLInsert`, `@SqlUpdate`, `@SqlDelete` and `@SqlDeleteAll` annotations.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new JavaIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new UsesType<>("org.hibernate.annotations.ResultCheckStyle", true), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                if (ANNOTATION_MATCHERS.stream().anyMatch(m -> m.matches(annotation))) {
-                    return processAnnotation(super.visitAnnotation(annotation, ctx), ctx);
+                J.Annotation an = super.visitAnnotation(annotation, ctx);
+                for (AnnotationMatcher m : ANNOTATION_MATCHERS) {
+                    if (m.matches(an)) {
+                        return processAnnotation(an, ctx);
+                    }
                 }
-                return annotation;
+                return an;
             }
 
             private J.Annotation processAnnotation(J.Annotation annotation, ExecutionContext ctx) {
@@ -87,9 +94,11 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
             }
 
             private J.Annotation updateAnnotation(J.Annotation annotation, J.Assignment assignment, ExecutionContext ctx) {
-                return Optional.ofNullable(getMappingForResultCheck(assignment))
-                        .map(map -> applyTemplate(assignment, map, ctx))
-                        .orElse(annotation);
+                String map = getMappingForResultCheck(assignment);
+                if (map != null) {
+                    return applyTemplate(assignment, map, ctx);
+                }
+                return annotation;
             }
 
             private J.Annotation applyTemplate(J.Assignment assignment, String map, ExecutionContext ctx) {
@@ -112,6 +121,6 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
                         .findFirst()
                         .orElse(null);
             }
-        };
+        });
     }
 }

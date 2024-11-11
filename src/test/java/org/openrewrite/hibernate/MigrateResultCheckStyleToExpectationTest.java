@@ -30,29 +30,27 @@ import static org.openrewrite.java.Assertions.java;
 class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
 
     static Stream<String[]> generateTestParameters() {
-        return Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll").map(annotation -> new String[][]{
-          new String[]{annotation, "ResultCheckStyle.NONE", "Expectation.None.class"},
-          new String[]{annotation, "ResultCheckStyle.COUNT", "Expectation.RowCount.class"},
-          new String[]{annotation, "ResultCheckStyle.PARAM", "Expectation.OutParameter.class"}
-        }).flatMap(Stream::of);
+        return Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll")
+          .map(annotation -> new String[][]{
+            new String[]{annotation, "ResultCheckStyle.NONE", "Expectation.None.class"},
+            new String[]{annotation, "ResultCheckStyle.COUNT", "Expectation.RowCount.class"},
+            new String[]{annotation, "ResultCheckStyle.PARAM", "Expectation.OutParameter.class"}
+          })
+          .flatMap(Stream::of);
     }
 
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateResultCheckStyleToExpectation())
-          .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+")
-          );
-
-
+          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+"));
     }
 
     @DocumentExample
     @ParameterizedTest
     @MethodSource("generateTestParameters")
     void shouldMigrateResultCheckStyleToExpectationNone(String annotation, String oldResultCheckStyleValue, String newExpectationValue) {
-        // language=java
         rewriteRun(
+          // language=java
           java(
             """
               import org.hibernate.annotations.%1$s;
@@ -68,6 +66,7 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
               @%1$s(verify = %2$s, sql = "")
               class A {}
               """.formatted(annotation, newExpectationValue)
-          ));
+          )
+        );
     }
 }
