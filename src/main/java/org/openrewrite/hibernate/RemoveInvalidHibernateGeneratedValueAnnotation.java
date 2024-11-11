@@ -50,20 +50,14 @@ public class RemoveInvalidHibernateGeneratedValueAnnotation extends Recipe {
                 new JavaIsoVisitor<ExecutionContext>() {
                     @Override
                     public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                        if (MATCHER_GENERATED_VALUE_ANNOTATION.matches(annotation) && !containsBoth()) {
-                            doAfterVisit(new RemoveAnnotationVisitor(getAnnotationMatcher(annotation)));
+                        if (MATCHER_GENERATED_VALUE_ANNOTATION.matches(annotation) &&
+                            !service(AnnotationService.class).matches(getCursor().getParentTreeCursor(), MATCHER_ID_ANNOTATION)) {
+                            doAfterVisit(new RemoveAnnotationVisitor(specificAnnotationMatcher(annotation)));
                         }
                         return annotation;
                     }
 
-                    private boolean containsBoth() {
-                        return service(AnnotationService.class)
-                                .getAllAnnotations(getCursor().getParentOrThrow())
-                                .stream()
-                                .anyMatch(MATCHER_ID_ANNOTATION::matches);
-                    }
-
-                    private AnnotationMatcher getAnnotationMatcher(J.Annotation annotation) {
+                    private AnnotationMatcher specificAnnotationMatcher(J.Annotation annotation) {
                         return new AnnotationMatcher(
                                 // ignored in practice, as we only match annotations previously found just above
                                 "@jakarta.persistence.GeneratedValue", true) {

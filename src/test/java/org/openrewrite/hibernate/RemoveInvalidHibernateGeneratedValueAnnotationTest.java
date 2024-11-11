@@ -29,91 +29,92 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new RemoveInvalidHibernateGeneratedValueAnnotation())
-          .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "jakarta.persistence")
-          );
+          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "jakarta.persistence"));
     }
 
     @DocumentExample
     @Test
     void removeIncorrectlyPlacedGenerateValue() {
-        //language=java
         rewriteRun(
+          //language=java
           java(
-          """
-            import jakarta.persistence.Entity;
-            import jakarta.persistence.GeneratedValue;
-            import jakarta.persistence.Id;
-
-            class A {
-                @Id
-                Integer id;
-                @GeneratedValue
-                String name;
-            }
-            """,
             """
-            import jakarta.persistence.Entity;
-            import jakarta.persistence.Id;
+              import jakarta.persistence.Entity;
+              import jakarta.persistence.GeneratedValue;
+              import jakarta.persistence.Id;
 
-            class A {
-                @Id
-                Integer id;
-                String name;
-            }
+              class A {
+                  @Id
+                  Integer id;
+                  @GeneratedValue
+                  String name;
+              }
+              """,
             """
-          ));
+              import jakarta.persistence.Entity;
+              import jakarta.persistence.Id;
+
+              class A {
+                  @Id
+                  Integer id;
+                  String name;
+              }
+              """
+          )
+        );
     }
 
     @Test
     void shouldNotRemoveCorrectlyPlacedGenerateValue() {
-        //language=java
         rewriteRun(
+          //language=java
           java(
-          """
-            import jakarta.persistence.Entity;
-            import jakarta.persistence.GeneratedValue;
-            import jakarta.persistence.Id;
-
-            class A {
-                @Id
-                @GeneratedValue
-                Integer id;
-            }
             """
-          ));
+              import jakarta.persistence.Entity;
+              import jakarta.persistence.GeneratedValue;
+              import jakarta.persistence.Id;
+
+              class A {
+                  @Id
+                  @GeneratedValue
+                  Integer id;
+              }
+              """
+          )
+        );
     }
 
     @Test
     void shouldOnlyRemoveIncorreclyPlacedGenerateValueButPreserveOthers() {
-        //language=java
         rewriteRun(
+          //language=java
           java(
-          """
-            import jakarta.persistence.Entity;
-            import jakarta.persistence.GeneratedValue;
-            import jakarta.persistence.Id;
-
-            class A {
-                @Id
-                @GeneratedValue
-                Integer id;
-                @GeneratedValue
-                String name;
-            }
-            """,
             """
-            import jakarta.persistence.Entity;
-            import jakarta.persistence.GeneratedValue;
-            import jakarta.persistence.Id;
+              import jakarta.persistence.Entity;
+              import jakarta.persistence.GeneratedValue;
+              import jakarta.persistence.Id;
 
-            class A {
-                @Id
-                @GeneratedValue
-                Integer id;
-                String name;
-            }
+              class A {
+                  @Id
+                  @GeneratedValue
+                  Integer id;
+                  @GeneratedValue
+                  String name;
+              }
+              """,
             """
-          ));
+              import jakarta.persistence.Entity;
+              import jakarta.persistence.GeneratedValue;
+              import jakarta.persistence.Id;
+
+              class A {
+                  @Id
+                  @GeneratedValue
+                  Integer id;
+                  String name;
+              }
+              """
+          )
+        );
     }
 }
