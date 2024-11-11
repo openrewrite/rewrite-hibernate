@@ -23,10 +23,7 @@ import org.openrewrite.java.*;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,48 +57,60 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return new JavaIsoVisitor<ExecutionContext>() {
             @Override
-            public J.Annotation visitAnnotation(J.Annotation annotationn, ExecutionContext ctx) {
-                if (ANNOTATION_MATCHERS.stream().anyMatch(m -> m.matches(annotationn))) {
-                    J.Annotation a = super.visitAnnotation(annotationn, ctx);
-                    List<Expression> arguments = a.getArguments();
+            public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                if (ANNOTATION_MATCHERS.stream().anyMatch(m -> m.matches(annotation))) {
+                    return processAnnotation(super.visitAnnotation(annotation, ctx), ctx);
+                }
+                return annotation;
+            }
 
-                    for (int i = 0; i < arguments.size(); i++) {
-                        if (arguments.get(i) instanceof J.Assignment &&
-                            (((J.Assignment) arguments.get(i)).getVariable() instanceof J.Identifier)) {
+            private J.Annotation processAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                List<Expression> arguments = annotation.getArguments();
+                if (arguments == null) {
+                    return annotation;
+                }
 
-                            // Each argument should be an assignment
-                            J.Assignment assignment = (J.Assignment) arguments.get(i);
-                            // Each assignment should have a
-                            J.Identifier identifier = (J.Identifier) assignment.getVariable();
-
-                            if ("check".equals(identifier.getSimpleName())) {
-                                String map = getMappingForResultCheck(assignment);
-                                if (map != null) {
-                                    a = JavaTemplate.builder("verify = #{}")
-                                            .javaParser(JavaParser.fromJavaVersion().dependsOn(
-                                                    "package org.hibernate.jdbc;public class Expectation { public static class None {} }"))
-                                            .build()
-                                            .apply(getCursor(), assignment.getCoordinates().replace(), map);
-
-                                    maybeAddImport("org.hibernate.jdbc.Expectation");
-                                    maybeRemoveImport("org.hibernate.annotations.ResultCheckStyle");
-                                    doAfterVisit(new ShortenFullyQualifiedTypeReferences().getVisitor());
-                                    return a;
-                                }
-                            }
+                for (Expression argument : arguments) {
+                    if (argument instanceof J.Assignment) {
+                        J.Assignment assignment = (J.Assignment) argument;
+                        if (isAssignmentToCheckParameter(assignment)) {
+                            return updateAnnotation(annotation, assignment, ctx);
                         }
                     }
                 }
-                return annotationn;
+                return annotation;
+            }
+
+            private boolean isAssignmentToCheckParameter(J.Assignment assignment) {
+                return assignment.getVariable() instanceof J.Identifier &&
+                       "check".equals(((J.Identifier) assignment.getVariable()).getSimpleName());
+            }
+
+            private J.Annotation updateAnnotation(J.Annotation annotation, J.Assignment assignment, ExecutionContext ctx) {
+                return Optional.ofNullable(getMappingForResultCheck(assignment))
+                        .map(map -> applyTemplate(assignment, map, ctx))
+                        .orElse(annotation);
+            }
+
+            private J.Annotation applyTemplate(J.Assignment assignment, String map, ExecutionContext ctx) {
+                J.Annotation updatedAnnotation = JavaTemplate.builder("verify = #{}")
+                        .javaParser(JavaParser.fromJavaVersion().dependsOn(
+                                "package org.hibernate.jdbc;public class Expectation { public static class None {} }"))
+                        .build()
+                        .apply(getCursor(), assignment.getCoordinates().replace(), map);
+
+                maybeAddImport("org.hibernate.jdbc.Expectation");
+                maybeRemoveImport("org.hibernate.annotations.ResultCheckStyle");
+                doAfterVisit(new ShortenFullyQualifiedTypeReferences().getVisitor());
+                return updatedAnnotation;
             }
 
             private @Nullable String getMappingForResultCheck(J.Assignment assignment) {
-                for (Map.Entry<String, String> entry : MAPPING.entrySet()) {
-                    if (assignment.getAssignment().toString().contains(entry.getKey())) {
-                        return entry.getValue();
-                    }
-                }
-                return null;
+                return MAPPING.entrySet().stream()
+                        .filter(entry -> assignment.getAssignment().toString().contains(entry.getKey()))
+                        .map(Map.Entry::getValue)
+                        .findFirst()
+                        .orElse(null);
             }
         };
     }
