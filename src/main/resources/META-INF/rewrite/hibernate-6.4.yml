@@ -27,4 +27,4 @@ recipeList:
       groupId: org.hibernate.orm
       artifactId: '*'
       newVersion: 6.4.x
-  - org.openrewrite.hibernate.RemoveInvalidHibernateGeneratedValuesAnnotation
+  - org.openrewrite.hibernate.RemoveInvalidHibernateGeneratedValueAnnotation
