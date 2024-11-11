@@ -36,9 +36,9 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
     private static final Set<AnnotationMatcher> ANNOTATION_MATCHERS;
 
     static {
-        MAPPING.put("ResultCheckStyle.NONE", "org.hibernate.jdbc.Expectation.None.class");
-        MAPPING.put("ResultCheckStyle.COUNT", "org.hibernate.jdbc.Expectation.RowCount.class");
-        MAPPING.put("ResultCheckStyle.PARAM", "org.hibernate.jdbc.Expectation.OutParameter.class");
+        MAPPING.put("NONE", "org.hibernate.jdbc.Expectation.None.class");
+        MAPPING.put("COUNT", "org.hibernate.jdbc.Expectation.RowCount.class");
+        MAPPING.put("PARAM", "org.hibernate.jdbc.Expectation.OutParameter.class");
 
         ANNOTATION_MATCHERS =
                 Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll")
@@ -115,11 +115,14 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
             }
 
             private @Nullable String getMappingForResultCheck(J.Assignment assignment) {
-                return MAPPING.entrySet().stream()
-                        .filter(entry -> assignment.getAssignment().toString().contains(entry.getKey()))
-                        .map(Map.Entry::getValue)
-                        .findFirst()
-                        .orElse(null);
+                Expression value = assignment.getAssignment();
+                if (value instanceof J.FieldAccess) {
+                    return MAPPING.get(((J.FieldAccess) value).getSimpleName());
+                }
+                if (value instanceof J.Identifier) {
+                    return MAPPING.get(((J.Identifier) value).getSimpleName());
+                }
+                return null;
             }
         });
     }
