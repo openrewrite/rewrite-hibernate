@@ -19,9 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
-import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.search.FindAnnotations;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -56,14 +54,14 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
         // language=java
         rewriteRun(
           java(
-              """
+            """
               import org.hibernate.annotations.%1$s;
               import org.hibernate.annotations.ResultCheckStyle;
 
               @%1$s(check = %2$s, sql = "")
               class A {}
               """.formatted(annotation, oldResultCheckStyleValue),
-              """
+            """
               import org.hibernate.annotations.%1$s;
               import org.hibernate.jdbc.Expectation;
 
