@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.DocumentExample;
@@ -66,6 +67,31 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
               @%1$s(verify = %2$s, sql = "")
               class A {}
               """.formatted(annotation, newExpectationValue)
+          )
+        );
+    }
+
+    @Test
+    void staticImportTest() {
+        rewriteRun(
+          // language=java
+          java(
+            """
+              import org.hibernate.annotations.SQLInsert;
+              import org.hibernate.annotations.ResultCheckStyle;
+
+              import static org.hibernate.annotations.ResultCheckStyle.NONE;
+
+              @SQLInsert(check = NONE, sql = "")
+              class A {}
+              """,
+            """
+              import org.hibernate.annotations.SQLInsert;
+              import org.hibernate.jdbc.Expectation;
+
+              @SQLInsert(verify = Expectation.None.class, sql = "")
+              class A {}
+              """
           )
         );
     }
