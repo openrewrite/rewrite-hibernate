@@ -22,6 +22,7 @@ description: >-
   This recipe will apply changes commonly needed when migrating to Hibernate 6.3.x.
 
 recipeList:
+  - org.openrewrite.hibernate.MigrateToHibernate62
   - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.2
   - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.3
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
