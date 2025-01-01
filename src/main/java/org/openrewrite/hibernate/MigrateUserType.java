@@ -97,7 +97,11 @@ public class MigrateUserType extends Recipe {
 
                     @Override
                     public J.Return visitReturn(J.Return _return, AtomicReference<J.FieldAccess> ref) {
-                        ref.set((J.FieldAccess) _return.getExpression());
+                        Expression expression = _return.getExpression();
+                        if (expression instanceof J.FieldAccess &&
+                                "class".equals(((J.FieldAccess) expression).getSimpleName())) {
+                            ref.set((J.FieldAccess) expression);
+                        }
                         return _return;
                     }
                 }.visitNonNull(cd, reference);
