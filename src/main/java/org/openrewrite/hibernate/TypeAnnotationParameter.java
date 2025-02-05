@@ -16,15 +16,13 @@
 package org.openrewrite.hibernate;
 
 import org.jspecify.annotations.Nullable;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Recipe;
-import org.openrewrite.Tree;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JLeftPadded;
 import org.openrewrite.java.tree.JavaType;
@@ -40,7 +38,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class TypeAnnotationParameter extends Recipe {
 
-    private static final AnnotationMatcher FQN_TYPE_ANNOTATION = new AnnotationMatcher("@org.hibernate.annotations.Type");
+    private static final String ORG_HIBERNATE_ANNOTATIONS_TYPE = "org.hibernate.annotations.Type";
+    private static final AnnotationMatcher FQN_TYPE_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPE);
 
     @Override
     public String getDisplayName() {
@@ -65,7 +64,7 @@ public class TypeAnnotationParameter extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new JavaIsoVisitor<ExecutionContext>() {
+        JavaIsoVisitor<ExecutionContext> visitor = new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation a = super.visitAnnotation(annotation, ctx);
@@ -74,19 +73,19 @@ public class TypeAnnotationParameter extends Recipe {
                 }
 
                 // Remove entire annotation if type is one of the removed types
-                if (a.getArguments().stream().anyMatch(arg -> {
+                if (a.getArguments() != null && a.getArguments().stream().anyMatch(arg -> {
                     if (arg instanceof J.Assignment) {
                         J.Assignment assignment = (J.Assignment) arg;
                         if (assignment.getVariable() instanceof J.Identifier &&
-                            "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
-                            assignment.getAssignment() instanceof J.Literal) {
+                                "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                                assignment.getAssignment() instanceof J.Literal) {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
                             return REMOVED_FQNS.contains(fqTypeName);
                         }
                     }
                     return false;
                 })) {
-                    maybeRemoveImport("org.hibernate.annotations.Type");
+                    maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPE);
                     return null;
                 }
 
@@ -96,7 +95,7 @@ public class TypeAnnotationParameter extends Recipe {
                 if (temporalType.get() != null) {
                     maybeAddImport("jakarta.persistence.Temporal");
                     maybeAddImport("jakarta.persistence.TemporalType");
-                    maybeRemoveImport("org.hibernate.annotations.Type");
+                    maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPE);
                     return JavaTemplate.builder("@Temporal(TemporalType." + temporalType.get().toUpperCase() + ")")
                             .doBeforeParseTemplate(System.out::println)
                             .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))
@@ -116,8 +115,8 @@ public class TypeAnnotationParameter extends Recipe {
                     public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<String> ref) {
                         J.Assignment as = super.visitAssignment(assignment, ref);
                         if (J.Literal.isLiteralValue(as.getAssignment(), "date") ||
-                            J.Literal.isLiteralValue(as.getAssignment(), "time") ||
-                            J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
+                                J.Literal.isLiteralValue(as.getAssignment(), "time") ||
+                                J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
                             //noinspection DataFlowIssue
                             ref.set((String) ((J.Literal) as.getAssignment()).getValue());
                         }
@@ -128,14 +127,14 @@ public class TypeAnnotationParameter extends Recipe {
             }
 
             private J.Annotation replaceArgumentWithClass(J.Annotation a) {
-                final boolean isOnlyParameter = a.getArguments().size() == 1;
+                final boolean isOnlyParameter = a.getArguments() != null && a.getArguments().size() == 1;
                 // Replace type parameter with value parameter
                 return a.withArguments(ListUtils.map(a.getArguments(), arg -> {
                     if (arg instanceof J.Assignment) {
                         J.Assignment assignment = (J.Assignment) arg;
                         if (assignment.getVariable() instanceof J.Identifier &&
-                            "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
-                            assignment.getAssignment() instanceof J.Literal) {
+                                "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                                assignment.getAssignment() instanceof J.Literal) {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
                             J.Identifier identifier = new J.Identifier(
                                     Tree.randomId(),
@@ -164,6 +163,7 @@ public class TypeAnnotationParameter extends Recipe {
                 }));
             }
         };
+        return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), visitor);
     }
 
     private static String getSimpleName(String fqName) {
