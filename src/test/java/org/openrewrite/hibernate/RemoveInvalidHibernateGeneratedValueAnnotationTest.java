@@ -29,7 +29,7 @@ class RemoveInvalidHibernateGeneratedValueAnnotationTest implements RewriteTest 
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new RemoveInvalidHibernateGeneratedValueAnnotation())
-          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "jakarta.persistence"));
+          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "jakarta.persistence-api"));
     }
 
     @DocumentExample
