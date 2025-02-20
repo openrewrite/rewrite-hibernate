@@ -43,7 +43,7 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateResultCheckStyleToExpectation())
-          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5+"));
+          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5.+"));
     }
 
     @DocumentExample
