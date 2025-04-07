@@ -23,23 +23,19 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.search.UsesType;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JLeftPadded;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.Space;
+import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TypeAnnotationParameter extends Recipe {
 
     private static final String ORG_HIBERNATE_ANNOTATIONS_TYPE = "org.hibernate.annotations.Type";
     private static final AnnotationMatcher FQN_TYPE_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPE);
+    private static final String ORG_HIBERNATE_ANNOTATIONS_TYPEDEF = "org.hibernate.annotations.TypeDef";
+    private static final AnnotationMatcher FQN_TYPEDEF_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
 
     @Override
     public String getDisplayName() {
@@ -68,6 +64,18 @@ public class TypeAnnotationParameter extends Recipe {
             @Override
             public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation a = super.visitAnnotation(annotation, ctx);
+                if (FQN_TYPEDEF_ANNOTATION.matches(a)) {
+                    Expression name = getAttributeValue(annotation, "name");
+                    if (name instanceof J.Literal) {
+                        String alias = (String) ((J.Literal) name).getValue();
+                        Expression typeClass = getAttributeValue(annotation, "typeClass");
+                        getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, alias, typeClass);
+                    }
+                    // Always remove @TypeDef
+                    maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
+                    return null;
+                }
+
                 if (!FQN_TYPE_ANNOTATION.matches(a)) {
                     return a;
                 }
@@ -108,6 +116,23 @@ public class TypeAnnotationParameter extends Recipe {
                 return replaceArgumentWithClass(a);
             }
 
+            private @Nullable Expression getAttributeValue(J.Annotation annotation, String attributeName) {
+                List<Expression> arguments = annotation.getArguments();
+                if (arguments == null) {
+                    return null;
+                }
+                for (Expression arg : arguments) {
+                    if (arg instanceof J.Assignment) {
+                        J.Assignment assignment = (J.Assignment) arg;
+                        if (assignment.getVariable() instanceof J.Identifier &&
+                                attributeName.equals(((J.Identifier) assignment.getVariable()).getSimpleName())) {
+                            return assignment.getAssignment();
+                        }
+                    }
+                }
+                return null;
+            }
+
             private AtomicReference<String> getTemporalTypeArgument(J.Annotation a) {
                 AtomicReference<String> temporalType = new AtomicReference<>();
                 new JavaIsoVisitor<AtomicReference<String>>() {
@@ -136,6 +161,19 @@ public class TypeAnnotationParameter extends Recipe {
                                 "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
                                 assignment.getAssignment() instanceof J.Literal) {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
+
+                            // Look for typeDef alias on class declaration
+                            Expression nearestMessage = getCursor().getNearestMessage(fqTypeName);
+                            if (nearestMessage != null) {
+                                if (isOnlyParameter) {
+                                    return nearestMessage.withPrefix(Space.EMPTY);
+                                }
+                                return assignment
+                                        .withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value"))
+                                        .withAssignment(nearestMessage);
+                            }
+
+                            // Create a new field access to the class
                             J.Identifier identifier = new J.Identifier(
                                     Tree.randomId(),
                                     Space.EMPTY,

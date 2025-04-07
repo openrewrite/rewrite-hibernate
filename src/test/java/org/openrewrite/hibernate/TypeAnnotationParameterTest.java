@@ -159,8 +159,38 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
+
               public class TestApplication {
                   @Type(String.class)
+                  Object a;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    @Issue("https://github.com/openrewrite/rewrite-hibernate/issues/55")
+    void adoptTypeDefClassWithParameters() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.Type;
+              import org.hibernate.annotations.TypeDef;
+
+              @TypeDef(name = "stringy", typeClass = String.class)
+              public class TestApplication {
+                  @Type(type = "stringy", parameters = {})
+                  Object a;
+              }
+              """,
+            """
+              import org.hibernate.annotations.Type;
+
+
+              public class TestApplication {
+                  @Type(value = String.class, parameters = {})
                   Object a;
               }
               """
