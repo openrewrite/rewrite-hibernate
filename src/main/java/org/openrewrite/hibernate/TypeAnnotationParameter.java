@@ -43,7 +43,7 @@ public class TypeAnnotationParameter extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "@Type annotation type parameter migration";
+        return "`@Type` annotation type parameter migration";
     }
 
     @Override
