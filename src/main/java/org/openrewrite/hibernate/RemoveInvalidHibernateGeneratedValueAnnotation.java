@@ -29,9 +29,9 @@ import org.openrewrite.java.tree.J;
 public class RemoveInvalidHibernateGeneratedValueAnnotation extends Recipe {
 
     private static final AnnotationMatcher MATCHER_GENERATED_VALUE_ANNOTATION
-            = new AnnotationMatcher("@jakarta.persistence.GeneratedValue", true);
+      = new AnnotationMatcher("@jakarta.persistence.GeneratedValue", true);
     private static final AnnotationMatcher MATCHER_ID_ANNOTATION
-            = new AnnotationMatcher("@jakarta.persistence.Id", true);
+      = new AnnotationMatcher("@jakarta.persistence.Id", true);
 
     @Override
     public String getDisplayName() {
@@ -46,27 +46,27 @@ public class RemoveInvalidHibernateGeneratedValueAnnotation extends Recipe {
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
-                new UsesType<>("jakarta.persistence.GeneratedValue", false),
-                new JavaIsoVisitor<ExecutionContext>() {
-                    @Override
-                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                        if (MATCHER_GENERATED_VALUE_ANNOTATION.matches(annotation) &&
-                            !service(AnnotationService.class).matches(getCursor().getParentTreeCursor(), MATCHER_ID_ANNOTATION)) {
-                            doAfterVisit(new RemoveAnnotationVisitor(specificAnnotationMatcher(annotation)));
-                        }
-                        return annotation;
-                    }
+          new UsesType<>("jakarta.persistence.GeneratedValue", false),
+          new JavaIsoVisitor<ExecutionContext>() {
+              @Override
+              public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                  if (MATCHER_GENERATED_VALUE_ANNOTATION.matches(annotation) &&
+                    !service(AnnotationService.class).matches(getCursor().getParentTreeCursor(), MATCHER_ID_ANNOTATION)) {
+                      doAfterVisit(new RemoveAnnotationVisitor(specificAnnotationMatcher(annotation)));
+                  }
+                  return annotation;
+              }
 
-                    private AnnotationMatcher specificAnnotationMatcher(J.Annotation annotation) {
-                        return new AnnotationMatcher(
-                                // ignored in practice, as we only match annotations previously found just above
-                                "@jakarta.persistence.GeneratedValue", true) {
-                            @Override
-                            public boolean matches(J.Annotation anno) {
-                                return annotation.equals(anno);
-                            }
-                        };
-                    }
-                });
+              private AnnotationMatcher specificAnnotationMatcher(J.Annotation annotation) {
+                  return new AnnotationMatcher(
+                    // ignored in practice, as we only match annotations previously found just above
+                    "@jakarta.persistence.GeneratedValue", true) {
+                      @Override
+                      public boolean matches(J.Annotation anno) {
+                          return annotation.equals(anno);
+                      }
+                  };
+              }
+          });
     }
 }

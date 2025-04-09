@@ -44,9 +44,9 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
         MAPPING.put("PARAM", "org.hibernate.jdbc.Expectation.OutParameter.class");
 
         ANNOTATION_MATCHERS =
-                Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll")
-                .map(annotationName -> new AnnotationMatcher("@org.hibernate.annotations." + annotationName, true))
-                .collect(toSet());
+          Stream.of("SQLInsert", "SQLUpdate", "SQLDelete", "SQLDeleteAll")
+            .map(annotationName -> new AnnotationMatcher("@org.hibernate.annotations." + annotationName, true))
+            .collect(toSet());
     }
 
     @Override
@@ -57,7 +57,7 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
     @Override
     public String getDescription() {
         return "Will migrate the usage of `org.hibernate.annotations.ResultCheckStyle` to `org.hibernate.jdbc.Expectation`" +
-               " in `@SQLInsert`, `@SqlUpdate`, `@SqlDelete` and `@SqlDeleteAll` annotations.";
+          " in `@SQLInsert`, `@SqlUpdate`, `@SqlDelete` and `@SqlDeleteAll` annotations.";
     }
 
     @Override
@@ -93,7 +93,7 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
 
             private boolean isAssignmentToCheckParameter(J.Assignment assignment) {
                 return assignment.getVariable() instanceof J.Identifier &&
-                       "check".equals(((J.Identifier) assignment.getVariable()).getSimpleName());
+                  "check".equals(((J.Identifier) assignment.getVariable()).getSimpleName());
             }
 
             private J.Annotation updateAnnotation(J.Annotation annotation, J.Assignment assignment, ExecutionContext ctx) {
@@ -106,10 +106,10 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
 
             private J.Annotation applyTemplate(J.Assignment assignment, String map, ExecutionContext ctx) {
                 J.Annotation updatedAnnotation = JavaTemplate.builder("verify = #{}")
-                        .javaParser(JavaParser.fromJavaVersion().dependsOn(
-                                "package org.hibernate.jdbc;public class Expectation { public static class None {} }"))
-                        .build()
-                        .apply(getCursor(), assignment.getCoordinates().replace(), map);
+                  .javaParser(JavaParser.fromJavaVersion().dependsOn(
+                    "package org.hibernate.jdbc;public class Expectation { public static class None {} }"))
+                  .build()
+                  .apply(getCursor(), assignment.getCoordinates().replace(), map);
 
                 maybeAddImport("org.hibernate.jdbc.Expectation");
                 maybeRemoveImport("org.hibernate.annotations.ResultCheckStyle");

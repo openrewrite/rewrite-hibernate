@@ -71,10 +71,10 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
                 JavaType annType = ann.getType();
                 if (!(TypeUtils.isOfClassType(annType, "jakarta.persistence.ElementCollection") ||
-                      TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToOne") ||
-                      TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToMany") ||
-                      TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToOne") ||
-                      TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToMany"))) {
+                  TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToOne") ||
+                  TypeUtils.isOfClassType(annType, "jakarta.persistence.OneToMany") ||
+                  TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToOne") ||
+                  TypeUtils.isOfClassType(annType, "jakarta.persistence.ManyToMany"))) {
                     // recipe does not apply
                     return ann;
                 }
@@ -83,9 +83,9 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
                 // Do not update existing fetch value
                 if (currentArgs != null && currentArgs.stream()
-                        .filter(J.Assignment.class::isInstance)
-                        .map(J.Assignment.class::cast)
-                        .anyMatch(arg -> "fetch".equals(((J.Identifier) arg.getVariable()).getSimpleName()))) {
+                  .filter(J.Assignment.class::isInstance)
+                  .map(J.Assignment.class::cast)
+                  .anyMatch(arg -> "fetch".equals(((J.Identifier) arg.getVariable()).getSimpleName()))) {
                     return ann;
                 }
 
@@ -98,22 +98,22 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
 
                 maybeAddImport("jakarta.persistence.FetchType", false);
                 J.Annotation annotationWithFetch = JavaTemplate.builder("fetch = " + fetchType)
-                        .imports("jakarta.persistence.FetchType")
-                        .contextSensitive()
-                        .build()
-                        .apply(getCursor(), ann.getCoordinates().replaceArguments());
+                  .imports("jakarta.persistence.FetchType")
+                  .contextSensitive()
+                  .build()
+                  .apply(getCursor(), ann.getCoordinates().replaceArguments());
                 JavaType fetchTypeType = JavaType.buildType("jakarta.persistence.FetchType");
                 J.Assignment assignment = (J.Assignment) annotationWithFetch.getArguments().get(0);
                 assignment = assignment
-                        .withPrefix(currentArgs == null || currentArgs.isEmpty() ? Space.EMPTY : Space.SINGLE_SPACE)
-                        .withAssignment(assignment.getAssignment().withType(fetchTypeType))
-                        .withType(fetchTypeType);
+                  .withPrefix(currentArgs == null || currentArgs.isEmpty() ? Space.EMPTY : Space.SINGLE_SPACE)
+                  .withAssignment(assignment.getAssignment().withType(fetchTypeType))
+                  .withType(fetchTypeType);
                 return ann.withArguments(ListUtils.concat(currentArgs, assignment));
             }
 
             private <T extends J> T removeLazyCollectionAnnotation(T tree, ExecutionContext ctx) {
                 Optional<J.Annotation> lazyAnnotation = FindAnnotations.find(tree, "org.hibernate.annotations.LazyCollection")
-                        .stream().findFirst();
+                  .stream().findFirst();
                 if (!lazyAnnotation.isPresent()) {
                     return tree;
                 }
@@ -138,7 +138,7 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                 }
                 //noinspection unchecked
                 return (T) new RemoveAnnotationVisitor(new AnnotationMatcher("@org.hibernate.annotations.LazyCollection"))
-                        .visit(tree, ctx, getCursor().getParentOrThrow());
+                  .visit(tree, ctx, getCursor().getParentOrThrow());
             }
         });
     }

@@ -59,15 +59,15 @@ public class MigrateUserType extends Recipe {
     @Override
     public String getDescription() {
         return "With Hibernate 6 the `UserType` interface received a type parameter making it more strictly typed. " +
-               "This recipe applies the changes required to adhere to this change.";
+          "This recipe applies the changes required to adhere to this change.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(Preconditions.and(
-                new FindImplementations(USER_TYPE).getVisitor(),
-                // This method only exists on the Hibernate 6 variant of UserType, so as a precondition this shouldn't exist
-                Preconditions.not(new FindMethodDeclaration("* getSqlType()", true).getVisitor())
+          new FindImplementations(USER_TYPE).getVisitor(),
+          // This method only exists on the Hibernate 6 variant of UserType, so as a precondition this shouldn't exist
+          Preconditions.not(new FindMethodDeclaration("* getSqlType()", true).getVisitor())
         ), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
@@ -120,13 +120,13 @@ public class MigrateUserType extends Recipe {
                                 J.NewArray newArray = (J.NewArray) ret.get().getExpression();
                                 if (newArray.getInitializer() != null) {
                                     String template = "@Override\n" +
-                                                      "public int getSqlType() {\n" +
-                                                      "    return #{any()};\n" +
-                                                      "}";
+                                      "public int getSqlType() {\n" +
+                                      "    return #{any()};\n" +
+                                      "}";
                                     md = JavaTemplate.builder(template)
-                                            .javaParser(JavaParser.fromJavaVersion())
-                                            .build()
-                                            .apply(getCursor(), md.getCoordinates().replace(), newArray.getInitializer().get(0)).withId(md.getId());
+                                      .javaParser(JavaParser.fromJavaVersion())
+                                      .build()
+                                      .apply(getCursor(), md.getCoordinates().replace(), newArray.getInitializer().get(0)).withId(md.getId());
                                 }
                             }
 
@@ -143,13 +143,13 @@ public class MigrateUserType extends Recipe {
                     md = changeParameterTypes(md, Collections.singletonList(0), parameterizedType);
                 } else if (NULL_SAFE_GET_STRING_ARRAY.matches(md, cd)) {
                     String template = "@Override\n" +
-                                      "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
-                                      "}";
+                      "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
+                      "}";
                     J.MethodDeclaration updatedParam = JavaTemplate.builder(template)
-                            .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core"))
-                            .imports("java.math.BigDecimal", "java.sql.ResultSet", "java.sql.SQLException", "org.hibernate.engine.spi.SharedSessionContractImplementor")
-                            .build()
-                            .apply(getCursor(), md.getCoordinates().replace());
+                      .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core"))
+                      .imports("java.math.BigDecimal", "java.sql.ResultSet", "java.sql.SQLException", "org.hibernate.engine.spi.SharedSessionContractImplementor")
+                      .build()
+                      .apply(getCursor(), md.getCoordinates().replace());
                     md = updatedParam.withId(md.getId()).withBody(md.getBody());
                 } else if (NULL_SAFE_SET.matches(md, cd)) {
                     md = changeParameterTypes(md, Collections.singletonList(1), parameterizedType);
@@ -186,7 +186,7 @@ public class MigrateUserType extends Recipe {
                                 J.Return r = (J.Return) stmt;
                                 if (r.getExpression() != null && !TypeUtils.isOfType(parameterizedType.getTarget().getType(), r.getExpression().getType())) {
                                     return r.withExpression(new J.TypeCast(randomId(), Space.EMPTY, Markers.EMPTY, new J.ControlParentheses<>(randomId(), Space.EMPTY, Markers.EMPTY,
-                                            new JRightPadded<>(TypeTree.build("BigDecimal").withType(parameterizedType.getTarget().getType()), Space.EMPTY, Markers.EMPTY)), r.getExpression()));
+                                      new JRightPadded<>(TypeTree.build("BigDecimal").withType(parameterizedType.getTarget().getType()), Space.EMPTY, Markers.EMPTY)), r.getExpression()));
                                 }
                             }
                             return stmt;
@@ -207,23 +207,23 @@ public class MigrateUserType extends Recipe {
             private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<Integer> paramIndexes, J.FieldAccess parameterizedType) {
                 if (md.getMethodType() != null) {
                     JavaType.Method met = md.getMethodType().withParameterTypes(ListUtils.map(md.getMethodType().getParameterTypes(),
-                            (index, type) -> {
-                                if (paramIndexes.contains(index)) {
-                                    type = TypeUtils.isOfType(JavaType.buildType("java.lang.Object"), type) ? parameterizedType.getTarget().getType() : type;
-                                }
-                                return type;
-                            }));
+                      (index, type) -> {
+                          if (paramIndexes.contains(index)) {
+                              type = TypeUtils.isOfType(JavaType.buildType("java.lang.Object"), type) ? parameterizedType.getTarget().getType() : type;
+                          }
+                          return type;
+                      }));
                     return md.withParameters(ListUtils.map(md.getParameters(), (index, param) -> {
                         if (param instanceof J.VariableDeclarations && paramIndexes.contains(index)) {
                             param = ((J.VariableDeclarations) param)
-                                    .withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget())
-                                    .withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
-                                        var = var.withType(parameterizedType.getTarget().getType());
-                                        if (var.getVariableType() != null && parameterizedType.getTarget().getType() != null) {
-                                            var = var.withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
-                                        }
-                                        return var;
-                                    }));
+                              .withType(parameterizedType.getTarget().getType()).withTypeExpression((TypeTree) parameterizedType.getTarget())
+                              .withVariables(ListUtils.map(((J.VariableDeclarations) param).getVariables(), var -> {
+                                  var = var.withType(parameterizedType.getTarget().getType());
+                                  if (var.getVariableType() != null && parameterizedType.getTarget().getType() != null) {
+                                      var = var.withVariableType(var.getVariableType().withType(parameterizedType.getTarget().getType()).withOwner(met));
+                                  }
+                                  return var;
+                              }));
                         }
                         return param;
                     }));

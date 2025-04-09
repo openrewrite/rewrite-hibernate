@@ -41,49 +41,49 @@ public class EmptyInterceptorToInterface extends Recipe {
     @Override
     public String getDescription() {
         return "In Hibernate 6.0 the `Interceptor` interface received default implementations therefore the NOOP implementation that could be extended was no longer needed. " +
-               "This recipe migrates 5.x `Interceptor#onPrepareStatement(String)` to 6.0 `StatementInspector#inspect()`.";
+          "This recipe migrates 5.x `Interceptor#onPrepareStatement(String)` to 6.0 `StatementInspector#inspect()`.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(new FindImplementations(EMPTY_INTERCEPTOR), new JavaIsoVisitor<ExecutionContext>() {
-                    @Override
-                    public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
-                        J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-                        if (cd.getExtends() != null && TypeUtils.isOfClassType(cd.getExtends().getType(), EMPTY_INTERCEPTOR)) {
-                            cd = cd.withExtends(null).withImplements(ListUtils.concat(cd.getImplements(), (TypeTree) TypeTree.build("Interceptor").withType(JavaType.buildType(INTERCEPTOR)).withPrefix(Space.SINGLE_SPACE)));
-                            maybeAddImport(INTERCEPTOR);
-                            if (getCursor().pollMessage("prepareStatementFound") != null) {
-                                cd = cd.withImplements(ListUtils.concat(cd.getImplements(), (TypeTree) TypeTree.build("StatementInspector").withType(JavaType.buildType(STATEMENT_INSPECTOR)).withPrefix(Space.SINGLE_SPACE)));
-                                maybeAddImport(STATEMENT_INSPECTOR);
-                            }
-                            maybeRemoveImport(EMPTY_INTERCEPTOR);
-                            if (cd.getPadding().getImplements() != null) {
-                                cd = cd.getPadding().withImplements(cd.getPadding().getImplements().withBefore(Space.SINGLE_SPACE));
-                            }
-                        }
-                        return cd;
+            @Override
+            public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
+                J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
+                if (cd.getExtends() != null && TypeUtils.isOfClassType(cd.getExtends().getType(), EMPTY_INTERCEPTOR)) {
+                    cd = cd.withExtends(null).withImplements(ListUtils.concat(cd.getImplements(), (TypeTree) TypeTree.build("Interceptor").withType(JavaType.buildType(INTERCEPTOR)).withPrefix(Space.SINGLE_SPACE)));
+                    maybeAddImport(INTERCEPTOR);
+                    if (getCursor().pollMessage("prepareStatementFound") != null) {
+                        cd = cd.withImplements(ListUtils.concat(cd.getImplements(), (TypeTree) TypeTree.build("StatementInspector").withType(JavaType.buildType(STATEMENT_INSPECTOR)).withPrefix(Space.SINGLE_SPACE)));
+                        maybeAddImport(STATEMENT_INSPECTOR);
                     }
-
-                    @Override
-                    public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-                        J.MethodDeclaration md = super.visitMethodDeclaration(method, ctx);
-                        J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
-                        if (cd != null && ON_PREPARE_STATEMENT.matches(md, cd)) {
-                            getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, "prepareStatementFound", true);
-                            J.MethodDeclaration inspectMD = JavaTemplate.apply(
-                                    (md.getLeadingAnnotations().isEmpty() ? "" : "@Override ") +
-                                    "public String inspect(String overriddenBelow) { return overriddenBelow; }",
-                                    getCursor(), md.getCoordinates().replace());
-                            return inspectMD
-                                    .withPrefix(md.getPrefix())
-                                    .withLeadingAnnotations(md.getLeadingAnnotations())
-                                    .withParameters(md.getParameters())
-                                    .withBody(md.getBody());
-                        }
-                        return md;
+                    maybeRemoveImport(EMPTY_INTERCEPTOR);
+                    if (cd.getPadding().getImplements() != null) {
+                        cd = cd.getPadding().withImplements(cd.getPadding().getImplements().withBefore(Space.SINGLE_SPACE));
                     }
                 }
+                return cd;
+            }
+
+            @Override
+            public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
+                J.MethodDeclaration md = super.visitMethodDeclaration(method, ctx);
+                J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
+                if (cd != null && ON_PREPARE_STATEMENT.matches(md, cd)) {
+                    getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, "prepareStatementFound", true);
+                    J.MethodDeclaration inspectMD = JavaTemplate.apply(
+                      (md.getLeadingAnnotations().isEmpty() ? "" : "@Override ") +
+                        "public String inspect(String overriddenBelow) { return overriddenBelow; }",
+                      getCursor(), md.getCoordinates().replace());
+                    return inspectMD
+                      .withPrefix(md.getPrefix())
+                      .withLeadingAnnotations(md.getLeadingAnnotations())
+                      .withParameters(md.getParameters())
+                      .withBody(md.getBody());
+                }
+                return md;
+            }
+        }
         );
     }
 }

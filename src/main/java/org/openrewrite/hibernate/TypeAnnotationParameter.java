@@ -58,10 +58,10 @@ public class TypeAnnotationParameter extends Recipe {
     }
 
     private static final Set<String> REMOVED_FQNS = new HashSet<>(Arrays.asList(
-            "org.hibernate.type.EnumType",
-            "org.hibernate.type.SerializableType",
-            "org.hibernate.type.SerializableToBlobType",
-            "org.hibernate.type.TextType"));
+      "org.hibernate.type.EnumType",
+      "org.hibernate.type.SerializableType",
+      "org.hibernate.type.SerializableToBlobType",
+      "org.hibernate.type.TextType"));
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
@@ -78,8 +78,8 @@ public class TypeAnnotationParameter extends Recipe {
                     if (arg instanceof J.Assignment) {
                         J.Assignment assignment = (J.Assignment) arg;
                         if (assignment.getVariable() instanceof J.Identifier &&
-                            "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
-                            assignment.getAssignment() instanceof J.Literal) {
+                          "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                          assignment.getAssignment() instanceof J.Literal) {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
                             return REMOVED_FQNS.contains(fqTypeName);
                         }
@@ -98,11 +98,11 @@ public class TypeAnnotationParameter extends Recipe {
                     maybeAddImport("jakarta.persistence.TemporalType");
                     maybeRemoveImport("org.hibernate.annotations.Type");
                     return JavaTemplate.builder("@Temporal(TemporalType." + temporalType.get().toUpperCase() + ")")
-                            .doBeforeParseTemplate(System.out::println)
-                            .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))
-                            .imports("jakarta.persistence.Temporal", "jakarta.persistence.TemporalType")
-                            .build()
-                            .apply(getCursor(), a.getCoordinates().replace());
+                      .doBeforeParseTemplate(System.out::println)
+                      .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))
+                      .imports("jakarta.persistence.Temporal", "jakarta.persistence.TemporalType")
+                      .build()
+                      .apply(getCursor(), a.getCoordinates().replace());
                 }
 
                 // Replace argument with .class reference to the same type
@@ -116,8 +116,8 @@ public class TypeAnnotationParameter extends Recipe {
                     public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<String> ref) {
                         J.Assignment as = super.visitAssignment(assignment, ref);
                         if (J.Literal.isLiteralValue(as.getAssignment(), "date") ||
-                            J.Literal.isLiteralValue(as.getAssignment(), "time") ||
-                            J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
+                          J.Literal.isLiteralValue(as.getAssignment(), "time") ||
+                          J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
                             //noinspection DataFlowIssue
                             ref.set((String) ((J.Literal) as.getAssignment()).getValue());
                         }
@@ -134,24 +134,24 @@ public class TypeAnnotationParameter extends Recipe {
                     if (arg instanceof J.Assignment) {
                         J.Assignment assignment = (J.Assignment) arg;
                         if (assignment.getVariable() instanceof J.Identifier &&
-                            "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
-                            assignment.getAssignment() instanceof J.Literal) {
+                          "type".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
+                          assignment.getAssignment() instanceof J.Literal) {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
                             J.Identifier identifier = new J.Identifier(
-                                    Tree.randomId(),
-                                    Space.EMPTY,
-                                    Markers.EMPTY,
-                                    Collections.emptyList(),
-                                    getSimpleName(fqTypeName),
-                                    JavaType.buildType(fqTypeName),
-                                    null);
+                              Tree.randomId(),
+                              Space.EMPTY,
+                              Markers.EMPTY,
+                              Collections.emptyList(),
+                              getSimpleName(fqTypeName),
+                              JavaType.buildType(fqTypeName),
+                              null);
                             J.FieldAccess fa = new J.FieldAccess(
-                                    Tree.randomId(),
-                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
-                                    assignment.getAssignment().getMarkers(),
-                                    identifier,
-                                    JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
-                                    JavaType.buildType("java.lang.Class")
+                              Tree.randomId(),
+                              isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
+                              assignment.getAssignment().getMarkers(),
+                              identifier,
+                              JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
+                              JavaType.buildType("java.lang.Class")
                             );
                             maybeAddImport(fqTypeName);
                             if (isOnlyParameter) {
