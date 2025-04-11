@@ -56,8 +56,8 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Will migrate the usage of `org.hibernate.annotations.ResultCheckStyle` to `org.hibernate.jdbc.Expectation`" +
-               " in `@SQLInsert`, `@SqlUpdate`, `@SqlDelete` and `@SqlDeleteAll` annotations.";
+        return "Will migrate the usage of `org.hibernate.annotations.ResultCheckStyle` to `org.hibernate.jdbc.Expectation` " +
+               "in `@SQLInsert`, `@SqlUpdate`, `@SqlDelete` and `@SqlDeleteAll` annotations.";
     }
 
     @Override
