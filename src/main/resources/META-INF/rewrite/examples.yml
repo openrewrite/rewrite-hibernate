@@ -1,0 +1,370 @@
+# Copyright 2025 the original author or authors.
+# <p>
+# Licensed under the Moderne Source Available License (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# <p>
+# https://docs.moderne.io/licensing/moderne-source-available-license
+# <p>
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.EmptyInterceptorToInterface
+examples:
+- description: ''
+  sources:
+  - before: |
+      import org.hibernate.EmptyInterceptor;
+
+      class MyInterceptor extends EmptyInterceptor {
+
+          @Override
+          public String onPrepareStatement(String sql) {
+              return sql;
+          }
+      }
+    after: |
+      import org.hibernate.Interceptor;
+      import org.hibernate.resource.jdbc.spi.StatementInspector;
+
+      class MyInterceptor implements Interceptor, StatementInspector {
+
+          @Override
+          public String inspect(String sql) {
+              return sql;
+          }
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.MigrateBooleanMappings
+examples:
+- description: ''
+  sources:
+  - before: |
+      import jakarta.persistence.Column;
+      import org.hibernate.annotations.Type;
+
+      public class SomeClass {
+
+          @Column(name = "IS_SOMETHING")
+          @Type(type = "true_false")
+          private boolean isSomething;
+
+          @Column(name = "IS_SOMETHING_ELSE")
+          @Type(type = "org.hibernate.type.YesNoBooleanType")
+          private boolean isSomethingElse;
+
+      }
+    after: |
+      import jakarta.persistence.Column;
+      import jakarta.persistence.Convert;
+      import org.hibernate.type.TrueFalseConverter;
+      import org.hibernate.type.YesNoConverter;
+
+      public class SomeClass {
+
+          @Column(name = "IS_SOMETHING")
+          @Convert(converter = TrueFalseConverter.class)
+          private boolean isSomething;
+
+          @Column(name = "IS_SOMETHING_ELSE")
+          @Convert(converter = YesNoConverter.class)
+          private boolean isSomethingElse;
+
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.MigrateUserType
+examples:
+- description: ''
+  sources:
+  - before: |
+      import org.hibernate.HibernateException;
+      import org.hibernate.engine.spi.SharedSessionContractImplementor;
+      import org.hibernate.usertype.UserType;
+
+      import java.io.Serializable;
+      import java.math.BigDecimal;
+      import java.sql.PreparedStatement;
+      import java.sql.ResultSet;
+      import java.sql.SQLException;
+      import java.sql.Types;
+      import java.util.Objects;
+
+      public class BigDecimalAsString implements UserType {
+
+          @Override
+          public int[] sqlTypes() {
+              return new int[]{Types.VARCHAR};
+          }
+
+          @Override
+          public Class returnedClass() {
+              return BigDecimal.class;
+          }
+
+          @Override
+          public boolean equals(Object x, Object y) {
+              return Objects.equals(x, y);
+          }
+
+          @Override
+          public int hashCode(Object x) {
+              return Objects.hashCode(x);
+          }
+
+          @Override
+          public Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner) throws SQLException {
+              String string = rs.getString(names[0]);
+              return string == null || rs.wasNull() ? null : new BigDecimal(string);
+          }
+
+          @Override
+          public void nullSafeSet(PreparedStatement st, Object value, int index, SharedSessionContractImplementor session) throws SQLException {
+              if (value == null) {
+                  st.setNull(index, Types.VARCHAR);
+              } else {
+                  st.setString(index, value.toString());
+              }
+          }
+
+          @Override
+          public Object deepCopy(Object value1) {
+              return value1;
+          }
+
+          @Override
+          public boolean isMutable() {
+              return false;
+          }
+
+          @Override
+          public Serializable disassemble(Object value) {
+              return (BigDecimal) value;
+          }
+
+          @Override
+          public Object assemble(Serializable cached, Object owner) {
+              return cached;
+          }
+
+          @Override
+          public Object replace(Object original, Object target, Object owner) {
+              return original;
+          }
+      }
+    after: |
+      import org.hibernate.HibernateException;
+      import org.hibernate.engine.spi.SharedSessionContractImplementor;
+      import org.hibernate.usertype.UserType;
+
+      import java.io.Serializable;
+      import java.math.BigDecimal;
+      import java.sql.PreparedStatement;
+      import java.sql.ResultSet;
+      import java.sql.SQLException;
+      import java.sql.Types;
+      import java.util.Objects;
+
+      public class BigDecimalAsString implements UserType<BigDecimal> {
+
+          @Override
+          public int getSqlType() {
+              return Types.VARCHAR;
+          }
+
+          @Override
+          public Class<BigDecimal> returnedClass() {
+              return BigDecimal.class;
+          }
+
+          @Override
+          public boolean equals(BigDecimal x, BigDecimal y) {
+              return Objects.equals(x, y);
+          }
+
+          @Override
+          public int hashCode(BigDecimal x) {
+              return Objects.hashCode(x);
+          }
+
+          @Override
+          public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+              String string = rs.getString(position);
+              return string == null || rs.wasNull() ? null : new BigDecimal(string);
+          }
+
+          @Override
+          public void nullSafeSet(PreparedStatement st, BigDecimal value, int index, SharedSessionContractImplementor session) throws SQLException {
+              if (value == null) {
+                  st.setNull(index, Types.VARCHAR);
+              } else {
+                  st.setString(index, value.toString());
+              }
+          }
+
+          @Override
+          public BigDecimal deepCopy(BigDecimal value1) {
+              return value1;
+          }
+
+          @Override
+          public boolean isMutable() {
+              return false;
+          }
+
+          @Override
+          public Serializable disassemble(BigDecimal value) {
+              return value;
+          }
+
+          @Override
+          public BigDecimal assemble(Serializable cached, Object owner) {
+              return (BigDecimal) cached;
+          }
+
+          @Override
+          public BigDecimal replace(BigDecimal original, BigDecimal target, Object owner) {
+              return original;
+          }
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.RemoveInvalidHibernateGeneratedValueAnnotation
+examples:
+- description: ''
+  sources:
+  - before: |
+      import jakarta.persistence.Entity;
+      import jakarta.persistence.GeneratedValue;
+      import jakarta.persistence.Id;
+
+      class A {
+          @Id
+          Integer id;
+          @GeneratedValue
+          String name;
+      }
+    after: |
+      import jakarta.persistence.Entity;
+      import jakarta.persistence.Id;
+
+      class A {
+          @Id
+          Integer id;
+          String name;
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.ReplaceLazyCollectionAnnotation
+examples:
+- description: ''
+  sources:
+  - before: |
+      import org.hibernate.annotations.LazyCollection;
+      import org.hibernate.annotations.LazyCollectionOption;
+      import jakarta.persistence.CascadeType;
+      import jakarta.persistence.OneToMany;
+
+      import java.util.HashSet;
+      import java.util.Set;
+
+      class SomeClass {
+
+          private Set<Object> items = new HashSet<>();
+
+          @LazyCollection(LazyCollectionOption.FALSE)
+          @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
+          public Set<Object> getItems() {
+              return items;
+          }
+      }
+    after: |
+      import jakarta.persistence.CascadeType;
+      import jakarta.persistence.FetchType;
+      import jakarta.persistence.OneToMany;
+
+      import java.util.HashSet;
+      import java.util.Set;
+
+      class SomeClass {
+
+          private Set<Object> items = new HashSet<>();
+
+          @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
+          public Set<Object> getItems() {
+              return items;
+          }
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.TypeAnnotationParameter
+examples:
+- description: ''
+  sources:
+  - before: |
+      import org.hibernate.annotations.Type;
+
+      public class TestApplication {
+          @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
+          Object a;
+      }
+    after: |
+      import org.hibernate.annotations.Type;
+
+      import java.util.concurrent.atomic.AtomicBoolean;
+
+      public class TestApplication {
+          @Type(AtomicBoolean.class)
+          Object a;
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.validator.HibernateValidator_8_0
+examples:
+- description: ''
+  sources:
+  - before: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
+        <groupId>com.example</groupId>
+        <artifactId>demo</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>7.0.5.Final</version>
+          </dependency>
+        </dependencies>
+      </project>
+    after: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
+        <groupId>com.example</groupId>
+        <artifactId>demo</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>8.0.2.Final</version>
+          </dependency>
+        </dependencies>
+      </project>
+    path: pom.xml
+    language: xml
