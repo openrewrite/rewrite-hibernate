@@ -35,6 +35,54 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
           );
     }
 
+    @DocumentExample
+    @Test
+    void methodAnnotation_shouldKeepPreviousArguments_whenFetchTypeIsAdded() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import org.hibernate.annotations.LazyCollection;
+              import org.hibernate.annotations.LazyCollectionOption;
+              import jakarta.persistence.CascadeType;
+              import jakarta.persistence.OneToMany;
+              
+              import java.util.HashSet;
+              import java.util.Set;
+              
+              class SomeClass {
+              
+                  private Set<Object> items = new HashSet<>();
+              
+                  @LazyCollection(LazyCollectionOption.FALSE)
+                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
+                  public Set<Object> getItems() {
+                      return items;
+                  }
+              }
+              """,
+            """
+              import jakarta.persistence.CascadeType;
+              import jakarta.persistence.FetchType;
+              import jakarta.persistence.OneToMany;
+              
+              import java.util.HashSet;
+              import java.util.Set;
+              
+              class SomeClass {
+              
+                  private Set<Object> items = new HashSet<>();
+              
+                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
+                  public Set<Object> getItems() {
+                      return items;
+                  }
+              }
+              """
+          )
+        );
+    }
+
     @ParameterizedTest
     @CsvSource({
       //"LazyCollectionOption.FALSE, FetchType.EAGER, ElementCollection", // different import order
@@ -267,54 +315,6 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
                   @LazyCollection(LazyCollectionOption.EXTRA)
                   @ElementCollection
                   private Set<Object> items;
-              }
-              """
-          )
-        );
-    }
-
-    @DocumentExample
-    @Test
-    void methodAnnotation_shouldKeepPreviousArguments_whenFetchTypeIsAdded() {
-        //language=java
-        rewriteRun(
-          java(
-            """
-              import org.hibernate.annotations.LazyCollection;
-              import org.hibernate.annotations.LazyCollectionOption;
-              import jakarta.persistence.CascadeType;
-              import jakarta.persistence.OneToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-              
-              class SomeClass {
-              
-                  private Set<Object> items = new HashSet<>();
-              
-                  @LazyCollection(LazyCollectionOption.FALSE)
-                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE })
-                  public Set<Object> getItems() {
-                      return items;
-                  }
-              }
-              """,
-            """
-              import jakarta.persistence.CascadeType;
-              import jakarta.persistence.FetchType;
-              import jakarta.persistence.OneToMany;
-              
-              import java.util.HashSet;
-              import java.util.Set;
-              
-              class SomeClass {
-              
-                  private Set<Object> items = new HashSet<>();
-              
-                  @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
-                  public Set<Object> getItems() {
-                      return items;
-                  }
               }
               """
           )
