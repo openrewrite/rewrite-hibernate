@@ -82,7 +82,8 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     void addScalarPreferStandardBasicTypes() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
               import org.hibernate.Session;
               import org.hibernate.type.*;
 
@@ -209,7 +210,8 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     void addScalarPreferStandardBasicTypes_justStringType() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -252,7 +254,8 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     void addScalarPreferStandardBasicTypes_justIntegerType() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -295,7 +298,8 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     void addScalarPreferStandardBasicTypes_justLongType() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -338,7 +342,8 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     void addScalarPreferStandardBasicTypes_justStringType_usingInstance() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -381,7 +386,8 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     void addScalarInvocationWithNoChange() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
             package com.myorg;
 
             import org.hibernate.Session;
@@ -409,7 +415,8 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     void noAddScalarInvocation() {
         rewriteRun(
           //language=java
-          java("""
+          java(
+                """
             package com.myorg;
 
             import org.hibernate.Session;
