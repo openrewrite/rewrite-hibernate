@@ -40,7 +40,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
+            """
               import org.hibernate.Session;
               import org.hibernate.type.StringType;
               import org.hibernate.type.IntegerType;
@@ -76,8 +76,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
               }
               """
           ));
-          java(
-                """
+    }
 
     @Test
     void addScalarPreferStandardBasicTypes() {
@@ -204,8 +203,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
               }
               """
           ));
-          java(
-                """
+    }
 
     @Test
     void addScalarPreferStandardBasicTypes_justStringType() {
@@ -248,8 +246,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
               }
               """
           ));
-          java(
-                """
+    }
 
     @Test
     void addScalarPreferStandardBasicTypes_justIntegerType() {
@@ -292,8 +289,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
               }
               """
           ));
-          java(
-                """
+    }
 
     @Test
     void addScalarPreferStandardBasicTypes_justLongType() {
@@ -336,8 +332,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
               }
               """
           ));
-          java(
-                """
+    }
 
     @Test
     void addScalarPreferStandardBasicTypes_justStringType_usingInstance() {
@@ -380,8 +375,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
               }
               """
           ));
-          java(
-                """
+    }
 
     @Test
     void addScalarInvocationWithNoChange() {
@@ -409,8 +403,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
             }
             """
           ));
-          java(
-                """
+    }
 
     @Test
     void noAddScalarInvocation() {
