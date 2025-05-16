@@ -23,11 +23,11 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
-class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest {
+class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(new AddScalarPreferStandardBasicTypesForHibernate5())
+        spec.recipe(new AddScalarPreferStandardBasicTypes())
           .parser(JavaParser.fromJavaVersion().classpath("hibernate-core", "javax.persistence-api"));
     }
 

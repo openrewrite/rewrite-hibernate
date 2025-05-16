@@ -28,7 +28,7 @@ import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.*;
 
-public class AddScalarPreferStandardBasicTypesForHibernate5 extends Recipe {
+public class AddScalarPreferStandardBasicTypes extends Recipe {
 
     static final MethodMatcher ADD_SCALAR_MATCHER =
             new MethodMatcher("org.hibernate.query.NativeQuery addScalar(String, org.hibernate.type.Type)");

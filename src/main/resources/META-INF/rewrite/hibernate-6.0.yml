@@ -25,6 +25,7 @@ description: >-
 
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernateDependencies60
+  - org.openrewrite.hibernate.AddScalarPreferStandardBasicTypes
   - org.openrewrite.hibernate.EmptyInterceptorToInterface
   - org.openrewrite.hibernate.MigrateBooleanMappings
   - org.openrewrite.hibernate.TypeAnnotationParameter
@@ -237,7 +238,7 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.0
 displayName: Migrate Hibernate Types to Hypersistence Utils 6.0
 description: >-
-  This recipe will migrate any existing dependencies on `com.vladmihalcea:hibernate-types` to `io.hypersistence:hypersistence-utils-hibernate-60`. 
+  This recipe will migrate any existing dependencies on `com.vladmihalcea:hibernate-types` to `io.hypersistence:hypersistence-utils-hibernate-60`.
   This migration will include the adjustment from `com.vladmihalcea` to `io.hypersistence.utils` package name.
 
 recipeList:
