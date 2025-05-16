@@ -15,21 +15,16 @@
  */
 package org.openrewrite.hibernate;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Preconditions;
-import org.openrewrite.Recipe;
-import org.openrewrite.Tree;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaParser;
+import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JLeftPadded;
 import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.Space;
 import org.openrewrite.java.tree.TypeUtils;
-import org.openrewrite.marker.Markers;
 
 import java.util.*;
 
@@ -40,10 +35,9 @@ public class AddScalarPreferStandardBasicTypesForHibernate5 extends Recipe {
 
     private static final String STANDARD_BASIC_TYPES_FQN = "org.hibernate.type.StandardBasicTypes";
 
-    private static final Map<String, String> CONVERTIBLE_TYPES;
+    private static final Map<String, String> CONVERTIBLE_TYPES = new HashMap<>();
 
     static {
-        CONVERTIBLE_TYPES = new HashMap<>();
         // value is constant name in StandardBasicTypes
         CONVERTIBLE_TYPES.put("org.hibernate.type.BooleanType", "BOOLEAN");
         CONVERTIBLE_TYPES.put("org.hibernate.type.NumericBooleanType", "NUMERIC_BOOLEAN");
@@ -135,39 +129,14 @@ public class AddScalarPreferStandardBasicTypesForHibernate5 extends Recipe {
                         if (standardBasicTypesConstant.isPresent()) {
                             maybeAddImport(STANDARD_BASIC_TYPES_FQN);
                             maybeRemoveImport(Objects.requireNonNull(secondArg.getType()).toString());
-                            return method.withArguments(Arrays.asList(firstArg, standardBasicTypesDotConstantName(standardBasicTypesConstant.get()).withPrefix(secondArg.getPrefix())));
+                            J.FieldAccess replacementArg = JavaTemplate.builder("StandardBasicTypes.#{}")
+                                    .imports(STANDARD_BASIC_TYPES_FQN)
+                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6.+"))
+                                    .build()
+                                    .apply(new Cursor(getCursor(), secondArg), secondArg.getCoordinates().replace(), standardBasicTypesConstant.get());
+                            return method.withArguments(Arrays.asList(firstArg, replacementArg.withPrefix(secondArg.getPrefix())));
                         }
                         return method;
-                    }
-
-                    private J.FieldAccess standardBasicTypesDotConstantName(final String constantName) {
-                        return new J.FieldAccess(
-                                Tree.randomId(),
-                                Space.EMPTY,
-                                Markers.EMPTY,
-                                new J.Identifier(
-                                        Tree.randomId(),
-                                        Space.EMPTY,
-                                        Markers.EMPTY,
-                                        Collections.emptyList(),
-                                        "StandardBasicTypes",
-                                        JavaType.ShallowClass.build(STANDARD_BASIC_TYPES_FQN),
-                                        null
-                                ),
-                                new JLeftPadded<>(
-                                        Space.EMPTY,
-                                        new J.Identifier(
-                                                Tree.randomId(),
-                                                Space.EMPTY,
-                                                Markers.EMPTY,
-                                                Collections.emptyList(),
-                                                constantName,
-                                                JavaType.ShallowClass.build(STANDARD_BASIC_TYPES_FQN + "." + constantName),
-                                                null),
-                                        Markers.EMPTY
-                                ),
-                                null
-                        );
                     }
 
                     private Optional<String> findConvertibleStandardBasicTypesConstant(JavaType type) {

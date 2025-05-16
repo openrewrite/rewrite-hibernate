@@ -17,7 +17,6 @@ package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
-import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -29,9 +28,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new AddScalarPreferStandardBasicTypesForHibernate5())
-          .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")
-          );
+          .parser(JavaParser.fromJavaVersion().classpath("hibernate-core", "javax.persistence-api"));
     }
 
     @DocumentExample
@@ -83,7 +80,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
+            """
               import org.hibernate.Session;
               import org.hibernate.type.*;
 
@@ -144,6 +141,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
               """,
             """
               import org.hibernate.Session;
+              import org.hibernate.type.BasicTypeReference;
               import org.hibernate.type.InstantType;
               import org.hibernate.type.LocalDateType;
               import org.hibernate.type.StandardBasicTypes;
@@ -211,7 +209,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
+            """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -255,7 +253,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
+            """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -299,7 +297,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
+            """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -343,7 +341,7 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
+            """
               package com.myorg;
 
               import org.hibernate.Session;
@@ -387,27 +385,27 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
-            package com.myorg;
-
-            import org.hibernate.Session;
-            import org.hibernate.type.StandardBasicTypes;
-            import org.hibernate.type.LocalDateType;
-
-            class MyRepository {
-
-                private Session session;
-
-                public void callAddScalar() {
-                    session.createNativeQuery("select * from foo")
-                        .addScalar("name", StandardBasicTypes.STRING)
-                        .addScalar("age", StandardBasicTypes.INTEGER)
-                        .addScalar("dob", new LocalDateType())
-                        .list();
-                }
-
-            }
             """
+              package com.myorg;
+
+              import org.hibernate.Session;
+              import org.hibernate.type.StandardBasicTypes;
+              import org.hibernate.type.LocalDateType;
+
+              class MyRepository {
+
+                  private Session session;
+
+                  public void callAddScalar() {
+                      session.createNativeQuery("select * from foo")
+                          .addScalar("name", StandardBasicTypes.STRING)
+                          .addScalar("age", StandardBasicTypes.INTEGER)
+                          .addScalar("dob", new LocalDateType())
+                          .list();
+                  }
+
+              }
+              """
           ));
     }
 
@@ -416,22 +414,22 @@ class AddScalarPreferStandardBasicTypesForHibernate5Test implements RewriteTest 
         rewriteRun(
           //language=java
           java(
-                """
-            package com.myorg;
-
-            import org.hibernate.Session;
-
-            class Toto {
-
-                private Session session;
-
-                public void noCallToAddScalar() {
-                    session.createNativeQuery("select * from foo")
-                        .list();
-                }
-
-            }
             """
+              package com.myorg;
+
+              import org.hibernate.Session;
+
+              class Toto {
+
+                  private Session session;
+
+                  public void noCallToAddScalar() {
+                      session.createNativeQuery("select * from foo")
+                          .list();
+                  }
+
+              }
+              """
           ));
     }
 
