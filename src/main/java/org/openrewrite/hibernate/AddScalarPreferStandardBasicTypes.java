@@ -97,62 +97,50 @@ public class AddScalarPreferStandardBasicTypes extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new UsesMethod<>(ADD_SCALAR_MATCHER),
-                new JavaIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new UsesMethod<>(ADD_SCALAR_MATCHER), new JavaIsoVisitor<ExecutionContext>() {
+            @Override
+            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
+                method = super.visitMethodInvocation(method, ctx);
 
-                    @Override
-                    public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
-                        method = super.visitMethodInvocation(method, ctx);
+                if (!ADD_SCALAR_MATCHER.matches(method)) {
+                    return method;
+                }
 
-                        if (!ADD_SCALAR_MATCHER.matches(method)) {
-                            return method;
+                Expression firstArg = method.getArguments().get(0);
+                Expression secondArg = method.getArguments().get(1);
+                JavaType secondArgType = secondArg.getType();
+                if (secondArgType == null || (secondArg instanceof J.FieldAccess &&
+                        TypeUtils.isOfClassType(((J.FieldAccess) secondArg).getTarget().getType(), STANDARD_BASIC_TYPES_FQN))) {
+                    // Begins with StandardBasicTypes.*"
+                    return method;
+                }
+
+                Optional<String> standardBasicTypesConstant = findConvertibleStandardBasicTypesConstant(secondArgType);
+                if (standardBasicTypesConstant.isPresent()) {
+                    maybeAddImport(STANDARD_BASIC_TYPES_FQN);
+                    maybeRemoveImport(secondArgType.toString());
+                    J.FieldAccess replacementArg = JavaTemplate.builder("StandardBasicTypes.#{}")
+                            .imports(STANDARD_BASIC_TYPES_FQN)
+                            .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6.+"))
+                            .build()
+                            .apply(new Cursor(getCursor(), secondArg), secondArg.getCoordinates().replace(), standardBasicTypesConstant.get());
+                    return method.withArguments(Arrays.asList(firstArg, replacementArg.withPrefix(secondArg.getPrefix())));
+                }
+                return method;
+            }
+
+            private Optional<String> findConvertibleStandardBasicTypesConstant(JavaType type) {
+                if (type instanceof JavaType.FullyQualified) {
+                    String searchedFQN = ((JavaType.FullyQualified) type).getFullyQualifiedName();
+                    for (Map.Entry<String, String> entry : CONVERTIBLE_TYPES.entrySet()) {
+                        if (TypeUtils.fullyQualifiedNamesAreEqual(searchedFQN, entry.getKey())) {
+                            return Optional.of(CONVERTIBLE_TYPES.get(entry.getKey()));
                         }
-
-                        Expression firstArg = method.getArguments().get(0);
-                        Expression secondArg = method.getArguments().get(1);
-
-                        if (secondArg.getType() == null) {
-                            return method;
-                        }
-
-                        assert secondArg.getType() != null;
-                        if (secondArg instanceof J.FieldAccess) {
-                            J.FieldAccess arg = (J.FieldAccess) secondArg;
-                            if (arg.getTarget() instanceof J.Identifier &&
-                                    TypeUtils.isOfClassType(arg.getTarget().getType(), STANDARD_BASIC_TYPES_FQN)) {
-                                // Begins with StandardBasicTypes.*"
-                                return method;
-                            }
-                        }
-
-                        Optional<String> standardBasicTypesConstant = findConvertibleStandardBasicTypesConstant(secondArg.getType());
-                        if (standardBasicTypesConstant.isPresent()) {
-                            maybeAddImport(STANDARD_BASIC_TYPES_FQN);
-                            maybeRemoveImport(Objects.requireNonNull(secondArg.getType()).toString());
-                            J.FieldAccess replacementArg = JavaTemplate.builder("StandardBasicTypes.#{}")
-                                    .imports(STANDARD_BASIC_TYPES_FQN)
-                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6.+"))
-                                    .build()
-                                    .apply(new Cursor(getCursor(), secondArg), secondArg.getCoordinates().replace(), standardBasicTypesConstant.get());
-                            return method.withArguments(Arrays.asList(firstArg, replacementArg.withPrefix(secondArg.getPrefix())));
-                        }
-                        return method;
                     }
-
-                    private Optional<String> findConvertibleStandardBasicTypesConstant(JavaType type) {
-                        if (type instanceof JavaType.FullyQualified) {
-                            String searchedFQN = ((JavaType.FullyQualified) type).getFullyQualifiedName();
-                            for (Map.Entry<String, String> entry : CONVERTIBLE_TYPES.entrySet()) {
-                                if (TypeUtils.fullyQualifiedNamesAreEqual(searchedFQN, entry.getKey())) {
-                                    return Optional.of(CONVERTIBLE_TYPES.get(entry.getKey()));
-                                }
-                            }
-                            return Optional.empty();
-                        }
-                        return Optional.empty();
-                    }
-
-                });
+                }
+                return Optional.empty();
+            }
+        });
     }
 
 }
