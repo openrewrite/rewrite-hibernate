@@ -13,6 +13,38 @@
 # limitations under the License.
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.AddScalarPreferStandardBasicTypes
+examples:
+- description: ''
+  sources:
+  - before: |
+      import org.hibernate.Session;
+      import org.hibernate.type.StringType;
+      import org.hibernate.type.IntegerType;
+
+      class MyRepository {
+          void callAddScalar(Session session) {
+              session.createNativeQuery("select * from foo")
+                  .addScalar("name", new StringType())
+                  .addScalar("age", IntegerType.INSTANCE)
+                  .list();
+          }
+      }
+    after: |
+      import org.hibernate.Session;
+      import org.hibernate.type.StandardBasicTypes;
+
+      class MyRepository {
+          void callAddScalar(Session session) {
+              session.createNativeQuery("select * from foo")
+                  .addScalar("name", StandardBasicTypes.STRING)
+                  .addScalar("age", StandardBasicTypes.INTEGER)
+                  .list();
+          }
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.EmptyInterceptorToInterface
 examples:
 - description: ''
