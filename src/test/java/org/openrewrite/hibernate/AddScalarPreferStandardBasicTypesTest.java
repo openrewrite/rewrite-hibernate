@@ -43,16 +43,12 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
               import org.hibernate.type.IntegerType;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", new StringType())
                           .addScalar("age", IntegerType.INSTANCE)
                           .list();
                   }
-
               }
               """,
             """
@@ -60,16 +56,12 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
               import org.hibernate.type.StandardBasicTypes;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", StandardBasicTypes.STRING)
                           .addScalar("age", StandardBasicTypes.INTEGER)
                           .list();
                   }
-
               }
               """
           ));
@@ -85,10 +77,7 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
               import org.hibernate.type.*;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", new StringType())
                           .addScalar("age", new IntegerType())
@@ -136,7 +125,6 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
                           .addScalar("creation_date", new InstantType())
                           .list();
                   }
-
               }
               """,
             """
@@ -147,10 +135,7 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
               import org.hibernate.type.StandardBasicTypes;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", StandardBasicTypes.STRING)
                           .addScalar("age", StandardBasicTypes.INTEGER)
@@ -198,7 +183,6 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
                           .addScalar("creation_date", new InstantType())
                           .list();
                   }
-
               }
               """
           ));
@@ -210,39 +194,27 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
           //language=java
           java(
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.StringType;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", new StringType())
                           .list();
                   }
-
               }
               """,
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.StandardBasicTypes;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", StandardBasicTypes.STRING)
                           .list();
                   }
-
               }
               """
           ));
@@ -254,39 +226,27 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
           //language=java
           java(
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.IntegerType;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("age", IntegerType.INSTANCE)
                           .list();
                   }
-
               }
               """,
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.StandardBasicTypes;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("age", StandardBasicTypes.INTEGER)
                           .list();
                   }
-
               }
               """
           ));
@@ -298,39 +258,27 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
           //language=java
           java(
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.LongType;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("long_number", LongType.INSTANCE)
                           .list();
                   }
-
               }
               """,
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.StandardBasicTypes;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("long_number", StandardBasicTypes.LONG)
                           .list();
                   }
-
               }
               """
           ));
@@ -342,39 +290,27 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
           //language=java
           java(
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.StringType;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", StringType.INSTANCE)
                           .list();
                   }
-
               }
               """,
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.StandardBasicTypes;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", StandardBasicTypes.STRING)
                           .list();
                   }
-
               }
               """
           ));
@@ -386,24 +322,18 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
           //language=java
           java(
             """
-              package com.myorg;
-
               import org.hibernate.Session;
               import org.hibernate.type.StandardBasicTypes;
               import org.hibernate.type.LocalDateType;
 
               class MyRepository {
-
-                  private Session session;
-
-                  public void callAddScalar() {
+                  void callAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .addScalar("name", StandardBasicTypes.STRING)
                           .addScalar("age", StandardBasicTypes.INTEGER)
                           .addScalar("dob", new LocalDateType())
                           .list();
                   }
-
               }
               """
           ));
@@ -415,19 +345,13 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
           //language=java
           java(
             """
-              package com.myorg;
-
               import org.hibernate.Session;
 
-              class Toto {
-
-                  private Session session;
-
-                  public void noCallToAddScalar() {
+              class MyRepository {
+                  void noCallToAddScalar(Session session) {
                       session.createNativeQuery("select * from foo")
                           .list();
                   }
-
               }
               """
           ));
