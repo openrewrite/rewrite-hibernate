@@ -39,48 +39,48 @@ public class AddScalarPreferStandardBasicTypes extends Recipe {
 
     static {
         // value is constant name in StandardBasicTypes
-        CONVERTIBLE_TYPES.put("org.hibernate.type.BooleanType", "BOOLEAN");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.NumericBooleanType", "NUMERIC_BOOLEAN");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.TrueFalseType", "TRUE_FALSE");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.YesNoType", "YES_NO");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.ByteType", "BYTE");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.ShortType", "SHORT");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.IntegerType", "INTEGER");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.LongType", "LONG");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.FloatType", "FLOAT");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.DoubleType", "DOUBLE");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.BigIntegerType", "BIG_INTEGER");
         CONVERTIBLE_TYPES.put("org.hibernate.type.BigDecimalType", "BIG_DECIMAL");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.CharacterType", "CHARACTER");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.StringType", "STRING");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.StringNVarcharType", "NSTRING");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.UrlType", "URL");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.TimeType", "TIME");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.DateType", "DATE");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.TimestampType", "TIMESTAMP");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.CalendarType", "CALENDAR");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.CalendarDateType", "CALENDAR_DATE");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.ClassType", "CLASS");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.LocaleType", "LOCALE");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.CurrencyType", "CURRENCY");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.TimeZoneType", "TIMEZONE");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.UUIDBinaryType", "UUID_BINARY");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.UUIDCharType", "UUID_CHAR");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.BigIntegerType", "BIG_INTEGER");
         CONVERTIBLE_TYPES.put("org.hibernate.type.BinaryType", "BINARY");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.WrapperBinaryType", "WRAPPER_BINARY");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.RowVersionType", "ROW_VERSION");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.ImageType", "IMAGE");
         CONVERTIBLE_TYPES.put("org.hibernate.type.BlobType", "BLOB");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.MaterializedBlobType", "MATERIALIZED_BLOB");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.BooleanType", "BOOLEAN");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.ByteType", "BYTE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.CalendarDateType", "CALENDAR_DATE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.CalendarType", "CALENDAR");
         CONVERTIBLE_TYPES.put("org.hibernate.type.CharArrayType", "CHAR_ARRAY");
         CONVERTIBLE_TYPES.put("org.hibernate.type.CharacterArrayType", "CHARACTER_ARRAY");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.TextType", "TEXT");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.NTextType", "NTEXT");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.CharacterType", "CHARACTER");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.ClassType", "CLASS");
         CONVERTIBLE_TYPES.put("org.hibernate.type.ClobType", "CLOB");
-        CONVERTIBLE_TYPES.put("org.hibernate.type.NClobType", "NCLOB");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.CurrencyType", "CURRENCY");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.DateType", "DATE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.DoubleType", "DOUBLE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.FloatType", "FLOAT");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.ImageType", "IMAGE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.IntegerType", "INTEGER");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.LocaleType", "LOCALE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.LongType", "LONG");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.MaterializedBlobType", "MATERIALIZED_BLOB");
         CONVERTIBLE_TYPES.put("org.hibernate.type.MaterializedClobType", "MATERIALIZED_CLOB");
         CONVERTIBLE_TYPES.put("org.hibernate.type.MaterializedNClobType", "MATERIALIZED_NCLOB");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.NClobType", "NCLOB");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.NTextType", "NTEXT");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.NumericBooleanType", "NUMERIC_BOOLEAN");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.RowVersionType", "ROW_VERSION");
         CONVERTIBLE_TYPES.put("org.hibernate.type.SerializableType", "SERIALIZABLE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.ShortType", "SHORT");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.StringNVarcharType", "NSTRING");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.StringType", "STRING");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.TextType", "TEXT");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.TimeType", "TIME");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.TimeZoneType", "TIMEZONE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.TimestampType", "TIMESTAMP");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.TrueFalseType", "TRUE_FALSE");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.UUIDBinaryType", "UUID_BINARY");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.UUIDCharType", "UUID_CHAR");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.UrlType", "URL");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.WrapperBinaryType", "WRAPPER_BINARY");
+        CONVERTIBLE_TYPES.put("org.hibernate.type.YesNoType", "YES_NO");
     }
 
     @Override
@@ -100,33 +100,31 @@ public class AddScalarPreferStandardBasicTypes extends Recipe {
         return Preconditions.check(new UsesMethod<>(ADD_SCALAR_MATCHER), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
-                method = super.visitMethodInvocation(method, ctx);
-
-                if (!ADD_SCALAR_MATCHER.matches(method)) {
-                    return method;
+                J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
+                if (!ADD_SCALAR_MATCHER.matches(m)) {
+                    return m;
                 }
 
-                Expression firstArg = method.getArguments().get(0);
-                Expression secondArg = method.getArguments().get(1);
+                Expression firstArg = m.getArguments().get(0);
+                Expression secondArg = m.getArguments().get(1);
                 JavaType secondArgType = secondArg.getType();
                 if (secondArgType == null || (secondArg instanceof J.FieldAccess &&
                         TypeUtils.isOfClassType(((J.FieldAccess) secondArg).getTarget().getType(), STANDARD_BASIC_TYPES_FQN))) {
                     // Begins with StandardBasicTypes.*"
-                    return method;
+                    return m;
                 }
 
                 Optional<String> standardBasicTypesConstant = findConvertibleStandardBasicTypesConstant(secondArgType);
                 if (standardBasicTypesConstant.isPresent()) {
                     maybeAddImport(STANDARD_BASIC_TYPES_FQN);
                     maybeRemoveImport(secondArgType.toString());
-                    J.FieldAccess replacementArg = JavaTemplate.builder("StandardBasicTypes.#{}")
+                    return JavaTemplate.builder("#{}, StandardBasicTypes.#{}")
                             .imports(STANDARD_BASIC_TYPES_FQN)
                             .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6.+"))
                             .build()
-                            .apply(new Cursor(getCursor(), secondArg), secondArg.getCoordinates().replace(), standardBasicTypesConstant.get());
-                    return method.withArguments(Arrays.asList(firstArg, replacementArg.withPrefix(secondArg.getPrefix())));
+                            .apply(updateCursor(m), m.getCoordinates().replaceArguments(), firstArg, standardBasicTypesConstant.get());
                 }
-                return method;
+                return m;
             }
 
             private Optional<String> findConvertibleStandardBasicTypesConstant(JavaType type) {
