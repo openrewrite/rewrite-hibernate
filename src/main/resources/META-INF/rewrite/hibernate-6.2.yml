@@ -28,13 +28,14 @@ recipeList:
       groupId: org.hibernate.orm
       artifactId: '*'
       newVersion: 6.2.x
+  - org.openrewrite.hibernate.ReplaceLazyCollectionAnnotation
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.2
 displayName: Migrate Hibernate Types to Hypersistence Utils 6.2
 description: >-
-  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-60` to `io.hypersistence:hypersistence-utils-hibernate-62`. 
+  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-60` to `io.hypersistence:hypersistence-utils-hibernate-62`.
 
 recipeList:
   - org.openrewrite.java.dependencies.ChangeDependency:
