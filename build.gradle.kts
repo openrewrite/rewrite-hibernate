@@ -24,7 +24,7 @@ dependencies {
     testImplementation("org.openrewrite:rewrite-gradle")
     testImplementation("org.openrewrite:rewrite-maven")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:latest.release")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.+")
 
     testRuntimeOnly("org.hibernate:hibernate-core:5.6.15.Final")
     testRuntimeOnly("javax.persistence:javax.persistence-api:2.2")
