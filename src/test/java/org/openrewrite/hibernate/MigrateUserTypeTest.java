@@ -34,8 +34,8 @@ class MigrateUserTypeTest implements RewriteTest {
           );
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldMigrateUserType() {
         //language=java
         rewriteRun(

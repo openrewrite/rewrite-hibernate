@@ -83,7 +83,6 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @CsvSource({
       //"LazyCollectionOption.FALSE, FetchType.EAGER, ElementCollection", // different import order
       "LazyCollectionOption.FALSE, FetchType.EAGER, ManyToMany",
@@ -91,6 +90,7 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
       "LazyCollectionOption.TRUE,  FetchType.LAZY,  OneToOne",
       "LazyCollectionOption.TRUE,  FetchType.LAZY,  ManyToOne"
     })
+    @ParameterizedTest
     void methodAnnotation_shouldBeUpdated_whenFetchArgumentIsMissing(
       String oldArg, String newArg, String targetAnnotation) {
         //language=java
@@ -136,7 +136,6 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @CsvSource({
       //"LazyCollectionOption.FALSE, FetchType.EAGER, ElementCollection", // different import order
       "LazyCollectionOption.FALSE, FetchType.EAGER, ManyToMany",
@@ -144,6 +143,7 @@ class ReplaceLazyCollectionAnnotationTest implements RewriteTest {
       "LazyCollectionOption.TRUE,  FetchType.LAZY,  OneToOne",
       "LazyCollectionOption.TRUE,  FetchType.LAZY,  ManyToOne"
     })
+    @ParameterizedTest
     void fieldAnnotation_shouldBeUpdated_whenFetchArgumentIsMissing(
       String oldArg, String newArg, String targetAnnotation) {
         //language=java

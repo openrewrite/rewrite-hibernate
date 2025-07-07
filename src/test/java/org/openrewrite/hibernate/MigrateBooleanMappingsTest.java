@@ -80,7 +80,6 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @CsvSource(textBlock = """
       numeric_boolean                         , NumericBooleanConverter
       true_false                              , TrueFalseConverter
@@ -89,6 +88,7 @@ class MigrateBooleanMappingsTest implements RewriteTest {
       org.hibernate.type.TrueFalseBooleanType , TrueFalseConverter
       org.hibernate.type.NumericBooleanType   , NumericBooleanConverter
       """)
+    @ParameterizedTest
     void mapping_shouldBeReplaced_whenMethodIsAnnotated(String usertype, String converter) {
         //language=java
         rewriteRun(
@@ -128,7 +128,6 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @CsvSource(textBlock = """
       numeric_boolean                         , NumericBooleanConverter
       true_false                              , TrueFalseConverter
@@ -137,6 +136,7 @@ class MigrateBooleanMappingsTest implements RewriteTest {
       org.hibernate.type.TrueFalseBooleanType , TrueFalseConverter
       org.hibernate.type.NumericBooleanType   , NumericBooleanConverter
       """)
+    @ParameterizedTest
     void trueFalseMapping_shouldBeReplaced_whenFieldIsAnnotated(String usertype, String converter) {
         //language=java
         rewriteRun(

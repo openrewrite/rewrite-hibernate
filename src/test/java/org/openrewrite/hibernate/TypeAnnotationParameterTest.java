@@ -140,8 +140,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         );
     }
 
-    @Test
     @Issue("https://github.com/openrewrite/rewrite-hibernate/issues/55")
+    @Test
     void adoptTypeDefClass() {
         rewriteRun(
           //language=java
@@ -169,8 +169,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         );
     }
 
-    @Test
     @Issue("https://github.com/openrewrite/rewrite-hibernate/issues/55")
+    @Test
     void adoptTypeDefClassWithParameters() {
         rewriteRun(
           //language=java

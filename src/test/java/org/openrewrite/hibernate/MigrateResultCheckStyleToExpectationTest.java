@@ -47,8 +47,8 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
     }
 
     @DocumentExample
-    @ParameterizedTest
     @MethodSource("generateTestParameters")
+    @ParameterizedTest
     void shouldMigrateResultCheckStyleToExpectationNone(String annotation, String oldResultCheckStyleValue, String newExpectationValue) {
         rewriteRun(
           // language=java
