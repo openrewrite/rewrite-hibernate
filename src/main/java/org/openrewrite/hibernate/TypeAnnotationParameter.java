@@ -27,8 +27,13 @@ import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static java.util.Collections.emptyList;
 
 public class TypeAnnotationParameter extends Recipe {
 
@@ -178,7 +183,7 @@ public class TypeAnnotationParameter extends Recipe {
                                     Tree.randomId(),
                                     Space.EMPTY,
                                     Markers.EMPTY,
-                                    Collections.emptyList(),
+                                    emptyList(),
                                     getSimpleName(fqTypeName),
                                     JavaType.buildType(fqTypeName),
                                     null);
@@ -187,7 +192,7 @@ public class TypeAnnotationParameter extends Recipe {
                                     isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
                                     assignment.getAssignment().getMarkers(),
                                     identifier,
-                                    JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, Collections.emptyList(), "class", null, null)),
+                                    JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
                                     JavaType.buildType("java.lang.Class")
                             );
                             maybeAddImport(fqTypeName);

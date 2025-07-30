@@ -28,11 +28,11 @@ import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.singletonList;
 import static org.openrewrite.Tree.randomId;
 
 public class MigrateUserType extends Recipe {
@@ -144,7 +144,7 @@ public class MigrateUserType extends Recipe {
                 } else if (EQUALS.matches(md, cd)) {
                     md = changeParameterTypes(md, Arrays.asList(0, 1), parameterizedType);
                 } else if (HASHCODE.matches(md, cd)) {
-                    md = changeParameterTypes(md, Collections.singletonList(0), parameterizedType);
+                    md = changeParameterTypes(md, singletonList(0), parameterizedType);
                 } else if (NULL_SAFE_GET_STRING_ARRAY.matches(md, cd)) {
                     String template = "@Override\n" +
                                       "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
@@ -156,15 +156,15 @@ public class MigrateUserType extends Recipe {
                             .apply(getCursor(), md.getCoordinates().replace());
                     md = updatedParam.withId(md.getId()).withBody(md.getBody());
                 } else if (NULL_SAFE_SET.matches(md, cd)) {
-                    md = changeParameterTypes(md, Collections.singletonList(1), parameterizedType);
+                    md = changeParameterTypes(md, singletonList(1), parameterizedType);
                 } else if (DEEP_COPY.matches(md, cd)) {
                     md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
-                    md = changeParameterTypes(md, Collections.singletonList(0), parameterizedType);
+                    md = changeParameterTypes(md, singletonList(0), parameterizedType);
                 } else if (DISASSEMBLE.matches(md, cd)) {
-                    md = changeParameterTypes(md, Collections.singletonList(0), parameterizedType);
+                    md = changeParameterTypes(md, singletonList(0), parameterizedType);
                     if (md.getBody() != null) {
                         md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
                             if (stmt instanceof J.Return) {
@@ -242,9 +242,9 @@ public class MigrateUserType extends Recipe {
                     J.MethodDeclaration md = getCursor().firstEnclosing(J.MethodDeclaration.class);
                     J.ClassDeclaration cd = getCursor().firstEnclosing(J.ClassDeclaration.class);
                     if (md != null && cd != null && NULL_SAFE_GET_INT.matches(md, cd)) {
-                        mi = mi.withArguments(Collections.singletonList(((J.VariableDeclarations) md.getParameters().get(1)).getVariables().get(0).getName()));
+                        mi = mi.withArguments(singletonList(((J.VariableDeclarations) md.getParameters().get(1)).getVariables().get(0).getName()));
                         if (mi.getMethodType() != null) {
-                            mi = mi.withMethodType(mi.getMethodType().withParameterTypes(Collections.singletonList(JavaType.buildType("int"))));
+                            mi = mi.withMethodType(mi.getMethodType().withParameterTypes(singletonList(JavaType.buildType("int"))));
                         }
                     }
                 }
