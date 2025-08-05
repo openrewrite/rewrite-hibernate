@@ -18,7 +18,6 @@ package org.openrewrite.hibernate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
@@ -46,7 +45,6 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
           .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5.+"));
     }
 
-    @DocumentExample
     @MethodSource("generateTestParameters")
     @ParameterizedTest
     void shouldMigrateResultCheckStyleToExpectationNone(String annotation, String oldResultCheckStyleValue, String newExpectationValue) {
