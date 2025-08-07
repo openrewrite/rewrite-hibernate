@@ -18,6 +18,7 @@ package org.openrewrite.hibernate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
@@ -45,30 +46,7 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
           .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-6.5.+"));
     }
 
-    @MethodSource("generateTestParameters")
-    @ParameterizedTest
-    void shouldMigrateResultCheckStyleToExpectationNone(String annotation, String oldResultCheckStyleValue, String newExpectationValue) {
-        rewriteRun(
-          // language=java
-          java(
-            """
-              import org.hibernate.annotations.%1$s;
-              import org.hibernate.annotations.ResultCheckStyle;
-
-              @%1$s(check = %2$s, sql = "")
-              class A {}
-              """.formatted(annotation, oldResultCheckStyleValue),
-            """
-              import org.hibernate.annotations.%1$s;
-              import org.hibernate.jdbc.Expectation;
-
-              @%1$s(verify = %2$s, sql = "")
-              class A {}
-              """.formatted(annotation, newExpectationValue)
-          )
-        );
-    }
-
+    @DocumentExample
     @Test
     void staticImportTest() {
         rewriteRun(
@@ -90,6 +68,30 @@ class MigrateResultCheckStyleToExpectationTest implements RewriteTest {
               @SQLInsert(verify = Expectation.None.class, sql = "")
               class A {}
               """
+          )
+        );
+    }
+
+    @MethodSource("generateTestParameters")
+    @ParameterizedTest
+    void shouldMigrateResultCheckStyleToExpectationNone(String annotation, String oldResultCheckStyleValue, String newExpectationValue) {
+        rewriteRun(
+          // language=java
+          java(
+            """
+              import org.hibernate.annotations.%1$s;
+              import org.hibernate.annotations.ResultCheckStyle;
+
+              @%1$s(check = %2$s, sql = "")
+              class A {}
+              """.formatted(annotation, oldResultCheckStyleValue),
+            """
+              import org.hibernate.annotations.%1$s;
+              import org.hibernate.jdbc.Expectation;
+
+              @%1$s(verify = %2$s, sql = "")
+              class A {}
+              """.formatted(annotation, newExpectationValue)
           )
         );
     }
