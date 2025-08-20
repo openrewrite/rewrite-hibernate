@@ -23,7 +23,7 @@ import org.openrewrite.test.RewriteTest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.java.Assertions.mavenProject;
 import static org.openrewrite.maven.Assertions.pomXml;
 
@@ -61,7 +61,7 @@ class MigrateToHibernate63Test implements RewriteTest {
                 </project>
                 """, spec -> spec.after(actual -> {
                   Matcher matcher = Pattern.compile("<version>(3\\.8\\.\\d+)</version>").matcher(actual);
-                  assertTrue(matcher.find());
+                assertThat(matcher.find()).isTrue();
                   return """
                     <?xml version="1.0" encoding="UTF-8"?>
                     <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
