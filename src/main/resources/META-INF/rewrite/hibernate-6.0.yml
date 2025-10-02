@@ -203,6 +203,9 @@ recipeList:
   - org.openrewrite.java.dependencies.RemoveDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
+  - org.openrewrite.maven.RemoveManagedDependency:
+      groupId: org.hibernate
+      artifactId: hibernate-entitymanager
   # Account for jaxb-runtime becoming `runtime` vs `compile` dependency
   # Add the jakarta JAXB artifact if it is missing but a project uses types in java.xml.bind
   - org.openrewrite.java.dependencies.AddDependency:
