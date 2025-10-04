@@ -16,6 +16,7 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.config.Environment;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -37,62 +38,7 @@ class MigrateToHibernate61Test implements RewriteTest {
           .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate61"));
     }
 
-    @Test
-    void groupIdHibernateOrmRenamed() {
-        rewriteRun(
-          mavenProject(
-            "Sample",
-            //language=xml
-            pomXml("""
-                <?xml version="1.0" encoding="UTF-8"?>
-                <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-                  <modelVersion>4.0.0</modelVersion>
-                  <groupId>com.example</groupId>
-                  <artifactId>demo</artifactId>
-                  <version>0.0.1-SNAPSHOT</version>
-                  <dependencies>
-                    <dependency>
-                      <groupId>org.hibernate</groupId>
-                      <artifactId>hibernate-core</artifactId>
-                      <version>5.6.15.Final</version>
-                    </dependency>
-                  </dependencies>
-                </project>
-                """, spec -> spec.after(actual -> {
-                  Matcher matcher = Pattern.compile("<version>(6\\.1\\.\\d+\\.Final)</version>").matcher(actual);
-                assertThat(matcher.find()).isTrue();
-                  return """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-                      <modelVersion>4.0.0</modelVersion>
-                      <groupId>com.example</groupId>
-                      <artifactId>demo</artifactId>
-                      <version>0.0.1-SNAPSHOT</version>
-                      <dependencies>
-                        <dependency>
-                          <groupId>org.hibernate.orm</groupId>
-                          <artifactId>hibernate-core</artifactId>
-                          <version>%s</version>
-                        </dependency>
-                      </dependencies>
-                    </project>
-                    """.formatted(matcher.group(1));
-              })
-            ),
-            //language=java
-            srcMainJava(
-              java("""
-                public class TestApplication {
-                }
-                """
-              )
-            )
-          )
-        );
-    }
-
+    @DocumentExample
     @Test
     void groupIdHypersistenceUtilsRenamedAndPackageUpdated() {
         rewriteRun(
@@ -147,6 +93,62 @@ class MigrateToHibernate61Test implements RewriteTest {
                 """, """
                 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
                 
+                public class TestApplication {
+                }
+                """
+              )
+            )
+          )
+        );
+    }
+
+    @Test
+    void groupIdHibernateOrmRenamed() {
+        rewriteRun(
+          mavenProject(
+            "Sample",
+            //language=xml
+            pomXml("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                  <modelVersion>4.0.0</modelVersion>
+                  <groupId>com.example</groupId>
+                  <artifactId>demo</artifactId>
+                  <version>0.0.1-SNAPSHOT</version>
+                  <dependencies>
+                    <dependency>
+                      <groupId>org.hibernate</groupId>
+                      <artifactId>hibernate-core</artifactId>
+                      <version>5.6.15.Final</version>
+                    </dependency>
+                  </dependencies>
+                </project>
+                """, spec -> spec.after(actual -> {
+                  Matcher matcher = Pattern.compile("<version>(6\\.1\\.\\d+\\.Final)</version>").matcher(actual);
+                assertThat(matcher.find()).isTrue();
+                  return """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                      <modelVersion>4.0.0</modelVersion>
+                      <groupId>com.example</groupId>
+                      <artifactId>demo</artifactId>
+                      <version>0.0.1-SNAPSHOT</version>
+                      <dependencies>
+                        <dependency>
+                          <groupId>org.hibernate.orm</groupId>
+                          <artifactId>hibernate-core</artifactId>
+                          <version>%s</version>
+                        </dependency>
+                      </dependencies>
+                    </project>
+                    """.formatted(matcher.group(1));
+              })
+            ),
+            //language=java
+            srcMainJava(
+              java("""
                 public class TestApplication {
                 }
                 """

@@ -16,6 +16,7 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.config.Environment;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -33,6 +34,7 @@ class MigrateToHibernate60Test implements RewriteTest {
         );
     }
 
+    @DocumentExample
     @Test
     void removesEntityManager() {
         rewriteRun(

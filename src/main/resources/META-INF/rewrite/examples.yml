@@ -15,7 +15,7 @@
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.AddScalarPreferStandardBasicTypes
 examples:
-- description: ''
+- description: '`AddScalarPreferStandardBasicTypesTest#addScalarPreferStandardBasicTypes_chainingMultipleTimes`'
   sources:
   - before: |
       import org.hibernate.Session;
@@ -47,7 +47,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.EmptyInterceptorToInterface
 examples:
-- description: ''
+- description: '`EmptyInterceptorToInterfaceTest#shouldChangeEmptyInterceptor`'
   sources:
   - before: |
       import org.hibernate.EmptyInterceptor;
@@ -75,7 +75,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.MigrateBooleanMappings
 examples:
-- description: ''
+- description: '`MigrateBooleanMappingsTest#allMappings_shouldBeReplaced`'
   sources:
   - before: |
       import jakarta.persistence.Column;
@@ -114,7 +114,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.MigrateResultCheckStyleToExpectation
 examples:
-- description: ''
+- description: '`MigrateResultCheckStyleToExpectationTest#staticImportTest`'
   sources:
   - before: |
       import org.hibernate.annotations.SQLInsert;
@@ -135,7 +135,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.MigrateUserType
 examples:
-- description: ''
+- description: '`MigrateUserTypeTest#shouldMigrateUserType`'
   sources:
   - before: |
       import org.hibernate.HibernateException;
@@ -292,7 +292,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.RemoveInvalidHibernateGeneratedValueAnnotation
 examples:
-- description: ''
+- description: '`RemoveInvalidHibernateGeneratedValueAnnotationTest#removeIncorrectlyPlacedGenerateValue`'
   sources:
   - before: |
       import jakarta.persistence.Entity;
@@ -319,7 +319,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.ReplaceLazyCollectionAnnotation
 examples:
-- description: ''
+- description: '`ReplaceLazyCollectionAnnotationTest#methodAnnotation_shouldKeepPreviousArguments_whenFetchTypeIsAdded`'
   sources:
   - before: |
       import org.hibernate.annotations.LazyCollection;
@@ -362,7 +362,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.TypeAnnotationParameter
 examples:
-- description: ''
+- description: '`TypeAnnotationParameterTest#onlyOneParameter`'
   sources:
   - before: |
       import org.hibernate.annotations.Type;
@@ -385,7 +385,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.validator.HibernateValidator_8_0
 examples:
-- description: ''
+- description: '`HibernateValidator80Test#changeDependency`'
   sources:
   - before: |
       <?xml version="1.0" encoding="UTF-8"?>
