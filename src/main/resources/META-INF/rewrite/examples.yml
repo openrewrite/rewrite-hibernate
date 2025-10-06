@@ -133,6 +133,97 @@ examples:
     language: java
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.MigrateToHibernate60
+examples:
+- description: '`MigrateToHibernate60Test#removesEntityManager`'
+  sources:
+  - before: a
+    language: mavenProject
+  - before: b
+    language: mavenProject
+  - before: |
+      <project>
+        <groupId>org.example</groupId>
+        <artifactId>a</artifactId>
+        <version>1.0.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>5.6.15.Final</version>
+          </dependency>
+        </dependencies>
+      </project>
+    after: |
+      <project>
+        <groupId>org.example</groupId>
+        <artifactId>a</artifactId>
+        <version>1.0.0</version>
+      </project>
+    path: pom.xml
+    language: xml
+  - before: |
+      <project>
+        <groupId>org.example</groupId>
+        <artifactId>b</artifactId>
+        <version>1.0.0</version>
+        <dependencyManagement>
+          <dependencies>
+            <dependency>
+              <groupId>org.hibernate</groupId>
+              <artifactId>hibernate-entitymanager</artifactId>
+              <version>5.6.15.Final</version>
+            </dependency>
+          </dependencies>
+        </dependencyManagement>
+      </project>
+    after: |
+      <project>
+        <groupId>org.example</groupId>
+        <artifactId>b</artifactId>
+        <version>1.0.0</version>
+      </project>
+    path: pom.xml
+    language: xml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.MigrateToHibernate61
+examples:
+- description: '`MigrateToHibernate61Test#groupIdHypersistenceUtilsRenamedAndPackageUpdated`'
+  sources:
+  - before: |
+      import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+
+      public class TestApplication {
+      }
+    after: |
+      import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+
+      public class TestApplication {
+      }
+    language: java
+  - before: Sample
+    language: mavenProject
+  - before: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
+        <groupId>com.example</groupId>
+        <artifactId>demo</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-52</artifactId>
+            <version>2.17.1</version>
+          </dependency>
+        </dependencies>
+      </project>
+    path: pom.xml
+    language: xml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.MigrateUserType
 examples:
 - description: '`MigrateUserTypeTest#shouldMigrateUserType`'
