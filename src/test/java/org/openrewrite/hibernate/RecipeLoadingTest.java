@@ -21,7 +21,7 @@ import org.openrewrite.test.RewriteTest;
 class RecipeLoadingTest implements RewriteTest {
 
     @Test
-    void testRecipeLoading() {
+    void recipeLoading() {
         assertRecipesConfigure();
     }
 }
