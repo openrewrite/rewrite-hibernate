@@ -16,7 +16,7 @@
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.hibernate.MigrateToHibernate71
+name: org.openrewrite.hibernate.MigrateToHibernate66
 displayName: Migrate to Hibernate 6.6.x
 description: >-
   This recipe will apply changes commonly needed when migrating to Hibernate 6.6.x.
