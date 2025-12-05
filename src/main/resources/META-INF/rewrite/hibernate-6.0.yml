@@ -32,7 +32,7 @@ recipeList:
   - org.openrewrite.hibernate.TypeDescriptorToType
   - org.openrewrite.java.migrate.jakarta.JavaxPersistenceToJakartaPersistence
   - org.openrewrite.java.migrate.jakarta.JavaxPersistenceXmlToJakartaPersistenceXml
-  - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.0
+  - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate60
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
@@ -237,7 +237,7 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate6.0
+name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate60
 displayName: Migrate Hibernate Types to Hypersistence Utils 6.0
 description: >-
   This recipe will migrate any existing dependencies on `com.vladmihalcea:hibernate-types` to `io.hypersistence:hypersistence-utils-hibernate-60`.
