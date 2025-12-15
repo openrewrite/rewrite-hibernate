@@ -121,8 +121,8 @@ public class AddScalarPreferStandardBasicTypes extends Recipe {
 
                 Optional<String> standardBasicTypesConstant = findConvertibleStandardBasicTypesConstant(secondArgType);
                 if (standardBasicTypesConstant.isPresent()) {
-                    maybeAddImport(STANDARD_BASIC_TYPES_FQN);
                     maybeRemoveImport(secondArgType.toString());
+                    maybeAddImport(STANDARD_BASIC_TYPES_FQN);
                     return JavaTemplate.builder("#{}, StandardBasicTypes.#{}")
                             .imports(STANDARD_BASIC_TYPES_FQN)
                             .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6.+"))

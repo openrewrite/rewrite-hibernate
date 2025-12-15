@@ -107,8 +107,8 @@ public class TypeAnnotationParameter extends Recipe {
                 //noinspection ConstantValue
                 if (temporalType.get() != null) {
                     maybeAddImport("jakarta.persistence.Temporal");
-                    maybeAddImport("jakarta.persistence.TemporalType");
                     maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPE);
+                    maybeAddImport("jakarta.persistence.TemporalType");
                     return JavaTemplate.builder("@Temporal(TemporalType." + temporalType.get().toUpperCase() + ")")
                             .doBeforeParseTemplate(System.out::println)
                             .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))

@@ -111,8 +111,8 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
                         .build()
                         .apply(getCursor(), assignment.getCoordinates().replace(), map);
 
-                maybeAddImport("org.hibernate.jdbc.Expectation");
                 maybeRemoveImport("org.hibernate.annotations.ResultCheckStyle");
+                maybeAddImport("org.hibernate.jdbc.Expectation");
                 doAfterVisit(new ShortenFullyQualifiedTypeReferences().getVisitor());
                 return updatedAnnotation;
             }

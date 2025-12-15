@@ -99,8 +99,8 @@ public class MigrateBooleanMappings extends Recipe {
                                     .build().apply(getCursor(), ann.getCoordinates().replace());
 
                             maybeAddImport("jakarta.persistence.Convert");
-                            maybeAddImport(converterFQN);
                             maybeRemoveImport("org.hibernate.annotations.Type");
+                            maybeAddImport(converterFQN);
                         }
 
                         return ann;
