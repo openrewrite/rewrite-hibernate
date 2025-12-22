@@ -117,8 +117,9 @@ class TypeAnnotationParameterTest implements RewriteTest {
           //language=java
           java(
             """
-              import java.util.Date;
               import org.hibernate.annotations.Type;
+
+              import java.util.Date;
 
               public class TestApplication {
                   @Type(type = "timestamp")
@@ -126,10 +127,10 @@ class TypeAnnotationParameterTest implements RewriteTest {
               }
               """,
             """
-              import java.util.Date;
-
               import jakarta.persistence.Temporal;
               import jakarta.persistence.TemporalType;
+
+              import java.util.Date;
 
               public class TestApplication {
                   @Temporal(TemporalType.TIMESTAMP)
