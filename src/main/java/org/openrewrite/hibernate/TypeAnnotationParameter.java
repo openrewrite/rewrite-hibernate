@@ -75,6 +75,12 @@ public class TypeAnnotationParameter extends Recipe {
                         String alias = (String) ((J.Literal) name).getValue();
                         Expression typeClass = getAttributeValue(annotation, "typeClass");
                         getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, alias, typeClass);
+
+                        // Remove import for the typeClass since we'll use fully qualified name in @Type
+                        String fullyQualifiedTypeName = getFullyQualifiedTypeName(typeClass);
+                        if (fullyQualifiedTypeName != null) {
+                            maybeRemoveImport(fullyQualifiedTypeName);
+                        }
                     }
                     // Always remove @TypeDef
                     maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
@@ -169,44 +175,106 @@ public class TypeAnnotationParameter extends Recipe {
 
                             // Look for typeDef alias on class declaration
                             Expression nearestMessage = getCursor().getNearestMessage(fqTypeName);
-                            if (nearestMessage != null) {
-                                if (isOnlyParameter) {
-                                    return nearestMessage.withPrefix(Space.EMPTY);
-                                }
-                                return assignment
-                                        .withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value"))
-                                        .withAssignment(nearestMessage);
-                            }
-
-                            // Create a new field access to the class
-                            J.Identifier identifier = new J.Identifier(
-                                    Tree.randomId(),
-                                    Space.EMPTY,
-                                    Markers.EMPTY,
-                                    emptyList(),
-                                    getSimpleName(fqTypeName),
-                                    JavaType.buildType(fqTypeName),
-                                    null);
-                            J.FieldAccess fa = new J.FieldAccess(
-                                    Tree.randomId(),
-                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
-                                    assignment.getAssignment().getMarkers(),
-                                    identifier,
-                                    JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
-                                    JavaType.buildType("java.lang.Class")
+                            String fullyQualifiedTypeName =
+                                    nearestMessage != null ? getFullyQualifiedTypeName(nearestMessage) : fqTypeName;
+                            Expression classRef = buildClassReference(
+                                    fullyQualifiedTypeName,
+                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix()
                             );
-                            maybeAddImport(fqTypeName);
+
                             if (isOnlyParameter) {
-                                return fa;
+                                return classRef;
                             }
-                            return assignment.withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value")).withAssignment(fa);
+                            return assignment
+                                    .withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value"))
+                                    .withAssignment(classRef);
                         }
                     }
                     return arg;
                 }));
             }
+
+            private J.FieldAccess buildCommonJavaLangClassReference(String simpleName, String fullyQualifiedName, Space prefix) {
+                J.Identifier identifier = new J.Identifier(
+                        Tree.randomId(),
+                        Space.EMPTY,
+                        Markers.EMPTY,
+                        emptyList(),
+                        simpleName,
+                        JavaType.buildType(fullyQualifiedName),
+                        null
+                );
+                return new J.FieldAccess(
+                        Tree.randomId(),
+                        prefix,
+                        Markers.EMPTY,
+                        identifier,
+                        JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
+                        JavaType.buildType("java.lang.Class")
+                );
+            }
+
+            private J.FieldAccess buildClassReference(String fullyQualifiedName, Space prefix) {
+                String javaLangClassName = fullyQualifiedName.startsWith("java.lang.") ?
+                        fullyQualifiedName :
+                        TypeUtils.findQualifiedJavaLangTypeName(fullyQualifiedName);
+                if (javaLangClassName != null) {
+                    return buildCommonJavaLangClassReference(
+                            getSimpleName(fullyQualifiedName),
+                            fullyQualifiedName,
+                            prefix);
+                }
+                String[] parts = fullyQualifiedName.split("\\.");
+                Expression current = new J.Identifier(
+                        Tree.randomId(),
+                        Space.EMPTY,
+                        Markers.EMPTY,
+                        emptyList(),
+                        parts[0],
+                        null,
+                        null
+                );
+
+                for (int i = 1; i < parts.length; i++) {
+                    current = new J.FieldAccess(
+                            Tree.randomId(),
+                            Space.EMPTY,
+                            Markers.EMPTY,
+                            current,
+                            JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), parts[i], null, null)),
+                            null
+                    );
+                }
+
+                // Add .class at the end
+                return new J.FieldAccess(
+                        Tree.randomId(),
+                        prefix,
+                        Markers.EMPTY,
+                        current,
+                        JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
+                        JavaType.buildType("java.lang.Class")
+                );
+            }
         };
         return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), visitor);
+    }
+
+    private static @Nullable String getFullyQualifiedTypeName(@Nullable Expression expr) {
+        if (expr instanceof J.FieldAccess) {
+            return stripClassSuffix(((J.FieldAccess) expr).toString());
+        }
+        if (expr instanceof JavaType.Parameterized) {
+            List<JavaType> types = ((JavaType.Parameterized)expr).getTypeParameters();
+            if (types.size() == 1 && types.get(0) instanceof JavaType.FullyQualified) {
+                return stripClassSuffix(((JavaType.FullyQualified)types.get(0)).getFullyQualifiedName());
+            }
+        }
+        return null;
+    }
+
+    private static String stripClassSuffix(String fqName) {
+        return fqName.endsWith(".class") ? fqName.substring(0, fqName.length() - 6) : fqName;
     }
 
     private static String getSimpleName(String fqName) {

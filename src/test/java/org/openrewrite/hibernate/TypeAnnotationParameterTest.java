@@ -50,10 +50,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-              import java.util.concurrent.atomic.AtomicBoolean;
-
               public class TestApplication {
-                  @Type(AtomicBoolean.class)
+                  @Type(java.util.concurrent.atomic.AtomicBoolean.class)
                   Object a;
               }
               """
@@ -77,10 +75,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-              import java.util.concurrent.atomic.AtomicBoolean;
-
               class TestApplication {
-                  @Type(value = AtomicBoolean.class, parameters = {})
+                  @Type(value = java.util.concurrent.atomic.AtomicBoolean.class, parameters = {})
                   Object a;
               }
               """
@@ -193,6 +189,35 @@ class TypeAnnotationParameterTest implements RewriteTest {
               public class TestApplication {
                   @Type(value = String.class, parameters = {})
                   Object a;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void simpleTypeDefOnClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.TypeDef;
+              import org.hibernate.annotations.Type;
+
+              @TypeDef(name = "json", typeClass = io.hypersistence.utils.hibernate.type.json.JsonType.class)
+              class MyEntity {
+                  @Type(type = "json")
+                  private String data;
+              }
+              """,
+            //language=java
+            """
+              import org.hibernate.annotations.Type;
+
+
+              class MyEntity {
+                  @Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
+                  private String data;
               }
               """
           )
