@@ -42,7 +42,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
                   Object a;
               }
@@ -50,7 +50,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(java.util.concurrent.atomic.AtomicBoolean.class)
                   Object a;
               }
@@ -92,13 +92,13 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "org.hibernate.type.TextType")
                   Object a;
               }
               """,
             """
-              public class TestApplication {
+              class TestApplication {
                  \s
                   Object a;
               }
@@ -117,7 +117,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
               import java.util.Date;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "timestamp")
                   Date a;
               }
@@ -128,7 +128,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
               import java.util.Date;
 
-              public class TestApplication {
+              class TestApplication {
                   @Temporal(TemporalType.TIMESTAMP)
                   Date a;
               }
@@ -148,7 +148,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import org.hibernate.annotations.TypeDef;
 
               @TypeDef(name = "stringy", typeClass = String.class)
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "stringy")
                   Object a;
               }
@@ -157,7 +157,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import org.hibernate.annotations.Type;
 
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(String.class)
                   Object a;
               }
@@ -177,7 +177,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import org.hibernate.annotations.TypeDef;
 
               @TypeDef(name = "stringy", typeClass = String.class)
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "stringy", parameters = {})
                   Object a;
               }
@@ -186,7 +186,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import org.hibernate.annotations.Type;
 
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(value = String.class, parameters = {})
                   Object a;
               }
@@ -196,7 +196,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
     }
 
     @Test
-    void simpleTypeDefOnClass() {
+    void qualifiedTypeClass() {
         rewriteRun(
           //language=java
           java(
@@ -235,7 +235,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import java.util.concurrent.atomic.AtomicBoolean;
 
               @TypeDef(name = "bool", typeClass = AtomicBoolean.class)
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "bool")
                   Object a;
               }
@@ -245,7 +245,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import java.util.concurrent.atomic.AtomicBoolean;
 
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(AtomicBoolean.class)
                   Object a;
               }
@@ -255,7 +255,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
     }
 
     @Test
-    void simpleTypeDefsOnClass() {
+    void qualifiedTypeDefsOnClass() {
         rewriteRun(
           //language=java
           java(
