@@ -77,12 +77,6 @@ public class TypeAnnotationParameter extends Recipe {
                         String alias = (String) ((J.Literal) name).getValue();
                         Expression typeClass = getAttributeValue(annotation, "typeClass");
                         getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, alias, typeClass);
-
-                        // Remove import for the typeClass since we'll use fully qualified name in @Type
-                        String fullyQualifiedTypeName = getFullyQualifiedTypeName(typeClass);
-                        if (fullyQualifiedTypeName != null) {
-                            maybeRemoveImport(fullyQualifiedTypeName);
-                        }
                     }
                     // Always remove @TypeDef
                     maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
@@ -131,7 +125,7 @@ public class TypeAnnotationParameter extends Recipe {
                 }
 
                 // Replace argument with .class reference to the same type
-                return replaceArgumentWithClass(a);
+                return replaceArgumentWithClass(a, ctx);
             }
 
             private @Nullable Expression getAttributeValue(J.Annotation annotation, String attributeName) {
@@ -169,7 +163,7 @@ public class TypeAnnotationParameter extends Recipe {
                 return temporalType;
             }
 
-            private J.Annotation replaceArgumentWithClass(J.Annotation a) {
+            private J.Annotation replaceArgumentWithClass(J.Annotation a, ExecutionContext ctx) {
                 final boolean isOnlyParameter = a.getArguments() != null && a.getArguments().size() == 1;
                 // Replace type parameter with value parameter
                 return a.withArguments(ListUtils.map(a.getArguments(), arg -> {
@@ -180,17 +174,17 @@ public class TypeAnnotationParameter extends Recipe {
                                 assignment.getAssignment() instanceof J.Literal) {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
 
-                            // Look for typeDef alias on class declaration
                             Expression nearestMessage = getCursor().getNearestMessage(fqTypeName);
-                            String fullyQualifiedTypeName =
-                                    nearestMessage != null ? getFullyQualifiedTypeName(nearestMessage) : fqTypeName;
-                            Expression classRef = buildClassReference(
-                                    fullyQualifiedTypeName,
-                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix()
-                            );
+                            Expression classRef =
+                                    nearestMessage != null && nearestMessage.getType() != JavaType.Unknown.getInstance() ?
+                                            nearestMessage :
+                                            buildClassReference(
+                                                    nearestMessage != null ? getFullyQualifiedTypeName(nearestMessage) : fqTypeName,
+                                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix()
+                                            );
 
                             if (isOnlyParameter) {
-                                return classRef;
+                                return classRef.withPrefix(Space.EMPTY);
                             }
                             return assignment
                                     .withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value"))
@@ -267,9 +261,9 @@ public class TypeAnnotationParameter extends Recipe {
         return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), visitor);
     }
 
-    private static @Nullable String getFullyQualifiedTypeName(@Nullable Expression expr) {
+    private static @Nullable String getFullyQualifiedTypeName(Expression expr) {
         if (expr instanceof J.FieldAccess) {
-            JavaType.Parameterized parameterizedType = TypeUtils.asParameterized(((J.FieldAccess) expr).getType());
+            JavaType.Parameterized parameterizedType = TypeUtils.asParameterized((expr).getType());
             if (parameterizedType != null) {
                 JavaType typeArgument = parameterizedType.getTypeParameters().get(0);
                 JavaType.FullyQualified fqType = TypeUtils.asFullyQualified(typeArgument);

@@ -242,10 +242,11 @@ class TypeAnnotationParameterTest implements RewriteTest {
               """,
             """
               import org.hibernate.annotations.Type;
+              import java.util.concurrent.atomic.AtomicBoolean;
 
 
               public class TestApplication {
-                  @Type(java.util.concurrent.atomic.AtomicBoolean.class)
+                  @Type(AtomicBoolean.class)
                   Object a;
               }
               """
