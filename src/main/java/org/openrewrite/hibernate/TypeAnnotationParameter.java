@@ -261,16 +261,7 @@ public class TypeAnnotationParameter extends Recipe {
     }
 
     private static @Nullable String getFullyQualifiedTypeName(@Nullable Expression expr) {
-        if (expr instanceof J.FieldAccess) {
-            return stripClassSuffix(((J.FieldAccess) expr).toString());
-        }
-        if (expr instanceof JavaType.Parameterized) {
-            List<JavaType> types = ((JavaType.Parameterized)expr).getTypeParameters();
-            if (types.size() == 1 && types.get(0) instanceof JavaType.FullyQualified) {
-                return stripClassSuffix(((JavaType.FullyQualified)types.get(0)).getFullyQualifiedName());
-            }
-        }
-        return null;
+        return expr instanceof J.FieldAccess ? stripClassSuffix(((J.FieldAccess) expr).toString()) : null;
     }
 
     private static String stripClassSuffix(String fqName) {
