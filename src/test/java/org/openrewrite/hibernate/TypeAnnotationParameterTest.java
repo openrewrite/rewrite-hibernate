@@ -225,6 +225,35 @@ class TypeAnnotationParameterTest implements RewriteTest {
     }
 
     @Test
+    void importedTypeClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.Type;
+              import org.hibernate.annotations.TypeDef;
+              import java.util.concurrent.atomic.AtomicBoolean;
+
+              @TypeDef(name = "bool", typeClass = AtomicBoolean.class)
+              public class TestApplication {
+                  @Type(type = "bool")
+                  Object a;
+              }
+              """,
+            """
+              import org.hibernate.annotations.Type;
+
+
+              public class TestApplication {
+                  @Type(java.util.concurrent.atomic.AtomicBoolean.class)
+                  Object a;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void simpleTypeDefsOnClass() {
         rewriteRun(
           //language=java
