@@ -149,22 +149,19 @@ public class TypeAnnotationParameter extends Recipe {
                 return null;
             }
 
-            private AtomicReference<String> getTemporalTypeArgument(J.Annotation a) {
-                AtomicReference<String> temporalType = new AtomicReference<>();
-                new JavaIsoVisitor<AtomicReference<String>>() {
+            private AtomicReference<@Nullable String> getTemporalTypeArgument(J.Annotation a) {
+                return new JavaIsoVisitor<AtomicReference<@Nullable String>>() {
                     @Override
-                    public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<String> ref) {
+                    public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<@Nullable String> ref) {
                         J.Assignment as = super.visitAssignment(assignment, ref);
                         if (J.Literal.isLiteralValue(as.getAssignment(), "date") ||
                                 J.Literal.isLiteralValue(as.getAssignment(), "time") ||
                                 J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
-                            //noinspection DataFlowIssue
                             ref.set((String) ((J.Literal) as.getAssignment()).getValue());
                         }
                         return as;
                     }
-                }.visitNonNull(a, temporalType);
-                return temporalType;
+                }.reduce(a, new AtomicReference<>());
             }
 
             private J.Annotation replaceArgumentWithClass(J.Annotation a, ExecutionContext ctx) {
