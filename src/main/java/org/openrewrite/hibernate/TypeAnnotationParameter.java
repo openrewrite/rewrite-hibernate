@@ -25,6 +25,7 @@ import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
+import org.openrewrite.marker.Markup;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -84,8 +85,11 @@ public class TypeAnnotationParameter extends Recipe {
                 }
 
                 if (FQN_TYPEDEFS_ANNOTATION.matches(a)) {
-                    maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
-                    return null;
+                    if (a.getArguments() == null || a.getArguments().isEmpty() || a.getArguments().get(0) instanceof J.Empty) {
+                        maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
+                        return null;
+                    }
+                    return Markup.warn(a, new IllegalStateException("Could not convert @TypeDefs annotation automatically"));
                 }
 
                 if (!FQN_TYPE_ANNOTATION.matches(a)) {
