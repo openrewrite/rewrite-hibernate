@@ -129,7 +129,7 @@ public class TypeAnnotationParameter extends Recipe {
                 }
 
                 // Replace argument with .class reference to the same type
-                return replaceArgumentWithClass(a, ctx);
+                return replaceArgumentWithClass(a);
             }
 
             private @Nullable Expression getAttributeValue(J.Annotation annotation, String attributeName) {
@@ -164,7 +164,7 @@ public class TypeAnnotationParameter extends Recipe {
                 }.reduce(a, new AtomicReference<>());
             }
 
-            private J.Annotation replaceArgumentWithClass(J.Annotation a, ExecutionContext ctx) {
+            private J.Annotation replaceArgumentWithClass(J.Annotation a) {
                 final boolean isOnlyParameter = a.getArguments() != null && a.getArguments().size() == 1;
                 // Replace type parameter with value parameter
                 return a.withArguments(ListUtils.map(a.getArguments(), arg -> {
