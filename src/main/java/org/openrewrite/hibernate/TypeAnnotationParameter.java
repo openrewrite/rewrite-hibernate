@@ -272,13 +272,10 @@ public class TypeAnnotationParameter extends Recipe {
                     return fqType.getFullyQualifiedName();
                 }
             }
-            return stripClassSuffix(((J.FieldAccess) expr).toString());
+            String fqName = ((J.FieldAccess) expr).toString();
+            return fqName.endsWith(".class") ? fqName.substring(0, fqName.length() - 6) : fqName;
         }
         return null;
-    }
-
-    private static String stripClassSuffix(String fqName) {
-        return fqName.endsWith(".class") ? fqName.substring(0, fqName.length() - 6) : fqName;
     }
 
     private static String getSimpleName(String fqName) {
