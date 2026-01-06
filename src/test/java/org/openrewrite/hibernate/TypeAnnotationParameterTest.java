@@ -223,4 +223,38 @@ class TypeAnnotationParameterTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void simpleTypeDefsOnClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.TypeDefs;
+              import org.hibernate.annotations.TypeDef;
+              import org.hibernate.annotations.Type;
+
+              @TypeDefs(@TypeDef(name = "json", typeClass = io.hypersistence.utils.hibernate.type.json.JsonType.class))
+              class MyEntity {
+                  @Type(type = "json")
+                  private String data;
+              }
+
+              class JsonType {}
+              """,
+            //language=java
+            """
+              import org.hibernate.annotations.Type;
+
+
+              class MyEntity {
+                  @Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
+                  private String data;
+              }
+
+              class JsonType {}
+              """
+          )
+        );
+    }
 }

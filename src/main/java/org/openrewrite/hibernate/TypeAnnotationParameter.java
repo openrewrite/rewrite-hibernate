@@ -41,6 +41,8 @@ public class TypeAnnotationParameter extends Recipe {
     private static final AnnotationMatcher FQN_TYPE_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPE);
     private static final String ORG_HIBERNATE_ANNOTATIONS_TYPEDEF = "org.hibernate.annotations.TypeDef";
     private static final AnnotationMatcher FQN_TYPEDEF_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
+    private static final String ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS = "org.hibernate.annotations.TypeDefs";
+    private static final AnnotationMatcher FQN_TYPEDEFS_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
 
     @Override
     public String getDisplayName() {
@@ -84,6 +86,11 @@ public class TypeAnnotationParameter extends Recipe {
                     }
                     // Always remove @TypeDef
                     maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
+                    return null;
+                }
+
+                if (FQN_TYPEDEFS_ANNOTATION.matches(a)) {
+                    maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
                     return null;
                 }
 
