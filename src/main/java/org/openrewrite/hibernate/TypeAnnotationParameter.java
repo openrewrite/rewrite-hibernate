@@ -196,36 +196,7 @@ public class TypeAnnotationParameter extends Recipe {
                 }));
             }
 
-            private J.FieldAccess buildCommonJavaLangClassReference(String simpleName, String fullyQualifiedName, Space prefix) {
-                J.Identifier identifier = new J.Identifier(
-                        Tree.randomId(),
-                        Space.EMPTY,
-                        Markers.EMPTY,
-                        emptyList(),
-                        simpleName,
-                        JavaType.buildType(fullyQualifiedName),
-                        null
-                );
-                return new J.FieldAccess(
-                        Tree.randomId(),
-                        prefix,
-                        Markers.EMPTY,
-                        identifier,
-                        JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
-                        JavaType.buildType("java.lang.Class")
-                );
-            }
-
             private J.FieldAccess buildClassReference(String fullyQualifiedName, Space prefix) {
-                String javaLangClassName = fullyQualifiedName.startsWith("java.lang.") ?
-                        fullyQualifiedName :
-                        TypeUtils.findQualifiedJavaLangTypeName(fullyQualifiedName);
-                if (javaLangClassName != null) {
-                    return buildCommonJavaLangClassReference(
-                            getSimpleName(fullyQualifiedName),
-                            fullyQualifiedName,
-                            prefix);
-                }
                 String[] parts = fullyQualifiedName.split("\\.");
                 Expression current = new J.Identifier(
                         Tree.randomId(),
@@ -264,26 +235,9 @@ public class TypeAnnotationParameter extends Recipe {
 
     private static @Nullable String getFullyQualifiedTypeName(Expression expr) {
         if (expr instanceof J.FieldAccess) {
-            JavaType.Parameterized parameterizedType = TypeUtils.asParameterized((expr).getType());
-            if (parameterizedType != null) {
-                JavaType typeArgument = parameterizedType.getTypeParameters().get(0);
-                JavaType.FullyQualified fqType = TypeUtils.asFullyQualified(typeArgument);
-                if (fqType != null) {
-                    return fqType.getFullyQualifiedName();
-                }
-            }
             String fqName = ((J.FieldAccess) expr).toString();
             return fqName.endsWith(".class") ? fqName.substring(0, fqName.length() - 6) : fqName;
         }
         return null;
     }
-
-    private static String getSimpleName(String fqName) {
-        int idx = fqName.lastIndexOf('.');
-        if (idx > 0 && idx < fqName.length() - 1) {
-            return fqName.substring(idx + 1);
-        }
-        return fqName;
-    }
-
 }
