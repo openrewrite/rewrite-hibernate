@@ -42,7 +42,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
                   Object a;
               }
@@ -52,7 +52,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
               import java.util.concurrent.atomic.AtomicBoolean;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(AtomicBoolean.class)
                   Object a;
               }
@@ -96,13 +96,13 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "org.hibernate.type.TextType")
                   Object a;
               }
               """,
             """
-              public class TestApplication {
+              class TestApplication {
                  \s
                   Object a;
               }
@@ -121,7 +121,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
               import java.util.Date;
 
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "timestamp")
                   Date a;
               }
@@ -132,7 +132,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
               import java.util.Date;
 
-              public class TestApplication {
+              class TestApplication {
                   @Temporal(TemporalType.TIMESTAMP)
                   Date a;
               }
@@ -152,7 +152,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import org.hibernate.annotations.TypeDef;
 
               @TypeDef(name = "stringy", typeClass = String.class)
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "stringy")
                   Object a;
               }
@@ -160,8 +160,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-
-              public class TestApplication {
+              class TestApplication {
                   @Type(String.class)
                   Object a;
               }
@@ -181,7 +180,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
               import org.hibernate.annotations.TypeDef;
 
               @TypeDef(name = "stringy", typeClass = String.class)
-              public class TestApplication {
+              class TestApplication {
                   @Type(type = "stringy", parameters = {})
                   Object a;
               }
@@ -189,8 +188,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
             """
               import org.hibernate.annotations.Type;
 
-
-              public class TestApplication {
+              class TestApplication {
                   @Type(value = String.class, parameters = {})
                   Object a;
               }
@@ -198,4 +196,132 @@ class TypeAnnotationParameterTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void qualifiedTypeClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.TypeDef;
+              import org.hibernate.annotations.Type;
+
+              @TypeDef(name = "json", typeClass = io.hypersistence.utils.hibernate.type.json.JsonType.class)
+              class MyEntity {
+                  @Type(type = "json")
+                  private String data;
+              }
+              """,
+            //language=java
+            """
+              import io.hypersistence.utils.hibernate.type.json.JsonType;
+              import org.hibernate.annotations.Type;
+
+              class MyEntity {
+                  @Type(JsonType.class)
+                  private String data;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void importedTypeClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.Type;
+              import org.hibernate.annotations.TypeDef;
+              import java.util.concurrent.atomic.AtomicBoolean;
+
+              @TypeDef(name = "bool", typeClass = AtomicBoolean.class)
+              class TestApplication {
+                  @Type(type = "bool")
+                  Object a;
+              }
+              """,
+            """
+              import org.hibernate.annotations.Type;
+              import java.util.concurrent.atomic.AtomicBoolean;
+
+              class TestApplication {
+                  @Type(AtomicBoolean.class)
+                  Object a;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void qualifiedTypeDefsOnClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.TypeDefs;
+              import org.hibernate.annotations.TypeDef;
+              import org.hibernate.annotations.Type;
+
+              @TypeDefs(@TypeDef(name = "json", typeClass = io.hypersistence.utils.hibernate.type.json.JsonType.class))
+              class MyEntity {
+                  @Type(type = "json")
+                  private String data;
+              }
+
+              class JsonType {}
+              """,
+            //language=java
+            """
+              import io.hypersistence.utils.hibernate.type.json.JsonType;
+              import org.hibernate.annotations.Type;
+
+              class MyEntity {
+                  @Type(JsonType.class)
+                  private String data;
+              }
+
+              class JsonType {}
+              """
+          )
+        );
+    }
+
+    @Test
+    void importedTypeDefsOnClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.TypeDefs;
+              import org.hibernate.annotations.TypeDef;
+              import org.hibernate.annotations.Type;
+              import io.hypersistence.utils.hibernate.type.json.JsonType;
+
+              @TypeDefs(@TypeDef(name = "json", typeClass = JsonType.class))
+              class MyEntity {
+                  @Type(type = "json")
+                  private String data;
+              }
+
+              class JsonType {}
+              """,
+            //language=java
+            """
+              import org.hibernate.annotations.Type;
+              import io.hypersistence.utils.hibernate.type.json.JsonType;
+
+              class MyEntity {
+                  @Type(JsonType.class)
+                  private String data;
+              }
+
+              class JsonType {}
+              """
+          )
+        );
+    }
+
 }

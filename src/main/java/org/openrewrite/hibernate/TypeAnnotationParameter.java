@@ -18,18 +18,15 @@ package org.openrewrite.hibernate;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
+import org.openrewrite.marker.Markup;
 
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -41,6 +38,8 @@ public class TypeAnnotationParameter extends Recipe {
     private static final AnnotationMatcher FQN_TYPE_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPE);
     private static final String ORG_HIBERNATE_ANNOTATIONS_TYPEDEF = "org.hibernate.annotations.TypeDef";
     private static final AnnotationMatcher FQN_TYPEDEF_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
+    private static final String ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS = "org.hibernate.annotations.TypeDefs";
+    private static final AnnotationMatcher FQN_TYPEDEFS_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
 
     @Override
     public String getDisplayName() {
@@ -65,7 +64,7 @@ public class TypeAnnotationParameter extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        JavaIsoVisitor<ExecutionContext> visitor = new JavaIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation a = super.visitAnnotation(annotation, ctx);
@@ -78,7 +77,14 @@ public class TypeAnnotationParameter extends Recipe {
                     }
                     // Always remove @TypeDef
                     maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
-                    return null;
+                    removeTypeDefAnnotations(a);
+                    return a;
+                }
+
+                if (FQN_TYPEDEFS_ANNOTATION.matches(a)) {
+                    maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
+                    removeTypeDefAnnotations(a);
+                    return a;
                 }
 
                 if (!FQN_TYPE_ANNOTATION.matches(a)) {
@@ -122,38 +128,33 @@ public class TypeAnnotationParameter extends Recipe {
             }
 
             private @Nullable Expression getAttributeValue(J.Annotation annotation, String attributeName) {
-                List<Expression> arguments = annotation.getArguments();
-                if (arguments == null) {
-                    return null;
-                }
-                for (Expression arg : arguments) {
-                    if (arg instanceof J.Assignment) {
-                        J.Assignment assignment = (J.Assignment) arg;
-                        if (assignment.getVariable() instanceof J.Identifier &&
-                                attributeName.equals(((J.Identifier) assignment.getVariable()).getSimpleName())) {
-                            return assignment.getAssignment();
+                if (annotation.getArguments() != null) {
+                    for (Expression arg : annotation.getArguments()) {
+                        if (arg instanceof J.Assignment) {
+                            J.Assignment assignment = (J.Assignment) arg;
+                            if (assignment.getVariable() instanceof J.Identifier &&
+                                    attributeName.equals(((J.Identifier) assignment.getVariable()).getSimpleName())) {
+                                return assignment.getAssignment();
+                            }
                         }
                     }
                 }
                 return null;
             }
 
-            private AtomicReference<String> getTemporalTypeArgument(J.Annotation a) {
-                AtomicReference<String> temporalType = new AtomicReference<>();
-                new JavaIsoVisitor<AtomicReference<String>>() {
+            private AtomicReference<@Nullable String> getTemporalTypeArgument(J.Annotation a) {
+                return new JavaIsoVisitor<AtomicReference<@Nullable String>>() {
                     @Override
-                    public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<String> ref) {
+                    public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<@Nullable String> ref) {
                         J.Assignment as = super.visitAssignment(assignment, ref);
                         if (J.Literal.isLiteralValue(as.getAssignment(), "date") ||
                                 J.Literal.isLiteralValue(as.getAssignment(), "time") ||
                                 J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
-                            //noinspection DataFlowIssue
                             ref.set((String) ((J.Literal) as.getAssignment()).getValue());
                         }
                         return as;
                     }
-                }.visitNonNull(a, temporalType);
-                return temporalType;
+                }.reduce(a, new AtomicReference<>());
             }
 
             private J.Annotation replaceArgumentWithClass(J.Annotation a) {
@@ -167,54 +168,70 @@ public class TypeAnnotationParameter extends Recipe {
                                 assignment.getAssignment() instanceof J.Literal) {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
 
-                            // Look for typeDef alias on class declaration
                             Expression nearestMessage = getCursor().getNearestMessage(fqTypeName);
-                            if (nearestMessage != null) {
-                                if (isOnlyParameter) {
-                                    return nearestMessage.withPrefix(Space.EMPTY);
-                                }
-                                return assignment
-                                        .withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value"))
-                                        .withAssignment(nearestMessage);
-                            }
+                            Expression classRef = nearestMessage != null && nearestMessage.getType() != JavaType.Unknown.getInstance() ?
+                                    nearestMessage :
+                                    buildClassReference(
+                                            nearestMessage != null ? getFullyQualifiedTypeName(nearestMessage) : fqTypeName,
+                                            isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix());
 
-                            // Create a new field access to the class
-                            J.Identifier identifier = new J.Identifier(
-                                    Tree.randomId(),
-                                    Space.EMPTY,
-                                    Markers.EMPTY,
-                                    emptyList(),
-                                    getSimpleName(fqTypeName),
-                                    JavaType.buildType(fqTypeName),
-                                    null);
-                            J.FieldAccess fa = new J.FieldAccess(
-                                    Tree.randomId(),
-                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix(),
-                                    assignment.getAssignment().getMarkers(),
-                                    identifier,
-                                    JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
-                                    JavaType.buildType("java.lang.Class")
-                            );
-                            maybeAddImport(fqTypeName);
                             if (isOnlyParameter) {
-                                return fa;
+                                return classRef.withPrefix(Space.EMPTY);
                             }
-                            return assignment.withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value")).withAssignment(fa);
+                            return assignment
+                                    .withVariable(((J.Identifier) assignment.getVariable()).withSimpleName("value"))
+                                    .withAssignment(classRef);
                         }
                     }
                     return arg;
                 }));
             }
-        };
-        return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), visitor);
+
+            private J.FieldAccess buildClassReference(String fullyQualifiedName, Space prefix) {
+                String[] parts = fullyQualifiedName.split("\\.");
+                J.Identifier identifier = new J.Identifier(
+                        Tree.randomId(),
+                        Space.EMPTY,
+                        Markers.EMPTY,
+                        emptyList(),
+                        parts[parts.length - 1],
+                        JavaType.buildType(fullyQualifiedName),
+                        null
+                );
+                // Add .class at the end
+                maybeAddImport(fullyQualifiedName);
+                return new J.FieldAccess(
+                        Tree.randomId(),
+                        prefix,
+                        Markers.EMPTY,
+                        identifier,
+                        JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
+                        JavaType.buildType("java.lang.Class")
+                );
+            }
+
+            private void removeTypeDefAnnotations(J.Annotation typeDefAnnotation) {
+                doAfterVisit(new RemoveAnnotationVisitor(new AnnotationMatcher("@org.hibernate.annotations.TypeDef*") {
+                    @Override
+                    public boolean matches(J.Annotation a) {
+                        if (a == typeDefAnnotation) {
+                            return true;
+                        }
+                        if (FQN_TYPEDEFS_ANNOTATION.matches(a)) {
+                            return a.getArguments() == null || a.getArguments().isEmpty() || a.getArguments().get(0) instanceof J.Empty;
+                        }
+                        return false;
+                    }
+                }));
+            }
+        });
     }
 
-    private static String getSimpleName(String fqName) {
-        int idx = fqName.lastIndexOf('.');
-        if (idx > 0 && idx < fqName.length() - 1) {
-            return fqName.substring(idx + 1);
+    private static @Nullable String getFullyQualifiedTypeName(Expression expr) {
+        if (expr instanceof J.FieldAccess) {
+            String fqName = ((J.FieldAccess) expr).toString();
+            return fqName.endsWith(".class") ? fqName.substring(0, fqName.length() - 6) : fqName;
         }
-        return fqName;
+        return null;
     }
-
 }
