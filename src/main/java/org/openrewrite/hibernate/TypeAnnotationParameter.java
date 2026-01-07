@@ -30,7 +30,6 @@ import org.openrewrite.marker.Markup;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -68,7 +67,7 @@ public class TypeAnnotationParameter extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        JavaIsoVisitor<ExecutionContext> visitor = new JavaIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation a = super.visitAnnotation(annotation, ctx);
@@ -133,16 +132,14 @@ public class TypeAnnotationParameter extends Recipe {
             }
 
             private @Nullable Expression getAttributeValue(J.Annotation annotation, String attributeName) {
-                List<Expression> arguments = annotation.getArguments();
-                if (arguments == null) {
-                    return null;
-                }
-                for (Expression arg : arguments) {
-                    if (arg instanceof J.Assignment) {
-                        J.Assignment assignment = (J.Assignment) arg;
-                        if (assignment.getVariable() instanceof J.Identifier &&
-                                attributeName.equals(((J.Identifier) assignment.getVariable()).getSimpleName())) {
-                            return assignment.getAssignment();
+                if (annotation.getArguments() != null) {
+                    for (Expression arg : annotation.getArguments()) {
+                        if (arg instanceof J.Assignment) {
+                            J.Assignment assignment = (J.Assignment) arg;
+                            if (assignment.getVariable() instanceof J.Identifier &&
+                                    attributeName.equals(((J.Identifier) assignment.getVariable()).getSimpleName())) {
+                                return assignment.getAssignment();
+                            }
                         }
                     }
                 }
@@ -176,13 +173,11 @@ public class TypeAnnotationParameter extends Recipe {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
 
                             Expression nearestMessage = getCursor().getNearestMessage(fqTypeName);
-                            Expression classRef =
-                                    nearestMessage != null && nearestMessage.getType() != JavaType.Unknown.getInstance() ?
-                                            nearestMessage :
-                                            buildClassReference(
-                                                    nearestMessage != null ? getFullyQualifiedTypeName(nearestMessage) : fqTypeName,
-                                                    isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix()
-                                            );
+                            Expression classRef = nearestMessage != null && nearestMessage.getType() != JavaType.Unknown.getInstance() ?
+                                    nearestMessage :
+                                    buildClassReference(
+                                            nearestMessage != null ? getFullyQualifiedTypeName(nearestMessage) : fqTypeName,
+                                            isOnlyParameter ? Space.EMPTY : assignment.getAssignment().getPrefix());
 
                             if (isOnlyParameter) {
                                 return classRef.withPrefix(Space.EMPTY);
@@ -204,7 +199,7 @@ public class TypeAnnotationParameter extends Recipe {
                         Markers.EMPTY,
                         emptyList(),
                         parts[0],
-                        null,
+                        JavaType.buildType(fullyQualifiedName),
                         null
                 );
 
@@ -229,8 +224,7 @@ public class TypeAnnotationParameter extends Recipe {
                         JavaType.buildType("java.lang.Class")
                 );
             }
-        };
-        return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), visitor);
+        });
     }
 
     private static @Nullable String getFullyQualifiedTypeName(Expression expr) {
