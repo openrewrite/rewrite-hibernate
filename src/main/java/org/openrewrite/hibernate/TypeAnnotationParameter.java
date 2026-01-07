@@ -193,33 +193,22 @@ public class TypeAnnotationParameter extends Recipe {
 
             private J.FieldAccess buildClassReference(String fullyQualifiedName, Space prefix) {
                 String[] parts = fullyQualifiedName.split("\\.");
-                Expression current = new J.Identifier(
+                J.Identifier identifier = new J.Identifier(
                         Tree.randomId(),
                         Space.EMPTY,
                         Markers.EMPTY,
                         emptyList(),
-                        parts[0],
+                        parts[parts.length -1],
                         JavaType.buildType(fullyQualifiedName),
                         null
                 );
-
-                for (int i = 1; i < parts.length; i++) {
-                    current = new J.FieldAccess(
-                            Tree.randomId(),
-                            Space.EMPTY,
-                            Markers.EMPTY,
-                            current,
-                            JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), parts[i], null, null)),
-                            null
-                    );
-                }
-
                 // Add .class at the end
+                maybeAddImport(fullyQualifiedName);
                 return new J.FieldAccess(
                         Tree.randomId(),
                         prefix,
                         Markers.EMPTY,
-                        current,
+                        identifier,
                         JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
                         JavaType.buildType("java.lang.Class")
                 );
