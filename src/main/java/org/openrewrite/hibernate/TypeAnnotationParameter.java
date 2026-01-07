@@ -18,10 +18,7 @@ package org.openrewrite.hibernate;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
@@ -80,15 +77,14 @@ public class TypeAnnotationParameter extends Recipe {
                     }
                     // Always remove @TypeDef
                     maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEF);
-                    return null;
+                    removeTypeDefAnnotations(a);
+                    return a;
                 }
 
                 if (FQN_TYPEDEFS_ANNOTATION.matches(a)) {
-                    if (a.getArguments() == null || a.getArguments().isEmpty() || a.getArguments().get(0) instanceof J.Empty) {
-                        maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
-                        return null;
-                    }
-                    return Markup.warn(a, new IllegalStateException("Could not convert @TypeDefs annotation automatically"));
+                    maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
+                    removeTypeDefAnnotations(a);
+                    return a;
                 }
 
                 if (!FQN_TYPE_ANNOTATION.matches(a)) {
@@ -198,7 +194,7 @@ public class TypeAnnotationParameter extends Recipe {
                         Space.EMPTY,
                         Markers.EMPTY,
                         emptyList(),
-                        parts[parts.length -1],
+                        parts[parts.length - 1],
                         JavaType.buildType(fullyQualifiedName),
                         null
                 );
@@ -212,6 +208,21 @@ public class TypeAnnotationParameter extends Recipe {
                         JLeftPadded.build(new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "class", null, null)),
                         JavaType.buildType("java.lang.Class")
                 );
+            }
+
+            private void removeTypeDefAnnotations(J.Annotation typeDefAnnotation) {
+                doAfterVisit(new RemoveAnnotationVisitor(new AnnotationMatcher("@org.hibernate.annotations.TypeDef*") {
+                    @Override
+                    public boolean matches(J.Annotation a) {
+                        if (a == typeDefAnnotation) {
+                            return true;
+                        }
+                        if (FQN_TYPEDEFS_ANNOTATION.matches(a)) {
+                            return a.getArguments() == null || a.getArguments().isEmpty() || a.getArguments().get(0) instanceof J.Empty;
+                        }
+                        return false;
+                    }
+                }));
             }
         });
     }
