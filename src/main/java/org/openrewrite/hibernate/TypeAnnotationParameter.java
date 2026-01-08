@@ -22,7 +22,6 @@ import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
-import org.openrewrite.marker.Markup;
 
 import java.time.Duration;
 import java.util.Arrays;

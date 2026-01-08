@@ -458,7 +458,7 @@ examples:
   - before: |
       import org.hibernate.annotations.Type;
 
-      public class TestApplication {
+      class TestApplication {
           @Type(type = "java.util.concurrent.atomic.AtomicBoolean")
           Object a;
       }
@@ -467,7 +467,7 @@ examples:
 
       import java.util.concurrent.atomic.AtomicBoolean;
 
-      public class TestApplication {
+      class TestApplication {
           @Type(AtomicBoolean.class)
           Object a;
       }
