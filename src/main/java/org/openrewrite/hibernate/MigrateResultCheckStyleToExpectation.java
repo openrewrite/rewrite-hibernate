@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -49,16 +50,12 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
                 .collect(toSet());
     }
 
-    @Override
-    public String getDisplayName() {
-        return "Migration of `ResultCheckStyle` to `Expectation`";
-    }
+    @Getter
+    final String displayName = "Migration of `ResultCheckStyle` to `Expectation`";
 
-    @Override
-    public String getDescription() {
-        return "Will migrate the usage of `org.hibernate.annotations.ResultCheckStyle` to `org.hibernate.jdbc.Expectation` " +
-               "in `@SQLInsert`, `@SqlUpdate`, `@SqlDelete` and `@SqlDeleteAll` annotations.";
-    }
+    @Getter
+    final String description = "Will migrate the usage of `org.hibernate.annotations.ResultCheckStyle` to `org.hibernate.jdbc.Expectation` " +
+      "in `@SQLInsert`, `@SqlUpdate`, `@SqlDelete` and `@SqlDeleteAll` annotations.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

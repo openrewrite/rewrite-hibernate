@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -33,16 +34,12 @@ public class EmptyInterceptorToInterface extends Recipe {
     private final String STATEMENT_INSPECTOR = "org.hibernate.resource.jdbc.spi.StatementInspector";
     private static final MethodMatcher ON_PREPARE_STATEMENT = new MethodMatcher("org.hibernate.Interceptor onPrepareStatement(java.lang.String)", true);
 
-    @Override
-    public String getDisplayName() {
-        return "Replace `extends EmptyInterceptor` with `implements Interceptor` and potentially `StatementInspector`";
-    }
+    @Getter
+    final String displayName = "Replace `extends EmptyInterceptor` with `implements Interceptor` and potentially `StatementInspector`";
 
-    @Override
-    public String getDescription() {
-        return "In Hibernate 6.0 the `Interceptor` interface received default implementations therefore the NOOP implementation that could be extended was no longer needed. " +
-               "This recipe migrates 5.x `Interceptor#onPrepareStatement(String)` to 6.0 `StatementInspector#inspect()`.";
-    }
+    @Getter
+    final String description = "In Hibernate 6.0 the `Interceptor` interface received default implementations therefore the NOOP implementation that could be extended was no longer needed. " +
+      "This recipe migrates 5.x `Interceptor#onPrepareStatement(String)` to 6.0 `StatementInspector#inspect()`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

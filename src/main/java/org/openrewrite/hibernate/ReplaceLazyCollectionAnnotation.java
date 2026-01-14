@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -32,15 +33,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class ReplaceLazyCollectionAnnotation extends Recipe {
-    @Override
-    public String getDisplayName() {
-        return "Replace `@LazyCollection` with `jakarta.persistence.FetchType`";
-    }
+    @Getter
+    final String displayName = "Replace `@LazyCollection` with `jakarta.persistence.FetchType`";
 
-    @Override
-    public String getDescription() {
-        return "Adds the `FetchType` to jakarta annotations and deletes `@LazyCollection`.";
-    }
+    @Getter
+    final String description = "Adds the `FetchType` to jakarta annotations and deletes `@LazyCollection`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

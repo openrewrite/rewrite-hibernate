@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -88,17 +89,11 @@ public class AddScalarPreferStandardBasicTypes extends Recipe {
         CONVERTIBLE_TYPES.put("org.hibernate.type.YesNoType", "YES_NO");
     }
 
-    @Override
-    public String getDisplayName() {
-        // language=markdown
-        return "AddScalarPreferStandardBasicTypesForHibernate5";
-    }
+    @Getter
+    final String displayName = "AddScalarPreferStandardBasicTypesForHibernate5";
 
-    @Override
-    public String getDescription() {
-        //language=markdown
-        return "Prefer the use of `StandardBasicTypes.*` in `NativeQuery.addScalar(...)` invocations.";
-    }
+    @Getter
+    final String description = "Prefer the use of `StandardBasicTypes.*` in `NativeQuery.addScalar(...)` invocations.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

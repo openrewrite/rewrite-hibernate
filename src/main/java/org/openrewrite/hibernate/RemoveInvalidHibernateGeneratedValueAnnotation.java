@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -33,15 +34,11 @@ public class RemoveInvalidHibernateGeneratedValueAnnotation extends Recipe {
     private static final AnnotationMatcher MATCHER_ID_ANNOTATION
             = new AnnotationMatcher("@jakarta.persistence.Id", true);
 
-    @Override
-    public String getDisplayName() {
-        return "Remove invalid `@GeneratedValue` annotation";
-    }
+    @Getter
+    final String displayName = "Remove invalid `@GeneratedValue` annotation";
 
-    @Override
-    public String getDescription() {
-        return "Removes `@GeneratedValue` annotation from fields that are not also annotated with `@Id`.";
-    }
+    @Getter
+    final String description = "Removes `@GeneratedValue` annotation from fields that are not also annotated with `@Id`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

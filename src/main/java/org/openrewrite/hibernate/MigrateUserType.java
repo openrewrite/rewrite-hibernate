@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -51,16 +52,12 @@ public class MigrateUserType extends Recipe {
     private static final MethodMatcher RETURNED_CLASS = new MethodMatcher("* returnedClass()");
     private static final MethodMatcher SQL_TYPES = new MethodMatcher("* sqlTypes()");
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate `UserType` to Hibernate 6";
-    }
+    @Getter
+    final String displayName = "Migrate `UserType` to Hibernate 6";
 
-    @Override
-    public String getDescription() {
-        return "With Hibernate 6 the `UserType` interface received a type parameter making it more strictly typed. " +
-               "This recipe applies the changes required to adhere to this change.";
-    }
+    @Getter
+    final String description = "With Hibernate 6 the `UserType` interface received a type parameter making it more strictly typed. " +
+      "This recipe applies the changes required to adhere to this change.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

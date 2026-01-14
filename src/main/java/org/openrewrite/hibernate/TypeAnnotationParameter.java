@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
@@ -40,15 +41,11 @@ public class TypeAnnotationParameter extends Recipe {
     private static final String ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS = "org.hibernate.annotations.TypeDefs";
     private static final AnnotationMatcher FQN_TYPEDEFS_ANNOTATION = new AnnotationMatcher("@" + ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS);
 
-    @Override
-    public String getDisplayName() {
-        return "`@Type` annotation type parameter migration";
-    }
+    @Getter
+    final String displayName = "`@Type` annotation type parameter migration";
 
-    @Override
-    public String getDescription() {
-        return "Hibernate 6.x has 'type' parameter of type String replaced with 'value' of type class.";
-    }
+    @Getter
+    final String description = "Hibernate 6.x has 'type' parameter of type String replaced with 'value' of type class.";
 
     @Override
     public @Nullable Duration getEstimatedEffortPerOccurrence() {

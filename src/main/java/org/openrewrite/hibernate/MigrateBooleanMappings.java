@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -44,15 +45,11 @@ public class MigrateBooleanMappings extends Recipe {
         REPLACEMENTS.put("numeric_boolean", "NumericBooleanConverter");
     }
 
-    @Override
-    public String getDisplayName() {
-        return "Replace boolean type mappings with converters";
-    }
+    @Getter
+    final String displayName = "Replace boolean type mappings with converters";
 
-    @Override
-    public String getDescription() {
-        return "Replaces type mapping of booleans with appropriate attribute converters.";
-    }
+    @Getter
+    final String description = "Replaces type mapping of booleans with appropriate attribute converters.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
