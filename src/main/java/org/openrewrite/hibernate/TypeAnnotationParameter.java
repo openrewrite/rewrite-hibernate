@@ -47,10 +47,8 @@ public class TypeAnnotationParameter extends Recipe {
     @Getter
     final String description = "Hibernate 6.x has 'type' parameter of type String replaced with 'value' of type class.";
 
-    @Override
-    public @Nullable Duration getEstimatedEffortPerOccurrence() {
-        return Duration.ofMinutes(1);
-    }
+    @Getter
+    final Duration estimatedEffortPerOccurrence = Duration.ofMinutes(1);
 
     private static final Set<String> REMOVED_FQNS = new HashSet<>(Arrays.asList(
             "org.hibernate.type.EnumType",
