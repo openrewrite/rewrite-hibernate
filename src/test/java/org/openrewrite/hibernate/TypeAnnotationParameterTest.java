@@ -324,4 +324,55 @@ class TypeAnnotationParameterTest implements RewriteTest {
         );
     }
 
+    @Issue("https://github.com/moderneinc/customer-requests/issues/1651")
+    @Test
+    void standaloneTypeDefWithoutType() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.TypeDef;
+
+              @TypeDef(name = "jsonb", typeClass = String.class)
+              class MyEntity {
+                  private String data;
+              }
+              """,
+            """
+              class MyEntity {
+                  private String data;
+              }
+              """
+          )
+        );
+    }
+
+    @Issue("https://github.com/moderneinc/customer-requests/issues/1651")
+    @Test
+    void standaloneTypeDefsWithoutType() {
+        rewriteRun(
+          spec -> spec.expectedCyclesThatMakeChanges(2),
+          //language=java
+          java(
+            """
+              import org.hibernate.annotations.TypeDef;
+              import org.hibernate.annotations.TypeDefs;
+
+              @TypeDefs({
+                  @TypeDef(name = "jsonb", typeClass = String.class),
+                  @TypeDef(name = "json", typeClass = Integer.class)
+              })
+              class MyEntity {
+                  private String data;
+              }
+              """,
+            """
+              class MyEntity {
+                  private String data;
+              }
+              """
+          )
+        );
+    }
+
 }

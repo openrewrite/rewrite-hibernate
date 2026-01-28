@@ -58,7 +58,10 @@ public class TypeAnnotationParameter extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return Preconditions.check(new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false), new JavaIsoVisitor<ExecutionContext>() {
+        return Preconditions.check(Preconditions.or(
+                new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPE, false),
+                new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPEDEF, false),
+                new UsesType<>(ORG_HIBERNATE_ANNOTATIONS_TYPEDEFS, false)), new JavaIsoVisitor<ExecutionContext>() {
             @Override
             public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation a = super.visitAnnotation(annotation, ctx);
