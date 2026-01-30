@@ -21,6 +21,8 @@ displayName: Migrate to Hibernate Validator 8.0.x
 description: >-
   This recipe will apply changes commonly needed when migrating to Hibernate Validator 8.0.x.
 
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate

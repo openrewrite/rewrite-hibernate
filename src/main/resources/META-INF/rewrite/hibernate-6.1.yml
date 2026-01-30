@@ -23,6 +23,8 @@ description: >-
   be updated to use the new org.hibernate.orm group ID and the recipe will make changes necessary to use Hibernate
   with Jakarta EE 9.0.
 
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernate60
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
