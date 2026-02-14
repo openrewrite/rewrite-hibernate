@@ -110,7 +110,6 @@ public class TypeAnnotationParameter extends Recipe {
                     maybeAddImport("jakarta.persistence.Temporal");
                     maybeAddImport("jakarta.persistence.TemporalType");
                     return JavaTemplate.builder("@Temporal(TemporalType." + temporalType.get().toUpperCase() + ")")
-                            .doBeforeParseTemplate(System.out::println)
                             .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))
                             .imports("jakarta.persistence.Temporal", "jakarta.persistence.TemporalType")
                             .build()

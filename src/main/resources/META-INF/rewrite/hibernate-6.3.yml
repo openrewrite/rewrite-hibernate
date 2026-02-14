@@ -23,7 +23,6 @@ description: >-
 
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernate62
-  - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate62
   - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate63
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
       groupId: org.hibernate.orm

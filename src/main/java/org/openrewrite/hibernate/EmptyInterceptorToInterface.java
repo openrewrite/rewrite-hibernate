@@ -29,9 +29,9 @@ import org.openrewrite.java.tree.*;
 
 public class EmptyInterceptorToInterface extends Recipe {
 
-    private final String EMPTY_INTERCEPTOR = "org.hibernate.EmptyInterceptor";
-    private final String INTERCEPTOR = "org.hibernate.Interceptor";
-    private final String STATEMENT_INSPECTOR = "org.hibernate.resource.jdbc.spi.StatementInspector";
+    private static final String EMPTY_INTERCEPTOR = "org.hibernate.EmptyInterceptor";
+    private static final String INTERCEPTOR = "org.hibernate.Interceptor";
+    private static final String STATEMENT_INSPECTOR = "org.hibernate.resource.jdbc.spi.StatementInspector";
     private static final MethodMatcher ON_PREPARE_STATEMENT = new MethodMatcher("org.hibernate.Interceptor onPrepareStatement(java.lang.String)", true);
 
     @Getter
