@@ -21,6 +21,8 @@ displayName: Migrate to Hibernate 6.4.x
 description: >-
   This recipe will apply changes commonly needed when migrating to Hibernate 6.4.x.
 
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernate63
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:

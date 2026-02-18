@@ -23,6 +23,8 @@ description: >-
   be updated to use the new `org.hibernate.orm` group ID and the recipe will make changes necessary to use Hibernate
   with Jakarta EE 9.0.
 
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernateDependencies60
   - org.openrewrite.hibernate.AddScalarPreferStandardBasicTypes
@@ -43,6 +45,8 @@ description: >-
   include the adjustment to the new `org.hibernate.orm` group ID. It accounts for artifacts names that both do and do
   not include the `jakarta` suffix and it will change both dependencies and managed dependencies.
 
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   # hibernate-agroal
   - org.openrewrite.java.dependencies.ChangeDependency:
@@ -227,6 +231,8 @@ displayName: Rename `JavaTypeDescriptor` and `SqlTypeDescriptor` to `JavaType` a
 description: >-
   Rename `JavaTypeDescriptor` and `SqlTypeDescriptor` to `JavaType` and `SqlType` respectively.
   See https://github.com/hibernate/hibernate-orm/blob/6.0/migration-guide.adoc#type-system for more details.
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: org.hibernate.type.descriptor.java.JavaTypeDescriptor
@@ -243,6 +249,8 @@ description: >-
   This recipe will migrate any existing dependencies on `com.vladmihalcea:hibernate-types` to `io.hypersistence:hypersistence-utils-hibernate-60`.
   This migration will include the adjustment from `com.vladmihalcea` to `io.hypersistence.utils` package name.
 
+preconditions:
+  - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: com.vladmihalcea
