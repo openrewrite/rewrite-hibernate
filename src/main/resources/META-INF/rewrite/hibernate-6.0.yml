@@ -48,23 +48,13 @@ description: >-
 preconditions:
   - org.openrewrite.Singleton
 recipeList:
-  # hibernate-agroal
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-agroal
-      newGroupId: org.hibernate.orm
-      newVersion: 6.0.x
+  # Step 1: Handle jakarta-suffixed artifacts individually (they need artifact renaming)
+  # These run before the glob so they're already at org.hibernate.orm when the glob scans.
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-agroal-jakarta
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-agroal
-      newVersion: 6.0.x
-  # hibernate-c3p0
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-c3p0
-      newGroupId: org.hibernate.orm
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -72,23 +62,11 @@ recipeList:
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-c3p0
       newVersion: 6.0.x
-    # hibernate-community-dialects
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-community-dialects
-      newGroupId: org.hibernate.orm
-      newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-community-dialects-jakarta
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-community-dialects
-      newVersion: 6.0.x
-    # hibernate-core
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-core
-      newGroupId: org.hibernate.orm
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -96,23 +74,11 @@ recipeList:
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-core
       newVersion: 6.0.x
-    # hibernate-envers
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-envers
-      newGroupId: org.hibernate.orm
-      newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-envers-jakarta
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-envers
-      newVersion: 6.0.x
-    # hibernate-graalvm
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-graalvm
-      newGroupId: org.hibernate.orm
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -120,23 +86,11 @@ recipeList:
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-graalvm
       newVersion: 6.0.x
-    # hibernate-hikaricp
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-hikaricp
-      newGroupId: org.hibernate.orm
-      newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-hikaricp-jakarta
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-hikaricp
-      newVersion: 6.0.x
-    # hibernate-jcache
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-jcache
-      newGroupId: org.hibernate.orm
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -144,23 +98,11 @@ recipeList:
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-jcache
       newVersion: 6.0.x
-    # hibernate-jpamodelgen
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-jpamodelgen
-      newGroupId: org.hibernate.orm
-      newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-jpamodelgen-jakarta
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-jpamodelgen
-      newVersion: 6.0.x
-    # hibernate-micrometer
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-micrometer
-      newGroupId: org.hibernate.orm
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -168,23 +110,11 @@ recipeList:
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-micrometer
       newVersion: 6.0.x
-    # hibernate-proxool
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-proxool
-      newGroupId: org.hibernate.orm
-      newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-proxool-jakarta
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-proxool
-      newVersion: 6.0.x
-    # hibernate-spatial
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-spatial
-      newGroupId: org.hibernate.orm
       newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
@@ -192,24 +122,48 @@ recipeList:
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-spatial
       newVersion: 6.0.x
-    # hibernate-testing
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate
-      oldArtifactId: hibernate-testing
-      newGroupId: org.hibernate.orm
-      newVersion: 6.0.x
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-testing-jakarta
       newGroupId: org.hibernate.orm
       newArtifactId: hibernate-testing
       newVersion: 6.0.x
+  # Step 2: Remove hibernate-entitymanager before the glob matches it.
+  # This artifact was removed in Hibernate 6 (merged into hibernate-core).
   - org.openrewrite.java.dependencies.RemoveDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
   - org.openrewrite.maven.RemoveManagedDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
+  # Step 3: Migrate all remaining org.hibernate:hibernate-* to org.hibernate.orm in a single
+  # ChangeDependency. Using a single recipe means that ChangeDependency's canUpdateVariable
+  # check sees all matching dependencies at once, so shared ext properties (e.g. hibernateVersion)
+  # are updated in place rather than being detached from some dependencies.
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-*
+      newGroupId: org.hibernate.orm
+      newVersion: 6.0.x
+  # Step 4: Revert non-ORM artifacts that the glob inadvertently matched.
+  # hibernate-validator and hibernate-search are separate projects that did not move to
+  # org.hibernate.orm. These entries restore the original groupId without changing the version.
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate.orm
+      oldArtifactId: hibernate-validator
+      newGroupId: org.hibernate
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate.orm
+      oldArtifactId: hibernate-validator-cdi
+      newGroupId: org.hibernate
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate.orm
+      oldArtifactId: hibernate-validator-annotation-processor
+      newGroupId: org.hibernate
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate.orm
+      oldArtifactId: hibernate-search-*
+      newGroupId: org.hibernate
   # Account for jaxb-runtime becoming `runtime` vs `compile` dependency
   # Add the jakarta JAXB artifact if it is missing but a project uses types in java.xml.bind
   - org.openrewrite.java.dependencies.AddDependency:
