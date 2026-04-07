@@ -48,8 +48,12 @@ description: >-
 preconditions:
   - org.openrewrite.Singleton
 recipeList:
-  # Step 1: Handle jakarta-suffixed artifacts individually (they need artifact renaming)
-  # These run before the glob so they're already at org.hibernate.orm when the glob scans.
+  # Step 1: Handle jakarta-suffixed artifacts individually (they need artifact renaming).
+  # Note: all scanners run in a single phase before any editors, so the glob scanner in
+  # step 3 still sees these at org.hibernate in its scan. However, the glob's editor runs
+  # after these editors, so it won't double-change them. The glob scanner matching these
+  # is harmless: canUpdateVariable still passes since hibernate-* matches them, and in
+  # practice jakarta and non-jakarta variants don't share version variables.
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-agroal-jakarta
