@@ -134,29 +134,15 @@ recipeList:
   - org.openrewrite.maven.RemoveManagedDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
-  # Single glob for all remaining ORM artifacts — preserves shared version properties
+  # Single glob for all remaining ORM artifacts — preserves shared version properties.
+  # Non-ORM artifacts (hibernate-validator, hibernate-search-*) are automatically
+  # skipped because their new coordinates don't resolve under org.hibernate.orm
+  # (see https://github.com/openrewrite/rewrite/pull/7321).
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-*
       newGroupId: org.hibernate.orm
       newVersion: 6.0.x
-  # Revert non-ORM artifacts the glob inadvertently matched
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate.orm
-      oldArtifactId: hibernate-validator
-      newGroupId: org.hibernate
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate.orm
-      oldArtifactId: hibernate-validator-cdi
-      newGroupId: org.hibernate
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate.orm
-      oldArtifactId: hibernate-validator-annotation-processor
-      newGroupId: org.hibernate
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: org.hibernate.orm
-      oldArtifactId: hibernate-search-*
-      newGroupId: org.hibernate
   # Account for jaxb-runtime becoming `runtime` vs `compile` dependency
   # Add the jakarta JAXB artifact if it is missing but a project uses types in java.xml.bind
   - org.openrewrite.java.dependencies.AddDependency:
