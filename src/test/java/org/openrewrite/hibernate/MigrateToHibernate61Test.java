@@ -151,6 +151,10 @@ class MigrateToHibernate61Test implements RewriteTest {
               java("""
                 public class TestApplication {
                 }
+                """,
+                """
+                public class TestApplication {
+                }
                 """
               )
             )
