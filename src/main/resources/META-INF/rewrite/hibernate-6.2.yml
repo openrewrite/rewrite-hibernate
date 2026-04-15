@@ -48,4 +48,43 @@ recipeList:
       newGroupId: io.hypersistence
       newArtifactId: hypersistence-utils-hibernate-62
       newVersion: 3.7.x
+  # Handle pre-6.0 coordinates directly, since ChangeDependency is a ScanningRecipe
+  # and chained ChangeDependency calls across recipe versions cannot see each other's
+  # output during the scan phase
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: com.vladmihalcea
+      oldArtifactId: hibernate-types-4
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.7.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: com.vladmihalcea
+      oldArtifactId: hibernate-types-5
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.7.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: com.vladmihalcea
+      oldArtifactId: hibernate-types-43
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.7.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: com.vladmihalcea
+      oldArtifactId: hibernate-types-52
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.7.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: com.vladmihalcea
+      oldArtifactId: hibernate-types-55
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.7.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: com.vladmihalcea
+      oldArtifactId: hibernate-types-60
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-62
+      newVersion: 3.7.x
 

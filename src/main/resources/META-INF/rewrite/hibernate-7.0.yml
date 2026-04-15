@@ -33,3 +33,16 @@ recipeList:
       oldGroupId: org.hibernate.orm
       oldArtifactId: hibernate-jpamodelgen
       newArtifactId: hibernate-processor
+  # Handle pre-6.0 coordinates directly, since ChangeDependency is a ScanningRecipe
+  # and chained ChangeDependency calls across recipe versions cannot see each other's
+  # output during the scan phase
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-jpamodelgen
+      newGroupId: org.hibernate.orm
+      newArtifactId: hibernate-processor
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-jpamodelgen-jakarta
+      newGroupId: org.hibernate.orm
+      newArtifactId: hibernate-processor
