@@ -23,6 +23,8 @@ dependencies {
     testImplementation("org.openrewrite:rewrite-test")
     testImplementation("org.openrewrite:rewrite-gradle")
     testImplementation("org.openrewrite:rewrite-maven")
+    testImplementation("org.openrewrite:rewrite-yaml")
+    testImplementation("org.openrewrite:rewrite-properties")
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.14.2")
 
