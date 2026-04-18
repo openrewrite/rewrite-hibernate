@@ -35,9 +35,6 @@ recipeList:
       newArtifactId: hibernate-processor
   # Class renames
   - org.openrewrite.java.ChangeType:
-      oldFullyQualifiedTypeName: org.hibernate.metamodel.spi.MetamodelImplementor
-      newFullyQualifiedTypeName: org.hibernate.metamodel.MappingMetamodel
-  - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: org.hibernate.metamodel.spi.AdditionalJaxbMappingProducer
       newFullyQualifiedTypeName: org.hibernate.boot.spi.AdditionalMappingContributor
   - org.openrewrite.java.ChangeType:
