@@ -31,7 +31,8 @@ class MigrateToHibernate70Test implements RewriteTest {
         spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate70")
           .parser(JavaParser.fromJavaVersion()
             .classpathFromResources(new InMemoryExecutionContext(),
-              "hibernate-core-5+", "hibernate-core-6+"));
+              "hibernate-core-5.6.15.Final",
+              "javax.persistence-api-2.2"));
     }
 
     @DocumentExample
@@ -49,6 +50,84 @@ class MigrateToHibernate70Test implements RewriteTest {
             import org.hibernate.boot.spi.AdditionalMappingContributor;
 
             class MyContributor implements AdditionalMappingContributor {
+            }
+            """
+          )
+        );
+    }
+
+    @Test
+    void migratesSaveToPersist() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                void save(Session session, Object entity) {
+                    session.save(entity);
+                }
+            }
+            """,
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                void save(Session session, Object entity) {
+                    session.persist(entity);
+                }
+            }
+            """
+          )
+        );
+    }
+
+    @Test
+    void migratesDeleteToRemove() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                void delete(Session session, Object entity) {
+                    session.delete(entity);
+                }
+            }
+            """,
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                void delete(Session session, Object entity) {
+                    session.remove(entity);
+                }
+            }
+            """
+          )
+        );
+    }
+
+    @Test
+    void migratesGetToFind() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                Object load(Session session) {
+                    return session.get(String.class, "id");
+                }
+            }
+            """,
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                Object load(Session session) {
+                    return session.find(String.class, "id");
+                }
             }
             """
           )
