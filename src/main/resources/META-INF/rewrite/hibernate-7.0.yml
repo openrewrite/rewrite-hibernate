@@ -33,3 +33,17 @@ recipeList:
       oldGroupId: org.hibernate.orm
       oldArtifactId: hibernate-jpamodelgen
       newArtifactId: hibernate-processor
+  # Class renames
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.metamodel.spi.MetamodelImplementor
+      newFullyQualifiedTypeName: org.hibernate.metamodel.MappingMetamodel
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.metamodel.spi.AdditionalJaxbMappingProducer
+      newFullyQualifiedTypeName: org.hibernate.boot.spi.AdditionalMappingContributor
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.boot.spi.MetadataContributor
+      newFullyQualifiedTypeName: org.hibernate.boot.spi.AdditionalMappingContributor
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.query.sqm.tree.SqmQualifiedJoin
+      newFullyQualifiedTypeName: org.hibernate.query.sqm.tree.SqmJoin
+
