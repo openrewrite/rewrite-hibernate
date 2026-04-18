@@ -31,8 +31,8 @@ class MigrateToHibernate70Test implements RewriteTest {
         spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate70")
           .parser(JavaParser.fromJavaVersion()
             .classpathFromResources(new InMemoryExecutionContext(),
-              "hibernate-core-5.6.15.Final",
-              "javax.persistence-api-2.2"));
+              "hibernate-core-5+",
+              "javax.persistence-api"));
     }
 
     @DocumentExample
