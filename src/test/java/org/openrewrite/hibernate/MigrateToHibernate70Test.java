@@ -36,28 +36,6 @@ class MigrateToHibernate70Test implements RewriteTest {
 
     @DocumentExample
     @Test
-    void migratesMetamodelImplementor() {
-        rewriteRun(
-          java(
-            """
-            import org.hibernate.metamodel.spi.MetamodelImplementor;
-
-            class MyClass {
-                MetamodelImplementor metamodel;
-            }
-            """,
-            """
-            import org.hibernate.metamodel.MappingMetamodel;
-
-            class MyClass {
-                MappingMetamodel metamodel;
-            }
-            """
-          )
-        );
-    }
-
-    @Test
     void migratesMetadataContributor() {
         rewriteRun(
           java(
