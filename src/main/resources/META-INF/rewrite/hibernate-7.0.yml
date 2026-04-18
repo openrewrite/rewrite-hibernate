@@ -44,3 +44,22 @@ recipeList:
       oldFullyQualifiedTypeName: org.hibernate.query.sqm.tree.SqmQualifiedJoin
       newFullyQualifiedTypeName: org.hibernate.query.sqm.tree.SqmJoin
 
+  # Session method renames - removed in Hibernate 7.0
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session save(Object)
+      newMethodName: persist
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session save(String, Object)
+      newMethodName: persist
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session delete(Object)
+      newMethodName: remove
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session delete(String, Object)
+      newMethodName: remove
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session get(Class, java.io.Serializable)
+      newMethodName: find
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session get(String, java.io.Serializable)
+      newMethodName: find
