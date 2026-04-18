@@ -133,4 +133,108 @@ class MigrateToHibernate70Test implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void migratesLoadToGetReference() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                Object load(Session session) {
+                    return session.load(String.class, "id");
+                }
+            }
+            """,
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                Object load(Session session) {
+                    return session.getReference(String.class, "id");
+                }
+            }
+            """
+          )
+        );
+    }
+
+    @Test
+    void migratesSaveOrUpdateToPersist() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                void saveOrUpdate(Session session, Object entity) {
+                    session.saveOrUpdate(entity);
+                }
+            }
+            """,
+            """
+            import org.hibernate.Session;
+
+            class MyService {
+                void saveOrUpdate(Session session, Object entity) {
+                    session.persist(entity);
+                }
+            }
+            """
+          )
+        );
+    }
+
+    @Test
+    void migratesCascadeSaveUpdateToPersist() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.annotations.Cascade;
+            import org.hibernate.annotations.CascadeType;
+
+            class MyEntity {
+                @Cascade(CascadeType.SAVE_UPDATE)
+                Object related;
+            }
+            """,
+            """
+            import org.hibernate.annotations.Cascade;
+            import org.hibernate.annotations.CascadeType;
+
+            class MyEntity {
+                @Cascade(CascadeType.PERSIST)
+                Object related;
+            }
+            """
+          )
+        );
+    }
+
+    @Test
+    void migratesCascadeDeleteToRemove() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.annotations.Cascade;
+            import org.hibernate.annotations.CascadeType;
+
+            class MyEntity {
+                @Cascade(CascadeType.DELETE)
+                Object related;
+            }
+            """,
+            """
+            import org.hibernate.annotations.Cascade;
+            import org.hibernate.annotations.CascadeType;
+
+            class MyEntity {
+                @Cascade(CascadeType.REMOVE)
+                Object related;
+            }
+            """
+          )
+        );
+    }
 }
