@@ -63,3 +63,16 @@ recipeList:
   - org.openrewrite.java.ChangeMethodName:
       methodPattern: org.hibernate.Session get(String, java.io.Serializable)
       newMethodName: find
+
+  # Remaining Session method renames
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session load(Class, java.io.Serializable)
+      newMethodName: getReference
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.Session load(String, java.io.Serializable)
+      newMethodName: getReference
+
+  # CascadeType enum value renames
+  - org.openrewrite.java.ReplaceConstantWithAnotherConstant:
+      existingFullyQualifiedConstantName: org.hibernate.annotations.CascadeType.DELETE
+      fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.REMOVE

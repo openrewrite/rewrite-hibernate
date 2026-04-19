@@ -133,4 +133,48 @@ class MigrateToHibernate70Test implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void migratesLoadAndCascadeTypes() {
+        rewriteRun(
+          java(
+            """
+            import org.hibernate.Session;
+            import org.hibernate.annotations.Cascade;
+            import org.hibernate.annotations.CascadeType;
+
+            class MyEntity {
+                @Cascade(CascadeType.DELETE)
+                Object deleteRelated;
+
+                Object load(Session session) {
+                    return session.load(String.class, "id");
+                }
+
+                Object loadByName(Session session) {
+                    return session.load("org.example.MyEntity", "id");
+                }
+            }
+            """,
+            """
+            import org.hibernate.Session;
+            import org.hibernate.annotations.Cascade;
+            import org.hibernate.annotations.CascadeType;
+
+            class MyEntity {
+                @Cascade(CascadeType.REMOVE)
+                Object deleteRelated;
+
+                Object load(Session session) {
+                    return session.getReference(String.class, "id");
+                }
+
+                Object loadByName(Session session) {
+                    return session.getReference("org.example.MyEntity", "id");
+                }
+            }
+            """
+          )
+        );
+    }
 }
