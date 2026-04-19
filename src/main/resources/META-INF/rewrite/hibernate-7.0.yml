@@ -71,17 +71,8 @@ recipeList:
   - org.openrewrite.java.ChangeMethodName:
       methodPattern: org.hibernate.Session load(String, java.io.Serializable)
       newMethodName: getReference
-  - org.openrewrite.java.ChangeMethodName:
-      methodPattern: org.hibernate.Session saveOrUpdate(Object)
-      newMethodName: persist
-  - org.openrewrite.java.ChangeMethodName:
-      methodPattern: org.hibernate.Session saveOrUpdate(String, Object)
-      newMethodName: persist
 
   # CascadeType enum value renames
-  - org.openrewrite.java.ReplaceConstantWithAnotherConstant:
-      existingFullyQualifiedConstantName: org.hibernate.annotations.CascadeType.SAVE_UPDATE
-      fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.PERSIST
   - org.openrewrite.java.ReplaceConstantWithAnotherConstant:
       existingFullyQualifiedConstantName: org.hibernate.annotations.CascadeType.DELETE
       fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.REMOVE
