@@ -112,6 +112,28 @@ examples:
     language: java
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.MigrateDialect
+examples:
+- description: '`MigrateDialectTest#replacesMySQL5DialectInYaml`'
+  sources:
+  - before: |
+      spring:
+        jpa:
+          database-platform: org.hibernate.dialect.MySQL5Dialect
+          properties:
+            hibernate:
+              dialect: org.hibernate.dialect.MySQL5Dialect
+    after: |
+      spring:
+        jpa:
+          database-platform: org.hibernate.dialect.MySQLDialect
+          properties:
+            hibernate:
+              dialect: org.hibernate.dialect.MySQLDialect
+    path: src/main/resources/application.yml
+    language: yaml
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.MigrateResultCheckStyleToExpectation
 examples:
 - description: '`MigrateResultCheckStyleToExpectationTest#staticImportTest`'
@@ -222,6 +244,23 @@ examples:
       </project>
     path: pom.xml
     language: xml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.MigrateToHibernate70
+examples:
+- description: '`MigrateToHibernate70Test#migratesMetadataContributor`'
+  sources:
+  - before: |
+      import org.hibernate.boot.spi.MetadataContributor;
+
+      class MyContributor implements MetadataContributor {
+      }
+    after: |
+      import org.hibernate.boot.spi.AdditionalMappingContributor;
+
+      class MyContributor implements AdditionalMappingContributor {
+      }
+    language: java
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.hibernate.MigrateUserType
