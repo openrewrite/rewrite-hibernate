@@ -231,6 +231,83 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         );
     }
 
+    @CsvSource(textBlock = """
+      NumericBooleanType , NumericBooleanConverter
+      TrueFalseType      , TrueFalseConverter
+      YesNoType          , YesNoConverter
+      """)
+    @ParameterizedTest
+    void classForm_shouldBeReplaced(String legacyType, String converter) {
+        //language=java
+        rewriteRun(
+          spec -> spec.parser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(),
+              "hibernate-core-5+", "hibernate-core-6+", "jakarta.persistence-api")),
+          java(
+            """
+              import jakarta.persistence.Column;
+              import org.hibernate.annotations.Type;
+              import org.hibernate.type.%1$s;
+
+              public class SomeClass {
+
+                  @Column(name = "IS_SOMETHING")
+                  @Type(%1$s.class)
+                  private boolean isSomething;
+              }
+              """.formatted(legacyType),
+            """
+              import jakarta.persistence.Column;
+              import jakarta.persistence.Convert;
+              import org.hibernate.type.%2$s;
+
+              public class SomeClass {
+
+                  @Column(name = "IS_SOMETHING")
+                  @Convert(converter = %2$s.class)
+                  private boolean isSomething;
+              }
+              """.formatted(legacyType, converter)
+          )
+        );
+    }
+
+    @Test
+    void valueAttribute_classForm_shouldBeReplaced() {
+        //language=java
+        rewriteRun(
+          spec -> spec.parser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(),
+              "hibernate-core-5+", "hibernate-core-6+", "jakarta.persistence-api")),
+          java(
+            """
+              import jakarta.persistence.Column;
+              import org.hibernate.annotations.Type;
+              import org.hibernate.type.NumericBooleanType;
+
+              public class SomeClass {
+
+                  @Column(name = "IS_SOMETHING")
+                  @Type(value = NumericBooleanType.class)
+                  private boolean isSomething;
+              }
+              """,
+            """
+              import jakarta.persistence.Column;
+              import jakarta.persistence.Convert;
+              import org.hibernate.type.NumericBooleanConverter;
+
+              public class SomeClass {
+
+                  @Column(name = "IS_SOMETHING")
+                  @Convert(converter = NumericBooleanConverter.class)
+                  private boolean isSomething;
+              }
+              """
+          )
+        );
+    }
+
     @Test
     void noChange_shouldBeMade_whenTypeIsClass() {
         //language=java
