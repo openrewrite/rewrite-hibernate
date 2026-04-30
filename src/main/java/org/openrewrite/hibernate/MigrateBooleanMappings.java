@@ -39,20 +39,17 @@ public class MigrateBooleanMappings extends Recipe {
     private static final Map<String, String> REPLACEMENTS = new HashMap<>();
 
     static {
-        REPLACEMENTS.put("org.hibernate.type.TrueFalseBooleanType", "TrueFalseConverter");
+        // true/false boolean
         REPLACEMENTS.put("true_false", "TrueFalseConverter");
-        REPLACEMENTS.put("org.hibernate.type.YesNoBooleanType", "YesNoConverter");
+        REPLACEMENTS.put("org.hibernate.type.TrueFalseType", "TrueFalseConverter");
+        REPLACEMENTS.put("org.hibernate.type.TrueFalseBooleanType", "TrueFalseConverter");
+        // yes/no boolean
         REPLACEMENTS.put("yes_no", "YesNoConverter");
-        REPLACEMENTS.put("org.hibernate.type.NumericBooleanType", "NumericBooleanConverter");
+        REPLACEMENTS.put("org.hibernate.type.YesNoType", "YesNoConverter");
+        REPLACEMENTS.put("org.hibernate.type.YesNoBooleanType", "YesNoConverter");
+        // numeric boolean
         REPLACEMENTS.put("numeric_boolean", "NumericBooleanConverter");
-    }
-
-    private static final Map<String, String> CLASS_REPLACEMENTS = new HashMap<>();
-
-    static {
-        CLASS_REPLACEMENTS.put("org.hibernate.type.TrueFalseType", "TrueFalseConverter");
-        CLASS_REPLACEMENTS.put("org.hibernate.type.YesNoType", "YesNoConverter");
-        CLASS_REPLACEMENTS.put("org.hibernate.type.NumericBooleanType", "NumericBooleanConverter");
+        REPLACEMENTS.put("org.hibernate.type.NumericBooleanType", "NumericBooleanConverter");
     }
 
     @Getter
@@ -71,86 +68,68 @@ public class MigrateBooleanMappings extends Recipe {
                         if (!TypeUtils.isOfClassType(ann.getType(), "org.hibernate.annotations.Type")) {
                             return ann;
                         }
-
                         List<Expression> args = ann.getArguments();
                         if (args == null) {
                             return ann;
                         }
 
-                        Object type = args.stream()
-                                .filter(exp -> {
-                                    if (exp instanceof J.Assignment) {
-                                        J.Identifier variable = (J.Identifier) ((J.Assignment) exp).getVariable();
-                                        return "type".equals(variable.getSimpleName());
-                                    }
-                                    return false;
-                                })
-                                .findFirst()
-                                .map(exp -> {
-                                    Expression value = ((J.Assignment) exp).getAssignment();
-                                    if (value instanceof J.Literal) {
-                                        return ((J.Literal) value).getValue();
-                                    }
-                                    return null;
-                                })
-                                .orElse(null);
-
-                        if (type instanceof String && REPLACEMENTS.containsKey((String) type)) {
-                            String converterName = REPLACEMENTS.get((String) type);
-                            String converterFQN = String.format("org.hibernate.type.%s", converterName);
-
-                            ann = JavaTemplate.builder(String.format("@Convert(converter = %s.class)", converterName))
-                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6+", "jakarta.persistence-api"))
-                                    .imports(converterFQN, "jakarta.persistence.Convert")
-                                    .contextSensitive()
-                                    .build().apply(getCursor(), ann.getCoordinates().replace());
-
-                            maybeRemoveImport("org.hibernate.annotations.Type");
-                            maybeAddImport("jakarta.persistence.Convert");
-                            maybeAddImport(converterFQN);
+                        String converterName = null;
+                        String legacyClassFQN = null;
+                        for (Expression arg : args) {
+                            String key;
+                            if (arg instanceof J.Assignment) {
+                                J.Assignment a = (J.Assignment) arg;
+                                if (!(a.getVariable() instanceof J.Identifier)) {
+                                    continue;
+                                }
+                                String attr = ((J.Identifier) a.getVariable()).getSimpleName();
+                                if ("type".equals(attr) && a.getAssignment() instanceof J.Literal) {
+                                    Object v = ((J.Literal) a.getAssignment()).getValue();
+                                    key = v instanceof String ? (String) v : null;
+                                } else if ("value".equals(attr)) {
+                                    legacyClassFQN = classRefFQN(a.getAssignment());
+                                    key = legacyClassFQN;
+                                } else {
+                                    continue;
+                                }
+                            } else if (args.size() == 1) {
+                                legacyClassFQN = classRefFQN(arg);
+                                key = legacyClassFQN;
+                            } else {
+                                continue;
+                            }
+                            if (key != null) {
+                                converterName = REPLACEMENTS.get(key);
+                                if (converterName != null) {
+                                    break;
+                                }
+                            }
+                        }
+                        if (converterName == null) {
                             return ann;
                         }
 
-                        String classFQN = getClassArgumentFQN(args);
-                        if (classFQN != null && CLASS_REPLACEMENTS.containsKey(classFQN)) {
-                            String converterName = CLASS_REPLACEMENTS.get(classFQN);
-                            String converterFQN = String.format("org.hibernate.type.%s", converterName);
+                        String converterFQN = "org.hibernate.type." + converterName;
+                        ann = JavaTemplate.builder("@Convert(converter = " + converterName + ".class)")
+                                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6+", "jakarta.persistence-api"))
+                                .imports(converterFQN, "jakarta.persistence.Convert")
+                                .contextSensitive()
+                                .build().apply(getCursor(), ann.getCoordinates().replace());
 
-                            ann = JavaTemplate.builder(String.format("@Convert(converter = %s.class)", converterName))
-                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6+", "jakarta.persistence-api"))
-                                    .imports(converterFQN, "jakarta.persistence.Convert")
-                                    .contextSensitive()
-                                    .build().apply(getCursor(), ann.getCoordinates().replace());
-
-                            maybeRemoveImport("org.hibernate.annotations.Type");
-                            maybeRemoveImport(classFQN);
-                            maybeAddImport("jakarta.persistence.Convert");
-                            maybeAddImport(converterFQN);
+                        maybeRemoveImport("org.hibernate.annotations.Type");
+                        if (legacyClassFQN != null) {
+                            maybeRemoveImport(legacyClassFQN);
                         }
-
+                        maybeAddImport("jakarta.persistence.Convert");
+                        maybeAddImport(converterFQN);
                         return ann;
                     }
 
-                    private @Nullable String getClassArgumentFQN(List<Expression> args) {
-                        if (args.size() != 1) {
+                    private @Nullable String classRefFQN(Expression expr) {
+                        if (!(expr instanceof J.FieldAccess)) {
                             return null;
                         }
-                        Expression arg = args.get(0);
-                        Expression classExpr;
-                        if (arg instanceof J.Assignment) {
-                            J.Assignment assignment = (J.Assignment) arg;
-                            if (!(assignment.getVariable() instanceof J.Identifier) ||
-                                    !"value".equals(((J.Identifier) assignment.getVariable()).getSimpleName())) {
-                                return null;
-                            }
-                            classExpr = assignment.getAssignment();
-                        } else {
-                            classExpr = arg;
-                        }
-                        if (!(classExpr instanceof J.FieldAccess)) {
-                            return null;
-                        }
-                        J.FieldAccess fa = (J.FieldAccess) classExpr;
+                        J.FieldAccess fa = (J.FieldAccess) expr;
                         if (!"class".equals(fa.getName().getSimpleName())) {
                             return null;
                         }
