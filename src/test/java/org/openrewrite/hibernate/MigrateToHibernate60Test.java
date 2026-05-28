@@ -115,11 +115,11 @@ class MigrateToHibernate60Test implements RewriteTest {
                 </dependencies>
               </project>
               """,
-            spec -> spec.after(after -> {
-                assertThat(after).contains("<groupId>org.hibernate.validator</groupId>");
-                assertThat(after).doesNotContain("<groupId>org.hibernate.orm</groupId>");
-                return after;
-            })
+            spec -> spec.after(after ->
+                assertThat(after)
+                    .contains("<groupId>org.hibernate.validator</groupId>")
+                    .doesNotContain("<groupId>org.hibernate.orm</groupId>")
+                    .actual())
           )
         );
     }
