@@ -21,6 +21,7 @@ import org.openrewrite.config.Environment;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.java.Assertions.mavenProject;
 import static org.openrewrite.maven.Assertions.pomXml;
 
@@ -91,6 +92,34 @@ class MigrateToHibernate60Test implements RewriteTest {
                 </project>
                 """
             )
+          )
+        );
+    }
+
+    @Test
+    void hibernateValidatorGetsItsOwnGroupIdNotOrm() {
+        rewriteRun(
+          //language=xml
+          pomXml(
+            """
+              <project>
+                <groupId>org.example</groupId>
+                <artifactId>a</artifactId>
+                <version>1.0.0</version>
+                <dependencies>
+                  <dependency>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-validator</artifactId>
+                    <version>6.2.5.Final</version>
+                  </dependency>
+                </dependencies>
+              </project>
+              """,
+            spec -> spec.after(after ->
+                assertThat(after)
+                    .contains("<groupId>org.hibernate.validator</groupId>")
+                    .doesNotContain("<groupId>org.hibernate.orm</groupId>")
+                    .actual())
           )
         );
     }

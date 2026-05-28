@@ -134,6 +134,11 @@ recipeList:
   - org.openrewrite.maven.RemoveManagedDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-validator
+      newGroupId: org.hibernate.validator
+      newVersion: 8.0.x
   # Single glob for all remaining ORM artifacts — preserves shared version properties
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
