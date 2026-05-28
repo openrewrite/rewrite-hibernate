@@ -134,8 +134,6 @@ recipeList:
   - org.openrewrite.maven.RemoveManagedDependency:
       groupId: org.hibernate
       artifactId: hibernate-entitymanager
-  # Hibernate Validator moved to its own `org.hibernate.validator` group ID, not `org.hibernate.orm`;
-  # rename it before the wildcard below so it is no longer matched as `org.hibernate:hibernate-*`.
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
       oldArtifactId: hibernate-validator
