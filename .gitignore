@@ -47,3 +47,5 @@ gradle-app.setting
 
 .idea/
 out/
+
+.context/
