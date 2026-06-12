@@ -15,19 +15,14 @@
  */
 package org.openrewrite.hibernate;
 
-import org.junit.jupiter.api.Test;
 import org.openrewrite.config.Environment;
 import org.openrewrite.test.RecipeSpec;
-import org.openrewrite.test.RewriteTest;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+class MigrateToHibernate63Test extends AbstractMigrateToHibernateWithHypersistenceTest {
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.openrewrite.java.Assertions.mavenProject;
-import static org.openrewrite.maven.Assertions.pomXml;
-
-class MigrateToHibernate63Test implements RewriteTest {
+    MigrateToHibernate63Test() {
+        super("62", "63", "3.7.3", "3\\.15\\.\\d+");
+    }
 
     @Override
     public void defaults(RecipeSpec spec) {
@@ -36,54 +31,4 @@ class MigrateToHibernate63Test implements RewriteTest {
           .build()
           .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate63"));
     }
-
-    @Test
-    void groupIdHypersistenceUtilsRenamedAndPackageUpdated() {
-        rewriteRun(
-          mavenProject(
-            "Sample",
-            //language=xml
-            pomXml("""
-                <?xml version="1.0" encoding="UTF-8"?>
-                <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-                  <modelVersion>4.0.0</modelVersion>
-                  <groupId>com.example</groupId>
-                  <artifactId>demo</artifactId>
-                  <version>0.0.1-SNAPSHOT</version>
-                  <dependencies>
-                    <dependency>
-                      <groupId>io.hypersistence</groupId>
-                      <artifactId>hypersistence-utils-hibernate-62</artifactId>
-                      <version>3.7.3</version>
-                    </dependency>
-                  </dependencies>
-                </project>
-                """, spec -> spec.after(actual -> {
-                  Matcher matcher = Pattern.compile("<version>(3\\.8\\.\\d+)</version>").matcher(actual);
-                assertThat(matcher.find()).isTrue();
-                  return """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-                      <modelVersion>4.0.0</modelVersion>
-                      <groupId>com.example</groupId>
-                      <artifactId>demo</artifactId>
-                      <version>0.0.1-SNAPSHOT</version>
-                      <dependencies>
-                        <dependency>
-                          <groupId>io.hypersistence</groupId>
-                          <artifactId>hypersistence-utils-hibernate-63</artifactId>
-                          <version>%s</version>
-                        </dependency>
-                      </dependencies>
-                    </project>
-                    """.formatted(matcher.group(1));
-              })
-            )
-          )
-        );
-    }
-
-
 }

@@ -15,20 +15,22 @@
  */
 package org.openrewrite.hibernate;
 
-import org.openrewrite.config.Environment;
+import org.openrewrite.InMemoryExecutionContext;
+import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 
-class MigrateToHibernate62Test extends AbstractMigrateToHibernateWithHypersistenceTest {
+class MigrateToHibernate71Test extends AbstractMigrateToHibernateWithHypersistenceTest {
 
-    MigrateToHibernate62Test() {
-        super("60", "62", "3.7.3", "3\\.9\\.\\d+");
+    MigrateToHibernate71Test() {
+        super("70", "71", "3.15.3", "3\\.15\\.\\d+");
     }
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipe(Environment.builder()
-          .scanRuntimeClasspath("org.openrewrite.hibernate")
-          .build()
-          .activateRecipes("org.openrewrite.hibernate.MigrateToHibernate62"));
+        spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate71")
+          .parser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(),
+              "hibernate-core-5+",
+              "javax.persistence-api"));
     }
 }
