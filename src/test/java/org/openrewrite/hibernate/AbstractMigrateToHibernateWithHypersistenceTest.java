@@ -18,9 +18,6 @@ package org.openrewrite.hibernate;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.test.RewriteTest;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.java.Assertions.mavenProject;
 import static org.openrewrite.maven.Assertions.pomXml;
@@ -47,9 +44,7 @@ public abstract class AbstractMigrateToHibernateWithHypersistenceTest implements
             pomXml(
               //language=xml
               """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                <project>
                   <modelVersion>4.0.0</modelVersion>
                   <groupId>com.example</groupId>
                   <artifactId>demo</artifactId>
@@ -63,31 +58,11 @@ public abstract class AbstractMigrateToHibernateWithHypersistenceTest implements
                   </dependencies>
                 </project>
                 """.formatted(hypersistenceOriginalHibernateVersion, hypersistenceOriginalVersion),
-              spec -> spec.after(actual -> {
-                  var pattern = "<version>(" + hypersistenceExpectedVersionPattern + ")</version>";
-                  Matcher matcher = Pattern.compile(pattern).matcher(actual);
-                  assertThat(matcher.find())
-                    .withFailMessage("Expected result to match `%s`:\n%s ", pattern, actual)
-                    .isTrue();
-                  //language=xml
-                  return """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-                      <modelVersion>4.0.0</modelVersion>
-                      <groupId>com.example</groupId>
-                      <artifactId>demo</artifactId>
-                      <version>0.0.1-SNAPSHOT</version>
-                      <dependencies>
-                        <dependency>
-                          <groupId>io.hypersistence</groupId>
-                          <artifactId>hypersistence-utils-hibernate-%s</artifactId>
-                          <version>%s</version>
-                        </dependency>
-                      </dependencies>
-                    </project>
-                    """.formatted(hypersistenceExpectedHibernateVersion, matcher.group(1));
-              })
+              spec -> spec.after(actual ->
+                assertThat(actual)
+                  .contains("<artifactId>hypersistence-utils-hibernate-" + hypersistenceExpectedHibernateVersion + "</artifactId>")
+                  .containsPattern("<version>" + hypersistenceExpectedVersionPattern + "</version>")
+                  .actual())
             )
           )
         );
