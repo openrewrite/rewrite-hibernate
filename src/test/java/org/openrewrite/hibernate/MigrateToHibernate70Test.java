@@ -20,11 +20,14 @@ import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
-import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
-class MigrateToHibernate70Test implements RewriteTest {
+class MigrateToHibernate70Test extends AbstractMigrateToHibernateWithHypersistenceTest {
+
+    MigrateToHibernate70Test() {
+        super("63", "70", "3.15.3", "3\\.15\\.\\d+");
+    }
 
     @Override
     public void defaults(RecipeSpec spec) {

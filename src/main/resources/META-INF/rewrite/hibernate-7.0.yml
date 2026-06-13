@@ -25,6 +25,7 @@ preconditions:
   - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernate66
+  - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate70
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
       groupId: org.hibernate.orm
       artifactId: '*'
@@ -76,3 +77,20 @@ recipeList:
   - org.openrewrite.java.ReplaceConstantWithAnotherConstant:
       existingFullyQualifiedConstantName: org.hibernate.annotations.CascadeType.DELETE
       fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.REMOVE
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate70
+displayName: Migrate Hibernate Types to Hypersistence Utils for Hibernate 7.0
+description: >-
+  This recipe will migrate any existing dependencies on `io.hypersistence:hypersistence-utils-hibernate-63` to `io.hypersistence:hypersistence-utils-hibernate-70`.
+
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.hypersistence
+      oldArtifactId: hypersistence-utils-hibernate-63
+      newGroupId: io.hypersistence
+      newArtifactId: hypersistence-utils-hibernate-70
+      newVersion: 3.15.x

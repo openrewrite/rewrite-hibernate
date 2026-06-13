@@ -48,7 +48,7 @@ recipeList:
       oldArtifactId: hypersistence-utils-hibernate-60
       newGroupId: io.hypersistence
       newArtifactId: hypersistence-utils-hibernate-62
-      newVersion: 3.7.x
+      newVersion: 3.9.x
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
