@@ -25,10 +25,6 @@ import static org.openrewrite.java.Assertions.java;
 
 class MigrateToHibernate70Test extends AbstractMigrateToHibernateWithHypersistenceTest {
 
-    MigrateToHibernate70Test() {
-        super("63", "70", "3.15.3", "3\\.15\\.\\d+");
-    }
-
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate70")
@@ -57,6 +53,10 @@ class MigrateToHibernate70Test extends AbstractMigrateToHibernateWithHypersisten
             """
           )
         );
+    }
+
+    MigrateToHibernate70Test() {
+        super("63", "70", "3.15.3", "3\\.15\\.\\d+");
     }
 
     @Test
