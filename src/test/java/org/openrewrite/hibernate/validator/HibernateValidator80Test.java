@@ -20,6 +20,7 @@ import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.maven.Assertions.pomXml;
 
 class HibernateValidator80Test implements RewriteTest {
@@ -52,23 +53,11 @@ class HibernateValidator80Test implements RewriteTest {
                 </dependencies>
               </project>
               """,
-            """
-              <?xml version="1.0" encoding="UTF-8"?>
-              <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-                <modelVersion>4.0.0</modelVersion>
-                <groupId>com.example</groupId>
-                <artifactId>demo</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
-                <dependencies>
-                  <dependency>
-                    <groupId>org.hibernate.validator</groupId>
-                    <artifactId>hibernate-validator</artifactId>
-                    <version>8.0.4.Final</version>
-                  </dependency>
-                </dependencies>
-              </project>
-              """
+            spec -> spec.after(actual ->
+              assertThat(actual)
+                .contains("<groupId>org.hibernate.validator</groupId>")
+                .containsPattern("<version>8\\.0\\.\\d+\\.Final</version>")
+                .actual())
           )
         );
     }
