@@ -29,7 +29,7 @@ public abstract class AbstractMigrateToHibernateWithHypersistenceTest implements
     private final String hypersistenceOriginalVersion;
     private final String hypersistenceExpectedVersionPattern;
 
-    public AbstractMigrateToHibernateWithHypersistenceTest(String hypersistenceOriginalHibernateVersion, String hypersistenceExpectedHibernateVersion, String hypersistenceOriginalVersion, String hypersistenceExpectedVersionPattern) {
+    protected AbstractMigrateToHibernateWithHypersistenceTest(String hypersistenceOriginalHibernateVersion, String hypersistenceExpectedHibernateVersion, String hypersistenceOriginalVersion, String hypersistenceExpectedVersionPattern) {
         this.hypersistenceOriginalHibernateVersion = hypersistenceOriginalHibernateVersion;
         this.hypersistenceExpectedHibernateVersion = hypersistenceExpectedHibernateVersion;
         this.hypersistenceOriginalVersion = hypersistenceOriginalVersion;
