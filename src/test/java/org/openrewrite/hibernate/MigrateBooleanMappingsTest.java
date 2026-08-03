@@ -242,7 +242,9 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion()
             .classpathFromResources(new InMemoryExecutionContext(),
-              "hibernate-core-5+", "hibernate-core-6+", "jakarta.persistence-api")),
+              "hibernate-core-5+",
+              "hibernate-core-6+",
+              "jakarta.persistence-api")),
           java(
             """
               import jakarta.persistence.Column;
@@ -278,7 +280,9 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion()
             .classpathFromResources(new InMemoryExecutionContext(),
-              "hibernate-core-5+", "hibernate-core-6+", "jakarta.persistence-api")),
+              "hibernate-core-5+",
+              "hibernate-core-6+",
+              "jakarta.persistence-api")),
           java(
             """
               import jakarta.persistence.Column;
