@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate.validator;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -43,20 +44,17 @@ public class MoveValidToContainerElement extends Recipe {
     private static final String VALID = "jakarta.validation.Valid";
     private static final AnnotationMatcher VALID_MATCHER = new AnnotationMatcher('@' + VALID);
 
-    @Override
-    public String getDisplayName() {
-        return "Move `@Valid` from the container to its element type";
-    }
+    @Getter
+    final String displayName = "Move `@Valid` from the container to its element type";
 
-    @Override
-    public String getDescription() {
-        return "Hibernate Validator 9.1 deprecates requesting cascaded validation at the container level, and warns " +
-                "while building the metadata for declarations such as `@Valid List<Order> orders`. Rewrites those to " +
-                "the type argument form `List<@Valid Order> orders` that has been available since Bean Validation " +
-                "2.0. The element type argument is annotated for `Iterable` and `Optional` containers, and the value " +
-                "type argument for `Map`, matching where the built-in value extractors cascade to. `@Valid` on " +
-                "anything other than one of those containers is left alone, as are wildcard and raw type arguments.";
-    }
+    @Getter
+    final String description = "Hibernate Validator 9.1 deprecates requesting cascaded validation at the container level, and warns " +
+            "while building the metadata for declarations such as `@Valid List<Order> orders`. Rewrites those to " +
+            "the type argument form `List<@Valid Order> orders` that has been available since Bean Validation " +
+            "2.0. The element type argument is annotated for `Iterable` and `Optional` containers, and the value " +
+            "type argument for `Map`, matching where the built-in value extractors cascade to. `@Valid` on " +
+            "anything other than one of those containers is left alone, as are wildcard, raw, qualified and " +
+            "array type arguments.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
@@ -71,21 +69,25 @@ public class MoveValidToContainerElement extends Recipe {
                 }
 
                 J.Annotation valid = findValid(vd.getLeadingAnnotations());
-                if (valid == null || annotateElementType(vd.getTypeExpression(), valid) == null) {
+                if (valid == null) {
+                    return vd;
+                }
+                TypeTree annotatedElement = annotateElementType(vd.getTypeExpression(), valid);
+                if (annotatedElement == null) {
                     return vd;
                 }
 
                 List<J.Annotation> remaining = removeAnnotation(vd.getLeadingAnnotations(), valid);
                 if (vd.getLeadingAnnotations().get(0) == valid && remaining.isEmpty()) {
                     if (vd.getModifiers().isEmpty()) {
-                        vd = vd.withTypeExpression(shiftLeft(vd.getTypeExpression()));
+                        annotatedElement = shiftLeft(annotatedElement);
                     } else {
                         vd = vd.withModifiers(Space.formatFirstPrefix(vd.getModifiers(),
                                 Space.firstPrefix(vd.getModifiers()).withWhitespace("")));
                     }
                 }
                 return vd.withLeadingAnnotations(remaining)
-                        .withTypeExpression(annotateElementType(vd.getTypeExpression(), valid));
+                        .withTypeExpression(annotatedElement);
             }
 
             @Override
@@ -97,21 +99,28 @@ public class MoveValidToContainerElement extends Recipe {
                 }
 
                 J.Annotation valid = findValid(m.getLeadingAnnotations());
-                if (valid == null || annotateElementType(m.getReturnTypeExpression(), valid) == null) {
+                if (valid == null) {
+                    return m;
+                }
+                TypeTree annotatedElement = annotateElementType(m.getReturnTypeExpression(), valid);
+                if (annotatedElement == null) {
                     return m;
                 }
 
                 List<J.Annotation> remaining = removeAnnotation(m.getLeadingAnnotations(), valid);
                 if (m.getLeadingAnnotations().get(0) == valid && remaining.isEmpty()) {
-                    if (m.getModifiers().isEmpty()) {
-                        m = m.withReturnTypeExpression(shiftLeft(m.getReturnTypeExpression()));
-                    } else {
+                    J.TypeParameters typeParameters = m.getAnnotations().getTypeParameters();
+                    if (!m.getModifiers().isEmpty()) {
                         m = m.withModifiers(Space.formatFirstPrefix(m.getModifiers(),
                                 Space.firstPrefix(m.getModifiers()).withWhitespace("")));
+                    } else if (typeParameters != null) {
+                        m = m.getAnnotations().withTypeParameters(shiftLeft(typeParameters));
+                    } else {
+                        annotatedElement = shiftLeft(annotatedElement);
                     }
                 }
                 return m.withLeadingAnnotations(remaining)
-                        .withReturnTypeExpression(annotateElementType(m.getReturnTypeExpression(), valid));
+                        .withReturnTypeExpression(annotatedElement);
             }
         });
     }
@@ -137,8 +146,8 @@ public class MoveValidToContainerElement extends Recipe {
         return remaining;
     }
 
-    private static <T extends J> @Nullable T shiftLeft(@Nullable T tree) {
-        return tree == null ? null : tree.withPrefix(tree.getPrefix().withWhitespace(""));
+    private static <T extends J> T shiftLeft(T tree) {
+        return tree.withPrefix(tree.getPrefix().withWhitespace(""));
     }
 
     /**
@@ -163,9 +172,11 @@ public class MoveValidToContainerElement extends Recipe {
         List<J.Annotation> remaining = ListUtils.map(annotatedType.getAnnotations(), a -> a == valid ? null : a);
         if (remaining.isEmpty()) {
             // Whichever of the two held the whitespace separating the declaration from `@Valid` now separates it
-            // from the container type.
+            // from the container type, while any comments trailing `@Valid` are kept.
             Space prefix = annotatedType.getPrefix();
-            return container.withPrefix(Space.EMPTY.equals(prefix) ? valid.getPrefix() : prefix);
+            Space kept = Space.EMPTY.equals(prefix) ? valid.getPrefix() : prefix;
+            return container.withPrefix(kept.withComments(
+                    ListUtils.concatAll(kept.getComments(), container.getPrefix().getComments())));
         }
         if (annotatedType.getAnnotations().get(0) == valid) {
             remaining = ListUtils.mapFirst(remaining, first -> first.withPrefix(valid.getPrefix()));
@@ -182,14 +193,17 @@ public class MoveValidToContainerElement extends Recipe {
             return null;
         }
         J.ParameterizedType parameterized = (J.ParameterizedType) typeExpression;
-        int index = elementTypeArgumentIndex(parameterized.getType());
         List<Expression> typeArguments = parameterized.getTypeParameters();
-        if (index < 0 || typeArguments == null || typeArguments.size() <= index) {
+        if (typeArguments == null) {
+            return null;
+        }
+        int index = elementTypeArgumentIndex(parameterized.getType(), typeArguments.size());
+        if (index < 0) {
             return null;
         }
 
         Expression typeArgument = typeArguments.get(index);
-        if (!(typeArgument instanceof TypeTree) || typeArgument instanceof J.Wildcard) {
+        if (!(typeArgument instanceof TypeTree) || !canAnnotateInPlace(typeArgument)) {
             return null;
         }
         J.Annotation elementValid = valid.withId(Tree.randomId()).withPrefix(Space.EMPTY);
@@ -212,14 +226,31 @@ public class MoveValidToContainerElement extends Recipe {
     }
 
     /**
-     * The index of the type argument that Bean Validation's built-in value extractors cascade into, or {@code -1}
-     * for types without such an extractor.
+     * A type argument can only take a type use annotation when it is written as a simple name; annotating a qualified
+     * name such as {@code Order.Item} does not compile, and annotating an array type such as {@code Order[]} would bind
+     * to the component type rather than to the type argument.
      */
-    private static int elementTypeArgumentIndex(@Nullable JavaType type) {
-        if (TypeUtils.isAssignableTo("java.util.Map", type)) {
+    private static boolean canAnnotateInPlace(J typeArgument) {
+        if (typeArgument instanceof J.AnnotatedType) {
+            return canAnnotateInPlace(((J.AnnotatedType) typeArgument).getTypeExpression());
+        }
+        if (typeArgument instanceof J.ParameterizedType) {
+            return !(((J.ParameterizedType) typeArgument).getClazz() instanceof J.FieldAccess);
+        }
+        return typeArgument instanceof J.Identifier;
+    }
+
+    /**
+     * The index of the type argument that Bean Validation's built-in value extractors cascade into, or {@code -1}
+     * for types without such an extractor. Only containers that declare exactly the type parameters of {@code Map},
+     * {@code Iterable} or {@code Optional} are considered, as any other arity means the type arguments no longer line
+     * up positionally with the ones the extractors read.
+     */
+    private static int elementTypeArgumentIndex(@Nullable JavaType type, int arity) {
+        if (arity == 2 && TypeUtils.isAssignableTo("java.util.Map", type)) {
             return 1;
         }
-        if (TypeUtils.isAssignableTo("java.lang.Iterable", type) || TypeUtils.isAssignableTo("java.util.Optional", type)) {
+        if (arity == 1 && (TypeUtils.isAssignableTo("java.lang.Iterable", type) || TypeUtils.isAssignableTo("java.util.Optional", type))) {
             return 0;
         }
         return -1;

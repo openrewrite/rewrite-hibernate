@@ -444,6 +444,145 @@ class MoveValidToContainerElementTest implements RewriteTest {
     }
 
     @Test
+    void genericMethod() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import jakarta.validation.Valid;
+              import java.util.List;
+
+              class Customer {
+                  @Valid
+                  <T> List<T> getOrders() {
+                      return null;
+                  }
+              }
+              """,
+            """
+              import jakarta.validation.Valid;
+              import java.util.List;
+
+              class Customer {
+                  <T> List<@Valid T> getOrders() {
+                      return null;
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void retainCommentTrailingTheAnnotation() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import jakarta.validation.Valid;
+              import java.util.List;
+
+              class Customer {
+                  private @Valid /* cascade */ List<Order> orders;
+              }
+
+              class Order {
+              }
+              """,
+            """
+              import jakarta.validation.Valid;
+              import java.util.List;
+
+              class Customer {
+                  private /* cascade */ List<@Valid Order> orders;
+              }
+
+              class Order {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void leaveQualifiedTypeArgumentsAlone() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import jakarta.validation.Valid;
+              import java.util.List;
+              import java.util.Map;
+
+              class Order {
+                  static class Item {
+                  }
+              }
+
+              class Customer {
+                  @Valid
+                  private List<Order.Item> items;
+
+                  @Valid
+                  private List<java.util.Date> dates;
+
+                  @Valid
+                  private List<Map.Entry<String, Order>> entries;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void leaveArrayTypeArgumentsAlone() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import jakarta.validation.Valid;
+              import java.util.List;
+
+              class Customer {
+                  @Valid
+                  private List<Order[]> orders;
+              }
+
+              class Order {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void leaveContainersWithExtraTypeParametersAlone() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import jakarta.validation.Valid;
+              import java.util.Iterator;
+
+              class Registry<K, V> implements Iterable<V> {
+                  public Iterator<V> iterator() {
+                      return null;
+                  }
+              }
+
+              class Customer {
+                  @Valid
+                  private Registry<String, Order> registry;
+              }
+
+              class Order {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void alreadyOnContainerElement() {
         rewriteRun(
           //language=java
