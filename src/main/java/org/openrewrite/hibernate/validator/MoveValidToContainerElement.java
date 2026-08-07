@@ -25,6 +25,7 @@ import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.RemoveAnnotationVisitor;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
@@ -34,7 +35,6 @@ import org.openrewrite.java.tree.TypeTree;
 import org.openrewrite.java.tree.TypeUtils;
 import org.openrewrite.marker.Markers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -76,18 +76,8 @@ public class MoveValidToContainerElement extends Recipe {
                 if (annotatedElement == null) {
                     return vd;
                 }
-
-                List<J.Annotation> remaining = removeAnnotation(vd.getLeadingAnnotations(), valid);
-                if (vd.getLeadingAnnotations().get(0) == valid && remaining.isEmpty()) {
-                    if (vd.getModifiers().isEmpty()) {
-                        annotatedElement = shiftLeft(annotatedElement);
-                    } else {
-                        vd = vd.withModifiers(Space.formatFirstPrefix(vd.getModifiers(),
-                                Space.firstPrefix(vd.getModifiers()).withWhitespace("")));
-                    }
-                }
-                return vd.withLeadingAnnotations(remaining)
-                        .withTypeExpression(annotatedElement);
+                doAfterVisit(new RemoveAnnotationVisitor(sameAnnotation(valid)));
+                return vd.withTypeExpression(annotatedElement);
             }
 
             @Override
@@ -106,21 +96,8 @@ public class MoveValidToContainerElement extends Recipe {
                 if (annotatedElement == null) {
                     return m;
                 }
-
-                List<J.Annotation> remaining = removeAnnotation(m.getLeadingAnnotations(), valid);
-                if (m.getLeadingAnnotations().get(0) == valid && remaining.isEmpty()) {
-                    J.TypeParameters typeParameters = m.getAnnotations().getTypeParameters();
-                    if (!m.getModifiers().isEmpty()) {
-                        m = m.withModifiers(Space.formatFirstPrefix(m.getModifiers(),
-                                Space.firstPrefix(m.getModifiers()).withWhitespace("")));
-                    } else if (typeParameters != null) {
-                        m = m.getAnnotations().withTypeParameters(shiftLeft(typeParameters));
-                    } else {
-                        annotatedElement = shiftLeft(annotatedElement);
-                    }
-                }
-                return m.withLeadingAnnotations(remaining)
-                        .withReturnTypeExpression(annotatedElement);
+                doAfterVisit(new RemoveAnnotationVisitor(sameAnnotation(valid)));
+                return m.withReturnTypeExpression(annotatedElement);
             }
         });
     }
@@ -135,19 +112,28 @@ public class MoveValidToContainerElement extends Recipe {
     }
 
     /**
-     * Drops {@code valid} from the leading annotations, letting whichever annotation followed it take over its
-     * prefix so that the declaration keeps its original indentation and line breaks.
+     * Matches only the one annotation instance that was found, so that {@link RemoveAnnotationVisitor} removes the
+     * container level {@code @Valid} without also stripping any {@code @Valid} already present on a type argument.
      */
-    private static List<J.Annotation> removeAnnotation(List<J.Annotation> leadingAnnotations, J.Annotation valid) {
-        List<J.Annotation> remaining = ListUtils.map(leadingAnnotations, a -> a == valid ? null : a);
-        if (leadingAnnotations.get(0) == valid && !remaining.isEmpty()) {
+    private static AnnotationMatcher sameAnnotation(J.Annotation annotation) {
+        return new AnnotationMatcher('@' + VALID) {
+            @Override
+            public boolean matches(J.Annotation anno) {
+                return annotation.equals(anno);
+            }
+        };
+    }
+
+    /**
+     * Drops {@code valid} from the annotations, letting whichever annotation followed it take over its prefix so that
+     * the declaration keeps its original indentation and line breaks.
+     */
+    private static List<J.Annotation> removeAnnotation(List<J.Annotation> annotations, J.Annotation valid) {
+        List<J.Annotation> remaining = ListUtils.map(annotations, a -> a == valid ? null : a);
+        if (annotations.get(0) == valid && !remaining.isEmpty()) {
             return ListUtils.mapFirst(remaining, first -> first.withPrefix(valid.getPrefix()));
         }
         return remaining;
-    }
-
-    private static <T extends J> T shiftLeft(T tree) {
-        return tree.withPrefix(tree.getPrefix().withWhitespace(""));
     }
 
     /**
@@ -169,17 +155,14 @@ public class MoveValidToContainerElement extends Recipe {
             return null;
         }
 
-        List<J.Annotation> remaining = ListUtils.map(annotatedType.getAnnotations(), a -> a == valid ? null : a);
+        List<J.Annotation> remaining = removeAnnotation(annotatedType.getAnnotations(), valid);
         if (remaining.isEmpty()) {
             // Whichever of the two held the whitespace separating the declaration from `@Valid` now separates it
             // from the container type, while any comments trailing `@Valid` are kept.
             Space prefix = annotatedType.getPrefix();
-            Space kept = Space.EMPTY.equals(prefix) ? valid.getPrefix() : prefix;
+            Space kept = prefix.isEmpty() ? valid.getPrefix() : prefix;
             return container.withPrefix(kept.withComments(
                     ListUtils.concatAll(kept.getComments(), container.getPrefix().getComments())));
-        }
-        if (annotatedType.getAnnotations().get(0) == valid) {
-            remaining = ListUtils.mapFirst(remaining, first -> first.withPrefix(valid.getPrefix()));
         }
         return annotatedType.withAnnotations(remaining).withTypeExpression(container);
     }
@@ -206,36 +189,36 @@ public class MoveValidToContainerElement extends Recipe {
         if (!(typeArgument instanceof TypeTree) || !canAnnotateInPlace(typeArgument)) {
             return null;
         }
-        J.Annotation elementValid = valid.withId(Tree.randomId()).withPrefix(Space.EMPTY);
         Expression annotated;
         if (typeArgument instanceof J.AnnotatedType) {
             J.AnnotatedType annotatedType = (J.AnnotatedType) typeArgument;
             if (findValid(annotatedType.getAnnotations()) != null) {
                 return null;
             }
-            annotated = annotatedType.withAnnotations(ListUtils.concat(elementValid,
+            annotated = annotatedType.withAnnotations(ListUtils.concat(elementValid(valid),
                     ListUtils.mapFirst(annotatedType.getAnnotations(), first -> first.withPrefix(Space.SINGLE_SPACE))));
         } else {
             annotated = new J.AnnotatedType(Tree.randomId(), typeArgument.getPrefix(), Markers.EMPTY,
-                    singletonList(elementValid), ((TypeTree) typeArgument).withPrefix(Space.SINGLE_SPACE));
+                    singletonList(elementValid(valid)), ((TypeTree) typeArgument).withPrefix(Space.SINGLE_SPACE));
         }
+        return parameterized.withTypeParameters(ListUtils.map(typeArguments, (i, arg) -> i == index ? annotated : arg));
+    }
 
-        List<Expression> newTypeArguments = new ArrayList<>(typeArguments);
-        newTypeArguments.set(index, annotated);
-        return parameterized.withTypeParameters(newTypeArguments);
+    private static J.Annotation elementValid(J.Annotation valid) {
+        return valid.withId(Tree.randomId()).withPrefix(Space.EMPTY);
     }
 
     /**
-     * A type argument can only take a type use annotation when it is written as a simple name; annotating a qualified
-     * name such as {@code Order.Item} does not compile, and annotating an array type such as {@code Order[]} would bind
-     * to the component type rather than to the type argument.
+     * Peels the wrappers off a type argument until the name it applies to is reached; only a simple name can take a
+     * type use annotation. Annotating a qualified name such as {@code Order.Item} does not compile, and annotating an
+     * array type such as {@code Order[]} would bind to the component type rather than to the type argument.
      */
     private static boolean canAnnotateInPlace(J typeArgument) {
         if (typeArgument instanceof J.AnnotatedType) {
             return canAnnotateInPlace(((J.AnnotatedType) typeArgument).getTypeExpression());
         }
         if (typeArgument instanceof J.ParameterizedType) {
-            return !(((J.ParameterizedType) typeArgument).getClazz() instanceof J.FieldAccess);
+            return canAnnotateInPlace(((J.ParameterizedType) typeArgument).getClazz());
         }
         return typeArgument instanceof J.Identifier;
     }
@@ -250,7 +233,7 @@ public class MoveValidToContainerElement extends Recipe {
         if (arity == 2 && TypeUtils.isAssignableTo("java.util.Map", type)) {
             return 1;
         }
-        if (arity == 1 && (TypeUtils.isAssignableTo("java.lang.Iterable", type) || TypeUtils.isAssignableTo("java.util.Optional", type))) {
+        if (arity == 1 && (TypeUtils.isOfClassType(type, "java.util.Optional") || TypeUtils.isAssignableTo("java.lang.Iterable", type))) {
             return 0;
         }
         return -1;
