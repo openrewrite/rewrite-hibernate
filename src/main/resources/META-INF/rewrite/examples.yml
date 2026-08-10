@@ -535,3 +535,79 @@ examples:
       </project>
     path: pom.xml
     language: xml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.validator.HibernateValidator_9_1
+examples:
+- description: '`HibernateValidator91Test#upgradeDependencyAndMoveValidInward`'
+  sources:
+  - before: |
+      import jakarta.validation.Valid;
+
+      import java.util.List;
+
+      class Customer {
+          @Valid
+          private List<Order> orders;
+      }
+
+      class Order {
+      }
+    after: |
+      import jakarta.validation.Valid;
+
+      import java.util.List;
+
+      class Customer {
+          private List<@Valid Order> orders;
+      }
+
+      class Order {
+      }
+    language: java
+  - before: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
+        <groupId>com.example</groupId>
+        <artifactId>demo</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>7.0.5.Final</version>
+          </dependency>
+        </dependencies>
+      </project>
+    path: pom.xml
+    language: xml
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.hibernate.validator.MoveValidToContainerElement
+examples:
+- description: '`MoveValidToContainerElementTest#listField`'
+  sources:
+  - before: |
+      import jakarta.validation.Valid;
+      import java.util.List;
+
+      class Customer {
+          @Valid
+          private List<Order> orders;
+      }
+
+      class Order {
+      }
+    after: |
+      import jakarta.validation.Valid;
+      import java.util.List;
+
+      class Customer {
+          private List<@Valid Order> orders;
+      }
+
+      class Order {
+      }
+    language: java
