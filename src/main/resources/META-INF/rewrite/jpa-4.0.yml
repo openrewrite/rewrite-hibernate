@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Red Hat Inc. and Hibernate Authors
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.jpa.MigrateJpa3To4
+displayName: Migrate from JPA 3.x to JPA 4.0
+description: >-
+  Migrates Jakarta Persistence 3.x usage to JPA 4.0.
+  Converts DML-oriented @NamedQuery to @NamedStatement,
+  @NamedNativeQuery to @NamedNativeStatement,
+  updates persistence.xml schema references,
+  and replaces EntityManager.getDelegate() with unwrap(Object.class).
+recipeList:
+  - org.openrewrite.hibernate.jpa.MigrateNamedQueryToStatement
+  - org.openrewrite.hibernate.jpa.UpdatePersistenceXmlVersion
+  - org.openrewrite.hibernate.jpa.MigrateEntityManagerGetDelegate
