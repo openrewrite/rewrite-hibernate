@@ -78,6 +78,9 @@ recipeList:
       existingFullyQualifiedConstantName: org.hibernate.annotations.CascadeType.DELETE
       fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.REMOVE
 
+  # Drop invalid @GeneratedValue(strategy=TABLE|SEQUENCE, generator="X") when "X" is a @GenericGenerator
+  - org.openrewrite.hibernate.RemoveGeneratedValueStrategyWithGenericGenerator
+
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate70
