@@ -16,20 +16,25 @@
 package org.openrewrite.hibernate;
 
 import lombok.Getter;
-import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.search.UsesType;
+import org.openrewrite.java.trait.Annotated;
+import org.openrewrite.java.trait.AttributeValue;
+import org.openrewrite.java.trait.Literal;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.Space;
+import org.openrewrite.java.tree.Statement;
 import org.openrewrite.java.tree.TypeUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RemoveGeneratedValueStrategyWithGenericGenerator extends Recipe {
 
@@ -56,151 +61,90 @@ public class RemoveGeneratedValueStrategyWithGenericGenerator extends Recipe {
                         new UsesType<>(GENERIC_GENERATOR, false)),
                 new JavaIsoVisitor<ExecutionContext>() {
                     @Override
+                    public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration cd, ExecutionContext ctx) {
+                        getCursor().putMessage("generatorsByName", collectGenerators(cd));
+                        return super.visitClassDeclaration(cd, ctx);
+                    }
+
+                    @Override
                     public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                         J.Annotation a = super.visitAnnotation(annotation, ctx);
                         if (!TypeUtils.isOfClassType(a.getType(), GENERATED_VALUE)) {
                             return a;
                         }
-                        List<Expression> args = a.getArguments();
-                        if (args == null || args.size() < 2) {
+
+                        Annotated gv = new Annotated(getCursor());
+                        AttributeValue strategy = gv.getAttributeValue("strategy").orElse(null);
+                        String generatorName = gv.getAttribute("generator").map(Literal::getString).orElse(null);
+                        if (strategy == null || generatorName == null) {
+                            return a;
+                        }
+                        if (!strategy.isEnumConstant(GENERATION_TYPE, "TABLE") &&
+                                !strategy.isEnumConstant(GENERATION_TYPE, "SEQUENCE")) {
                             return a;
                         }
 
-                        J.Assignment strategyArg = null;
-                        String strategyValue = null;
-                        String generatorName = null;
-                        for (Expression arg : args) {
-                            if (!(arg instanceof J.Assignment)) {
-                                continue;
-                            }
-                            J.Assignment assign = (J.Assignment) arg;
-                            if (!(assign.getVariable() instanceof J.Identifier)) {
-                                continue;
-                            }
-                            String key = ((J.Identifier) assign.getVariable()).getSimpleName();
-                            if ("strategy".equals(key)) {
-                                strategyArg = assign;
-                                strategyValue = enumConstantName(assign.getAssignment());
-                            } else if ("generator".equals(key)) {
-                                generatorName = stringLiteralValue(assign.getAssignment());
-                            }
-                        }
-
-                        if (strategyArg == null || generatorName == null) {
-                            return a;
-                        }
-                        if (!"TABLE".equals(strategyValue) && !"SEQUENCE".equals(strategyValue)) {
+                        Map<String, GeneratorKind> generators = getCursor().getNearestMessage("generatorsByName");
+                        if (generators == null || generators.get(generatorName) != GeneratorKind.GENERIC) {
                             return a;
                         }
 
-                        J.ClassDeclaration enclosingClass = getCursor().firstEnclosing(J.ClassDeclaration.class);
-                        if (enclosingClass == null) {
-                            return a;
-                        }
-
-                        GeneratorKind kind = findGeneratorKind(enclosingClass, generatorName);
-                        if (kind != GeneratorKind.GENERIC) {
-                            return a;
-                        }
-
+                        J.Assignment strategyArg = (J.Assignment) strategy.getCursor().getParentTreeCursor().getValue();
+                        List<Expression> remaining = ListUtils.map(a.getArguments(), arg -> arg == strategyArg ? null : arg);
+                        remaining = ListUtils.mapFirst(remaining, first -> first.withPrefix(Space.EMPTY));
                         maybeRemoveImport(GENERATION_TYPE);
-                        return JavaTemplate.builder("@GeneratedValue(generator = \"" + escape(generatorName) + "\")")
-                                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))
-                                .imports(GENERATED_VALUE)
-                                .build()
-                                .apply(getCursor(), a.getCoordinates().replace());
+                        return a.withArguments(remaining);
                     }
                 });
     }
 
-    private static String escape(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
+    private enum GeneratorKind {GENERIC, CONFLICTING}
 
-    private static @Nullable String enumConstantName(Expression expr) {
-        if (expr instanceof J.FieldAccess) {
-            return ((J.FieldAccess) expr).getSimpleName();
-        }
-        if (expr instanceof J.Identifier) {
-            return ((J.Identifier) expr).getSimpleName();
-        }
-        return null;
-    }
-
-    private static @Nullable String stringLiteralValue(Expression expr) {
-        if (expr instanceof J.Literal) {
-            Object v = ((J.Literal) expr).getValue();
-            return v instanceof String ? (String) v : null;
-        }
-        return null;
-    }
-
-    private enum GeneratorKind {GENERIC, TABLE, SEQUENCE, NONE}
-
-    private static GeneratorKind findGeneratorKind(J.ClassDeclaration cls, String name) {
-        GeneratorKind found = GeneratorKind.NONE;
-        for (J.Annotation ann : cls.getLeadingAnnotations()) {
-            GeneratorKind k = classifyIfNamed(ann, name);
-            if (k == GeneratorKind.TABLE || k == GeneratorKind.SEQUENCE) {
-                return k;
-            }
-            if (k == GeneratorKind.GENERIC) {
-                found = GeneratorKind.GENERIC;
+    private static Map<String, GeneratorKind> collectGenerators(J.ClassDeclaration cd) {
+        Map<String, GeneratorKind> result = new HashMap<>();
+        recordGenerators(cd.getLeadingAnnotations(), result);
+        for (Statement stmt : cd.getBody().getStatements()) {
+            if (stmt instanceof J.VariableDeclarations) {
+                recordGenerators(((J.VariableDeclarations) stmt).getLeadingAnnotations(), result);
             }
         }
-        for (org.openrewrite.java.tree.Statement stmt : cls.getBody().getStatements()) {
-            if (!(stmt instanceof J.VariableDeclarations)) {
+        return result;
+    }
+
+    private static void recordGenerators(List<J.Annotation> annotations, Map<String, GeneratorKind> out) {
+        for (J.Annotation ann : annotations) {
+            boolean isGeneric = TypeUtils.isOfClassType(ann.getType(), GENERIC_GENERATOR);
+            boolean isConflicting = TypeUtils.isOfClassType(ann.getType(), TABLE_GENERATOR) ||
+                    TypeUtils.isOfClassType(ann.getType(), SEQUENCE_GENERATOR);
+            if (!isGeneric && !isConflicting) {
                 continue;
             }
-            for (J.Annotation ann : ((J.VariableDeclarations) stmt).getLeadingAnnotations()) {
-                GeneratorKind k = classifyIfNamed(ann, name);
-                if (k == GeneratorKind.TABLE || k == GeneratorKind.SEQUENCE) {
-                    return k;
-                }
-                if (k == GeneratorKind.GENERIC) {
-                    found = GeneratorKind.GENERIC;
-                }
+            String name = annotationNameAttribute(ann);
+            if (name == null) {
+                continue;
+            }
+            if (isConflicting) {
+                out.put(name, GeneratorKind.CONFLICTING);
+            } else {
+                out.putIfAbsent(name, GeneratorKind.GENERIC);
             }
         }
-        return found;
     }
 
-    private static GeneratorKind classifyIfNamed(J.Annotation ann, String name) {
-        String fqn = annotationFqn(ann);
-        if (fqn == null) {
-            return GeneratorKind.NONE;
-        }
-        boolean isGeneric = GENERIC_GENERATOR.equals(fqn);
-        boolean isTable = TABLE_GENERATOR.equals(fqn);
-        boolean isSequence = SEQUENCE_GENERATOR.equals(fqn);
-        if (!isGeneric && !isTable && !isSequence) {
-            return GeneratorKind.NONE;
-        }
-        if (!name.equals(nameAttribute(ann))) {
-            return GeneratorKind.NONE;
-        }
-        return isGeneric ? GeneratorKind.GENERIC : isTable ? GeneratorKind.TABLE : GeneratorKind.SEQUENCE;
-    }
-
-    private static @Nullable String annotationFqn(J.Annotation ann) {
-        return ann.getType() instanceof org.openrewrite.java.tree.JavaType.FullyQualified ?
-                ((org.openrewrite.java.tree.JavaType.FullyQualified) ann.getType()).getFullyQualifiedName() :
-                null;
-    }
-
-    private static @Nullable String nameAttribute(J.Annotation ann) {
+    private static String annotationNameAttribute(J.Annotation ann) {
         List<Expression> args = ann.getArguments();
         if (args == null) {
             return null;
         }
         for (Expression arg : args) {
-            if (!(arg instanceof J.Assignment)) {
-                continue;
-            }
-            J.Assignment assign = (J.Assignment) arg;
-            if (assign.getVariable() instanceof J.Identifier &&
-                    "name".equals(((J.Identifier) assign.getVariable()).getSimpleName())) {
-                return stringLiteralValue(assign.getAssignment());
+            if (arg instanceof J.Assignment) {
+                J.Assignment assign = (J.Assignment) arg;
+                if (assign.getVariable() instanceof J.Identifier &&
+                        "name".equals(((J.Identifier) assign.getVariable()).getSimpleName()) &&
+                        assign.getAssignment() instanceof J.Literal) {
+                    Object v = ((J.Literal) assign.getAssignment()).getValue();
+                    return v instanceof String ? (String) v : null;
+                }
             }
         }
         return null;
