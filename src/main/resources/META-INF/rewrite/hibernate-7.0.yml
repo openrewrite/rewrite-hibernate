@@ -26,6 +26,7 @@ preconditions:
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernate66
   - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate70
+  - org.openrewrite.hibernate.MigrateRemovedDialectsHibernate70
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
       groupId: org.hibernate.orm
       artifactId: '*'
@@ -79,6 +80,40 @@ recipeList:
       fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.REMOVE
 
   - org.openrewrite.hibernate.RemoveGeneratedValueStrategyWithGenericGenerator
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.MigrateRemovedDialectsHibernate70
+displayName: Migrate dialects removed in Hibernate 7.0 to their generic equivalents
+description: >-
+  Hibernate 7.0 removed the remaining version- and storage-specific dialect subclasses that still
+  existed in Hibernate 6.x. The IBM-i (`DB2400*`) variants map to `DB2iDialect`, not the generic
+  `DB2Dialect`; the HANA row/column-store variants and MariaDB 10.6 collapse into the generic
+  `HANADialect` / `MariaDBDialect`, which autodetect behavior from the JDBC connection.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.dialect.DB2400Dialect
+      newFullyQualifiedTypeName: org.hibernate.dialect.DB2iDialect
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.dialect.DB2400V7R3Dialect
+      newFullyQualifiedTypeName: org.hibernate.dialect.DB2iDialect
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.dialect.MariaDB106Dialect
+      newFullyQualifiedTypeName: org.hibernate.dialect.MariaDBDialect
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.dialect.AbstractHANADialect
+      newFullyQualifiedTypeName: org.hibernate.dialect.HANADialect
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.dialect.HANAColumnStoreDialect
+      newFullyQualifiedTypeName: org.hibernate.dialect.HANADialect
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.dialect.HANACloudColumnStoreDialect
+      newFullyQualifiedTypeName: org.hibernate.dialect.HANADialect
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.dialect.HANARowStoreDialect
+      newFullyQualifiedTypeName: org.hibernate.dialect.HANADialect
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
