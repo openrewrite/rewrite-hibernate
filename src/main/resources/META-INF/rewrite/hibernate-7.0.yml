@@ -78,6 +78,8 @@ recipeList:
       existingFullyQualifiedConstantName: org.hibernate.annotations.CascadeType.DELETE
       fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.REMOVE
 
+  - org.openrewrite.hibernate.RemoveGeneratedValueStrategyWithGenericGenerator
+
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate70
