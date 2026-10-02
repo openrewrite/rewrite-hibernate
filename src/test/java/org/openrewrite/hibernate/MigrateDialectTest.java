@@ -124,4 +124,26 @@ class MigrateDialectTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void replacesSybaseASE157DialectInProperties() {
+        rewriteRun(
+          properties(
+            "spring.jpa.database-platform=org.hibernate.dialect.SybaseASE157Dialect\n",
+            "spring.jpa.database-platform=org.hibernate.dialect.SybaseASEDialect\n",
+            s -> s.path("src/main/resources/application.properties")
+          )
+        );
+    }
+
+    @Test
+    void replacesCockroachDB201DialectInProperties() {
+        rewriteRun(
+          properties(
+            "spring.jpa.database-platform=org.hibernate.dialect.CockroachDB201Dialect\n",
+            "spring.jpa.database-platform=org.hibernate.dialect.CockroachDialect\n",
+            s -> s.path("src/main/resources/application.properties")
+          )
+        );
+    }
 }
