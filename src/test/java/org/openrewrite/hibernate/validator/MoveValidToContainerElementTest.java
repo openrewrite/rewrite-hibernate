@@ -505,12 +505,13 @@ class MoveValidToContainerElementTest implements RewriteTest {
     }
 
     @Test
-    void leaveQualifiedTypeArgumentsAlone() {
+    void qualifiedTypeArguments() {
         rewriteRun(
           //language=java
           java(
             """
               import jakarta.validation.Valid;
+              import jakarta.validation.constraints.NotNull;
               import java.util.List;
               import java.util.Map;
 
@@ -527,7 +528,31 @@ class MoveValidToContainerElementTest implements RewriteTest {
                   private List<java.util.Date> dates;
 
                   @Valid
+                  private List<java.util.@NotNull Date> requiredDates;
+
+                  @Valid
                   private List<Map.Entry<String, Order>> entries;
+              }
+              """,
+            """
+              import jakarta.validation.Valid;
+              import jakarta.validation.constraints.NotNull;
+              import java.util.List;
+              import java.util.Map;
+
+              class Order {
+                  static class Item {
+                  }
+              }
+
+              class Customer {
+                  private List<Order.@Valid Item> items;
+
+                  private List<java.util.@Valid Date> dates;
+
+                  private List<java.util.@Valid @NotNull Date> requiredDates;
+
+                  private List<Map.@Valid Entry<String, Order>> entries;
               }
               """
           )

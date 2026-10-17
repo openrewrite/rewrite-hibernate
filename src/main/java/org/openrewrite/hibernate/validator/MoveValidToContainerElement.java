@@ -30,6 +30,7 @@ import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.java.tree.NameTree;
 import org.openrewrite.java.tree.Space;
 import org.openrewrite.java.tree.TypeTree;
 import org.openrewrite.java.tree.TypeUtils;
@@ -53,8 +54,8 @@ public class MoveValidToContainerElement extends Recipe {
             "the type argument form `List<@Valid Order> orders` that has been available since Bean Validation " +
             "2.0. The element type argument is annotated for `Iterable` and `Optional` containers, and the value " +
             "type argument for `Map`, matching where the built-in value extractors cascade to. `@Valid` on " +
-            "anything other than one of those containers is left alone, as are wildcard, raw, qualified and " +
-            "array type arguments.";
+            "anything other than one of those containers is left alone, as are wildcard, raw and array type " +
+            "arguments.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
@@ -186,11 +187,16 @@ public class MoveValidToContainerElement extends Recipe {
         }
 
         Expression typeArgument = typeArguments.get(index);
-        if (!(typeArgument instanceof TypeTree) || !canAnnotateInPlace(typeArgument)) {
+        if (!(typeArgument instanceof TypeTree)) {
             return null;
         }
         Expression annotated;
-        if (typeArgument instanceof J.AnnotatedType) {
+        if (!canAnnotateInPlace(typeArgument)) {
+            annotated = annotateLastName(typeArgument, valid);
+            if (annotated == null) {
+                return null;
+            }
+        } else if (typeArgument instanceof J.AnnotatedType) {
             J.AnnotatedType annotatedType = (J.AnnotatedType) typeArgument;
             if (findValid(annotatedType.getAnnotations()) != null) {
                 return null;
@@ -210,8 +216,9 @@ public class MoveValidToContainerElement extends Recipe {
 
     /**
      * Peels the wrappers off a type argument until the name it applies to is reached; only a simple name can take a
-     * type use annotation. Annotating a qualified name such as {@code Order.Item} does not compile, and annotating an
-     * array type such as {@code Order[]} would bind to the component type rather than to the type argument.
+     * type use annotation in front of it. A qualified name such as {@code Order.Item} takes it on its last name
+     * instead, and annotating an array type such as {@code Order[]} would bind to the component type rather than to
+     * the type argument.
      */
     private static boolean canAnnotateInPlace(J typeArgument) {
         if (typeArgument instanceof J.AnnotatedType) {
@@ -221,6 +228,33 @@ public class MoveValidToContainerElement extends Recipe {
             return canAnnotateInPlace(((J.ParameterizedType) typeArgument).getClazz());
         }
         return typeArgument instanceof J.Identifier;
+    }
+
+    /**
+     * Puts {@code valid} on the last name of a qualified type argument, as in {@code java.util.@Valid List<Order>}.
+     */
+    private static @Nullable Expression annotateLastName(J typeArgument, J.Annotation valid) {
+        if (typeArgument instanceof J.AnnotatedType) {
+            J.AnnotatedType annotatedType = (J.AnnotatedType) typeArgument;
+            Expression annotated = annotateLastName(annotatedType.getTypeExpression(), valid);
+            return annotated instanceof TypeTree ? annotatedType.withTypeExpression((TypeTree) annotated) : null;
+        }
+        if (typeArgument instanceof J.ParameterizedType) {
+            J.ParameterizedType parameterized = (J.ParameterizedType) typeArgument;
+            Expression annotated = annotateLastName(parameterized.getClazz(), valid);
+            return annotated instanceof NameTree ? parameterized.withClazz((NameTree) annotated) : null;
+        }
+        if (!(typeArgument instanceof J.FieldAccess)) {
+            return null;
+        }
+        J.FieldAccess qualified = (J.FieldAccess) typeArgument;
+        J.Identifier name = qualified.getName();
+        if (findValid(name.getAnnotations()) != null) {
+            return null;
+        }
+        return qualified.withName(name.withPrefix(Space.SINGLE_SPACE)
+                .withAnnotations(ListUtils.concat(elementValid(valid),
+                        ListUtils.mapFirst(name.getAnnotations(), first -> first.withPrefix(Space.SINGLE_SPACE)))));
     }
 
     /**

@@ -121,11 +121,11 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                     // default is LazyCollectionOption.TRUE
                     getCursor().putMessage("fetchType", "FetchType.LAZY");
                 } else {
-                    switch (arguments.get(0).toString()) {
-                        case "LazyCollectionOption.FALSE":
+                    switch (lazyCollectionOption(arguments.get(0))) {
+                        case "FALSE":
                             getCursor().putMessage("fetchType", "FetchType.EAGER");
                             break;
-                        case "LazyCollectionOption.TRUE":
+                        case "TRUE":
                             getCursor().putMessage("fetchType", "FetchType.LAZY");
                             break;
                         default:
@@ -138,5 +138,20 @@ public class ReplaceLazyCollectionAnnotation extends Recipe {
                         .visit(tree, ctx, getCursor().getParentOrThrow());
             }
         });
+    }
+
+    /**
+     * The name of the {@code LazyCollectionOption} constant an argument refers to, however it is qualified, or an
+     * empty string when it refers to none.
+     */
+    private static String lazyCollectionOption(Expression argument) {
+        J.Identifier name = argument instanceof J.FieldAccess ? ((J.FieldAccess) argument).getName() :
+                argument instanceof J.Identifier ? (J.Identifier) argument : null;
+        JavaType.Variable constant = name == null ? null : name.getFieldType();
+        if (constant == null ||
+            !TypeUtils.isOfClassType(constant.getOwner(), "org.hibernate.annotations.LazyCollectionOption")) {
+            return "";
+        }
+        return constant.getName();
     }
 }
