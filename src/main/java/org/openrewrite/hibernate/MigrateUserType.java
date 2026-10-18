@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.openrewrite.Tree.randomId;
 
@@ -72,7 +73,7 @@ public class MigrateUserType extends Recipe {
                 J.FieldAccess parameterizedType = getReturnedClass(cd);
                 cd = cd.withImplements(ListUtils.map(cd.getImplements(), impl -> {
                     if (TypeUtils.isAssignableTo(USER_TYPE, impl.getType()) && parameterizedType != null) {
-                        return TypeTree.build("UserType<" + parameterizedType.getTarget() + ">").withType(JavaType.buildType(USER_TYPE)).withPrefix(Space.SINGLE_SPACE);
+                        return parameterized(USER_TYPE, parameterizedType.getTarget()).withPrefix(Space.SINGLE_SPACE);
                     }
                     return impl;
                 }));
@@ -134,7 +135,7 @@ public class MigrateUserType extends Recipe {
                         }
                     }
                 } else if (RETURNED_CLASS.matches(md, cd)) {
-                    md = md.withReturnTypeExpression(TypeTree.build("Class<" + parameterizedType.getTarget() + ">"));
+                    md = md.withReturnTypeExpression(parameterized("java.lang.Class", parameterizedType.getTarget()));
                     if (md.getReturnTypeExpression() != null) {
                         md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
                     }
@@ -248,5 +249,19 @@ public class MigrateUserType extends Recipe {
                 return mi;
             }
         });
+    }
+
+    /**
+     * The type tree the parser makes of {@code Name<TypeArgument>}, for the class named by {@code fullyQualifiedName}.
+     */
+    private static J.ParameterizedType parameterized(String fullyQualifiedName, Expression typeArgument) {
+        JavaType.ShallowClass type = JavaType.ShallowClass.build(fullyQualifiedName);
+        JavaType argumentType = typeArgument.getType() == null ? JavaType.Unknown.getInstance() : typeArgument.getType();
+        // a copy of the type argument, so that the class literal it came from keeps its own ids
+        Expression argument = TypeTree.build(typeArgument.toString());
+        return new J.ParameterizedType(randomId(), Space.EMPTY, Markers.EMPTY,
+                new J.Identifier(randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), type.getClassName(), type, null),
+                JContainer.build(singletonList(JRightPadded.build(argument.withType(argumentType)))),
+                new JavaType.Parameterized(null, type, singletonList(argumentType)));
     }
 }
