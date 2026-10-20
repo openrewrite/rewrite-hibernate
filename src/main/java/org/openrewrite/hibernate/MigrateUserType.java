@@ -135,10 +135,7 @@ public class MigrateUserType extends Recipe {
                         }
                     }
                 } else if (RETURNED_CLASS.matches(md, cd)) {
-                    md = md.withReturnTypeExpression(parameterized("java.lang.Class", parameterizedType.getTarget()));
-                    if (md.getReturnTypeExpression() != null) {
-                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                    }
+                    md = changeReturnType(md, parameterized("java.lang.Class", parameterizedType.getTarget()));
                 } else if (EQUALS.matches(md, cd)) {
                     md = changeParameterTypes(md, Arrays.asList(0, 1), parameterizedType);
                 } else if (HASHCODE.matches(md, cd)) {
@@ -156,10 +153,7 @@ public class MigrateUserType extends Recipe {
                 } else if (NULL_SAFE_SET.matches(md, cd)) {
                     md = changeParameterTypes(md, singletonList(1), parameterizedType);
                 } else if (DEEP_COPY.matches(md, cd)) {
-                    md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
-                    if (md.getReturnTypeExpression() != null) {
-                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                    }
+                    md = changeReturnType(md, parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     md = changeParameterTypes(md, singletonList(0), parameterizedType);
                 } else if (DISASSEMBLE.matches(md, cd)) {
                     md = changeParameterTypes(md, singletonList(0), parameterizedType);
@@ -178,10 +172,7 @@ public class MigrateUserType extends Recipe {
                         })));
                     }
                 } else if (ASSEMBLE.matches(md, cd)) {
-                    md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
-                    if (md.getReturnTypeExpression() != null) {
-                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                    }
+                    md = changeReturnType(md, parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     if (md.getBody() != null) {
                         md = md.withBody(md.getBody().withStatements(ListUtils.map(md.getBody().getStatements(), stmt -> {
                             if (stmt instanceof J.Return) {
@@ -195,15 +186,23 @@ public class MigrateUserType extends Recipe {
                         })));
                     }
                 } else if (REPLACE.matches(md, cd)) {
-                    md = md.withReturnTypeExpression(parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
-                    if (md.getReturnTypeExpression() != null) {
-                        md = md.withPrefix(md.getReturnTypeExpression().getPrefix());
-                    }
+                    md = changeReturnType(md, parameterizedType.getTarget().withPrefix(Space.SINGLE_SPACE));
                     md = changeParameterTypes(md, Arrays.asList(0, 1), parameterizedType);
                 }
                 updateCursor(md);
                 md = (J.MethodDeclaration) super.visitMethodDeclaration(md, ctx);
                 return maybeAutoFormat(method, md, ctx);
+            }
+
+            private J.MethodDeclaration changeReturnType(J.MethodDeclaration md, TypeTree returnTypeExpression) {
+                md = md.withReturnTypeExpression(returnTypeExpression)
+                        .withPrefix(returnTypeExpression.getPrefix());
+                JavaType.Method mt = md.getMethodType();
+                if (mt != null) {
+                    mt = mt.withReturnType(returnTypeExpression.getType());
+                    md = md.withMethodType(mt).withName(md.getName().withType(mt));
+                }
+                return md;
             }
 
             private J.MethodDeclaration changeParameterTypes(J.MethodDeclaration md, List<Integer> paramIndexes, J.FieldAccess parameterizedType) {
