@@ -85,8 +85,7 @@ public class MigrateUserType extends Recipe {
 
             @SuppressWarnings("ConstantConditions")
             private J.@Nullable FieldAccess getReturnedClass(J.ClassDeclaration cd) {
-                AtomicReference<J.FieldAccess> reference = new AtomicReference<>();
-                new JavaIsoVisitor<AtomicReference<J.FieldAccess>>() {
+                return new JavaIsoVisitor<AtomicReference<J.FieldAccess>>() {
                     @Override
                     public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, AtomicReference<J.FieldAccess> ref) {
                         // Only visit top level method returnedClass
@@ -102,8 +101,7 @@ public class MigrateUserType extends Recipe {
                         }
                         return _return;
                     }
-                }.visitNonNull(cd, reference);
-                return reference.get();
+                }.reduce(cd, new AtomicReference<>()).get();
             }
 
             @Override
