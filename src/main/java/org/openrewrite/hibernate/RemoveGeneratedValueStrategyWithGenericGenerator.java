@@ -90,7 +90,7 @@ public class RemoveGeneratedValueStrategyWithGenericGenerator extends Recipe {
                         }
 
                         J.Assignment strategyArg = (J.Assignment) strategy.getCursor().getParentTreeCursor().getValue();
-                        List<Expression> remaining = ListUtils.map(a.getArguments(), arg -> arg == strategyArg ? null : arg);
+                        List<Expression> remaining = ListUtils.filter(a.getArguments(), arg -> arg != strategyArg);
                         remaining = ListUtils.mapFirst(remaining, first -> first.withPrefix(Space.EMPTY));
                         maybeRemoveImport(GENERATION_TYPE);
                         return a.withArguments(remaining);

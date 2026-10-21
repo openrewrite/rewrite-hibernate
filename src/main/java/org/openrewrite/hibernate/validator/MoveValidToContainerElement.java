@@ -130,7 +130,7 @@ public class MoveValidToContainerElement extends Recipe {
      * the declaration keeps its original indentation and line breaks.
      */
     private static List<J.Annotation> removeAnnotation(List<J.Annotation> annotations, J.Annotation valid) {
-        List<J.Annotation> remaining = ListUtils.map(annotations, a -> a == valid ? null : a);
+        List<J.Annotation> remaining = ListUtils.filter(annotations, a -> a != valid);
         if (annotations.get(0) == valid && !remaining.isEmpty()) {
             return ListUtils.mapFirst(remaining, first -> first.withPrefix(valid.getPrefix()));
         }
