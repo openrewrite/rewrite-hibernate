@@ -23,8 +23,8 @@ import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.*;
+import org.openrewrite.java.search.DeclaresMethod;
 import org.openrewrite.java.search.FindImplementations;
-import org.openrewrite.java.search.FindMethodDeclaration;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
@@ -65,7 +65,7 @@ public class MigrateUserType extends Recipe {
         return Preconditions.check(Preconditions.and(
                 new FindImplementations(USER_TYPE).getVisitor(),
                 // This method only exists on the Hibernate 6 variant of UserType, so as a precondition this shouldn't exist
-                Preconditions.not(new FindMethodDeclaration("* getSqlType()", true).getVisitor())
+                Preconditions.not(new DeclaresMethod<>("* getSqlType()", true))
         ), new JavaVisitor<ExecutionContext>() {
             @Override
             public J visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
