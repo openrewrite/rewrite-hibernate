@@ -18,6 +18,7 @@ package org.openrewrite.hibernate;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
+import org.openrewrite.test.RecipeQualityValidation;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -70,6 +71,8 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
     @Test
     void addScalarPreferStandardBasicTypes() {
         rewriteRun(
+          // RemoveImport unfolds the star import into BasicTypeReference, never named here (openrewrite/rewrite#9377)
+          spec -> spec.recipeQualityValidation(RecipeQualityValidation.builder().removeUnusedImports(false).build()),
           //language=java
           java(
             """
