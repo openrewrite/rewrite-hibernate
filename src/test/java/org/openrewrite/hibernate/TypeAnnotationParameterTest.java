@@ -16,6 +16,8 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.Issue;
@@ -320,6 +322,38 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
               class JsonType {}
               """
+          )
+        );
+    }
+
+
+    @Issue("https://github.com/openrewrite/rewrite-hibernate/issues/107")
+    @ParameterizedTest
+    @CsvSource({
+      "uuid-char, CHAR, java.util.UUID",
+      "uuid-binary, BINARY, java.util.UUID",
+      "text, LONGVARCHAR, String"
+    })
+    void basicTypeRegistryNames(String name, String jdbcType, String javaType) {
+        rewriteRun(
+          java(
+            """
+              import org.hibernate.annotations.Type;
+
+              class Example {
+                  @Type(type = "%s")
+                  %s value;
+              }
+              """.formatted(name, javaType),
+            """
+              import org.hibernate.annotations.JdbcTypeCode;
+              import org.hibernate.type.SqlTypes;
+
+              class Example {
+                  @JdbcTypeCode(SqlTypes.%s)
+                  %s value;
+              }
+              """.formatted(jdbcType, javaType)
           )
         );
     }
