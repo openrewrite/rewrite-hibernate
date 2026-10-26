@@ -25,6 +25,7 @@ import org.openrewrite.xml.XmlIsoVisitor;
 import org.openrewrite.xml.trait.Namespaced;
 import org.openrewrite.xml.tree.Xml;
 
+import javax.xml.XMLConstants;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -107,7 +108,8 @@ public class ChangeHibernateDialect extends Recipe {
                                 return namespace;
                             }
                         }
-                        return "";
+                        // The xml prefix has this binding even without an xmlns:xml declaration.
+                        return XMLConstants.XML_NS_PREFIX.equals(prefix) ? XMLConstants.XML_NS_URI : "";
                     }
                 });
     }
