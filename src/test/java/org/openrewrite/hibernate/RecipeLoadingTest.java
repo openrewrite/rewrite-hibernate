@@ -16,12 +16,29 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.Recipe;
+import org.openrewrite.config.Environment;
 import org.openrewrite.test.RewriteTest;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class RecipeLoadingTest implements RewriteTest {
 
     @Test
     void recipeLoading() {
-        assertRecipesConfigure();
+        List<Recipe> recipes = Environment.builder().scanRuntimeClasspath("org.openrewrite.hibernate").build().listRecipes();
+        assertThat(recipes).isNotEmpty();
+        for (Recipe recipe : recipes) {
+            if (recipe.getName().startsWith("org.openrewrite.hibernate")) {
+                // The mapping helper has required options; composites supply all 33 real mappings.
+                Recipe configured = recipe instanceof ChangeHibernateDialect ?
+                  new ChangeHibernateDialect("org.hibernate.dialect.MySQL8Dialect", "org.hibernate.dialect.MySQLDialect") : recipe;
+                assertThatCode(() -> rewriteRun(spec -> spec.recipe(configured)))
+                  .as("Recipe %s configures with its required options", recipe.getName()).doesNotThrowAnyException();
+            }
+        }
     }
 }
