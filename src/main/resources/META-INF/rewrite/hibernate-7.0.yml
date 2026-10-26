@@ -25,6 +25,7 @@ preconditions:
   - org.openrewrite.Singleton
 recipeList:
   - org.openrewrite.hibernate.MigrateToHibernate66
+  - org.openrewrite.hibernate.MigratePersistenceXmlToJakartaPersistence32
   - org.openrewrite.hibernate.MigrateToHypersistenceUtilsHibernate70
   - org.openrewrite.hibernate.MigrateRemovedDialectsHibernate70
   - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
