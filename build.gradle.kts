@@ -6,6 +6,10 @@ plugins {
 group = "org.openrewrite.recipe"
 description = "Hibernate ORM Migration"
 
+tasks.withType<Test>().configureEach {
+    maxHeapSize = "2g"
+}
+
 recipeDependencies {
     parserClasspath("jakarta.persistence:jakarta.persistence-api:latest.release")
     parserClasspath("jakarta.validation:jakarta.validation-api:3.1.1")

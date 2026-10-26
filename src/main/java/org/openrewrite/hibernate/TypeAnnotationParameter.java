@@ -24,11 +24,11 @@ import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
+import javax.lang.model.SourceVersion;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.emptyList;
 
@@ -45,7 +45,8 @@ public class TypeAnnotationParameter extends Recipe {
     final String displayName = "`@Type` annotation type parameter migration";
 
     @Getter
-    final String description = "Hibernate 6.x has 'type' parameter of type String replaced with 'value' of type class.";
+    final String description = "Migrate Hibernate type class references and supported basic type registry names to Hibernate 6 annotations. " +
+            "Unrecognized registry names are retained for manual migration.";
 
     @Getter
     final Duration estimatedEffortPerOccurrence = Duration.ofMinutes(1);
@@ -85,6 +86,19 @@ public class TypeAnnotationParameter extends Recipe {
                     return a;
                 }
 
+                Expression type = getAttributeValue(a, "type");
+                if (type instanceof J.Literal && ((J.Literal) type).getValue() instanceof String) {
+                    String name = (String) ((J.Literal) type).getValue();
+                    // A local TypeDef takes precedence over a built-in registry name.
+                    if (getCursor().getNearestMessage(name) == null) {
+                        String jdbcType = "uuid-char".equals(name) ? "CHAR" :
+                                "uuid-binary".equals(name) ? "BINARY" : "text".equals(name) ? "LONGVARCHAR" : null;
+                        if (jdbcType != null) {
+                            return migrateBasicType(a, name, jdbcType, ctx);
+                        }
+                    }
+                }
+
                 // Remove entire annotation if type is one of the removed types
                 if (a.getArguments() != null && a.getArguments().stream().anyMatch(arg -> {
                     if (arg instanceof J.Assignment) {
@@ -103,13 +117,12 @@ public class TypeAnnotationParameter extends Recipe {
                 }
 
                 // Replace with Temporal if applicable
-                AtomicReference<String> temporalType = getTemporalTypeArgument(a);
-                //noinspection ConstantValue
-                if (temporalType.get() != null) {
+                String temporalType = getTemporalTypeArgument(a);
+                if (temporalType != null) {
                     maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPE);
                     maybeAddImport("jakarta.persistence.Temporal");
                     maybeAddImport("jakarta.persistence.TemporalType");
-                    return JavaTemplate.builder("@Temporal(TemporalType." + temporalType.get().toUpperCase() + ")")
+                    return JavaTemplate.builder("@Temporal(TemporalType." + temporalType.toUpperCase() + ")")
                             .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "jakarta.persistence-api"))
                             .imports("jakarta.persistence.Temporal", "jakarta.persistence.TemporalType")
                             .build()
@@ -135,19 +148,50 @@ public class TypeAnnotationParameter extends Recipe {
                 return null;
             }
 
-            private AtomicReference<@Nullable String> getTemporalTypeArgument(J.Annotation a) {
-                return new JavaIsoVisitor<AtomicReference<@Nullable String>>() {
-                    @Override
-                    public J.Assignment visitAssignment(J.Assignment assignment, AtomicReference<@Nullable String> ref) {
-                        J.Assignment as = super.visitAssignment(assignment, ref);
-                        if (J.Literal.isLiteralValue(as.getAssignment(), "date") ||
-                                J.Literal.isLiteralValue(as.getAssignment(), "time") ||
-                                J.Literal.isLiteralValue(as.getAssignment(), "timestamp")) {
-                            ref.set((String) ((J.Literal) as.getAssignment()).getValue());
-                        }
-                        return as;
-                    }
-                }.reduce(a, new AtomicReference<>());
+            private @Nullable String getTemporalTypeArgument(J.Annotation a) {
+                Expression type = getAttributeValue(a, "type");
+                return J.Literal.isLiteralValue(type, "date") || J.Literal.isLiteralValue(type, "time") ||
+                        J.Literal.isLiteralValue(type, "timestamp") ? (String) ((J.Literal) type).getValue() : null;
+            }
+
+            private J.Annotation migrateBasicType(J.Annotation a, String name, String jdbcType, ExecutionContext ctx) {
+                String javaType = "text".equals(name) ? "java.lang.String" : "java.util.UUID";
+                Cursor owner = getCursor().getParentTreeCursor();
+                Object target = owner.getValue();
+                boolean compatible = false;
+                if (target instanceof J.VariableDeclarations) {
+                    J.VariableDeclarations variables = (J.VariableDeclarations) target;
+                    Cursor scope = owner.getParentTreeCursor();
+                    compatible = scope.getValue() instanceof J.Block &&
+                            scope.getParentTreeCursor().getValue() instanceof J.ClassDeclaration &&
+                            variables.getVariables().stream().allMatch(v -> !(v.getType() instanceof JavaType.Array) &&
+                                    TypeUtils.isOfClassType(v.getType(), javaType));
+                } else if (target instanceof J.MethodDeclaration) {
+                    J.MethodDeclaration method = (J.MethodDeclaration) target;
+                    JavaType returnType = method.getMethodType() == null ? null : method.getMethodType().getReturnType();
+                    compatible = method.getReturnTypeExpression() != null &&
+                            !(returnType instanceof JavaType.Array) && TypeUtils.isOfClassType(returnType, javaType) &&
+                            (method.getParameters().isEmpty() || method.getParameters().get(0) instanceof J.Empty);
+                }
+                if (!compatible || (getAttributeValue(a, "parameters") != null && !hasEmptyParameters(a)) ||
+                        service(org.openrewrite.java.service.AnnotationService.class)
+                                .getAllAnnotations(owner).stream().anyMatch(annotation ->
+                                        TypeUtils.isOfClassType(annotation.getType(), "org.hibernate.annotations.JdbcTypeCode"))) {
+                    return a;
+                }
+                maybeRemoveImport(ORG_HIBERNATE_ANNOTATIONS_TYPE);
+                maybeAddImport("org.hibernate.annotations.JdbcTypeCode");
+                maybeAddImport("org.hibernate.type.SqlTypes");
+                return JavaTemplate.builder("@JdbcTypeCode(SqlTypes." + jdbcType + ")")
+                        .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6+"))
+                        .imports("org.hibernate.annotations.JdbcTypeCode", "org.hibernate.type.SqlTypes")
+                        .build().apply(getCursor(), a.getCoordinates().replace());
+            }
+
+            private boolean hasEmptyParameters(J.Annotation a) {
+                Expression parameters = getAttributeValue(a, "parameters");
+                return parameters instanceof J.NewArray && ((J.NewArray) parameters).getInitializer() != null &&
+                        ((J.NewArray) parameters).getInitializer().stream().allMatch(element -> element instanceof J.Empty);
             }
 
             private J.Annotation replaceArgumentWithClass(J.Annotation a) {
@@ -162,6 +206,28 @@ public class TypeAnnotationParameter extends Recipe {
                             String fqTypeName = (String) ((J.Literal) assignment.getAssignment()).getValue();
 
                             Expression nearestMessage = getCursor().getNearestMessage(fqTypeName);
+                            boolean knownClass = false;
+                            if (nearestMessage == null && !fqTypeName.contains(".")) {
+                                // Unqualified names may be registry keys. Only an explicit class import is safe here.
+                                J.CompilationUnit cu = getCursor().firstEnclosing(J.CompilationUnit.class);
+                                if (cu != null) {
+                                    for (J.Import anImport : cu.getImports()) {
+                                        if (!anImport.isStatic() && anImport.getQualid().getSimpleName().equals(fqTypeName)) {
+                                            fqTypeName = anImport.getTypeName();
+                                            break;
+                                        }
+                                    }
+                                    for (J.ClassDeclaration declaration : cu.getClasses()) {
+                                        if (declaration.getType() != null && declaration.getSimpleName().equals(fqTypeName)) {
+                                            knownClass = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (nearestMessage == null && ((!fqTypeName.contains(".") && !knownClass) || !SourceVersion.isName(fqTypeName))) {
+                                return arg;
+                            }
                             Expression classRef = nearestMessage != null && nearestMessage.getType() != JavaType.Unknown.getInstance() ?
                                     nearestMessage :
                                     buildClassReference(
