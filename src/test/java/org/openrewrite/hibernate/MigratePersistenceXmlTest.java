@@ -16,6 +16,7 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.openrewrite.test.RewriteTest;
 
@@ -27,7 +28,8 @@ class MigratePersistenceXmlTest implements RewriteTest {
     @ValueSource(strings = {"70", "71"})
     void upgradesPersistenceDescriptorForHibernate7(String target) {
         rewriteRun(
-          spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target),
+          spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target)
+            .cycles(3).expectedCyclesThatMakeChanges(1),
           xml(
             """
             <persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
@@ -51,6 +53,110 @@ class MigratePersistenceXmlTest implements RewriteTest {
             """,
             spec -> spec.path("src/main/resources/META-INF/persistence.xml")
           )
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({"70, 3.0", "70, 3.1", "71, 3.0", "71, 3.1"})
+    void upgradesJakartaDescriptors(String target, String version) {
+        String before = """
+          <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_%s.xsd"
+                       version="%s"/>
+          """.formatted(version.replace('.', '_'), version);
+        rewriteRun(
+          spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target)
+            .cycles(3).expectedCyclesThatMakeChanges(1),
+          xml(before, before.replace("persistence_" + version.replace('.', '_'), "persistence_3_2")
+              .replace("version=\"" + version + "\"", "version=\"3.2\""),
+            spec -> spec.path("persistence.xml"))
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"70", "71"})
+    void preservesPrefixesAndOtherSchemaLocations(String target) {
+        rewriteRun(
+          spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target)
+            .cycles(3).expectedCyclesThatMakeChanges(1),
+          xml(
+            """
+            <p:persistence xmlns:p="https://jakarta.ee/xml/ns/persistence"
+                           xmlns:schema="http://www.w3.org/2001/XMLSchema-instance"
+                           schema:schemaLocation="urn:before before.xsd
+                                                 https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_1.xsd urn:after after.xsd"
+                           version="3.1">
+                <p:persistence-unit name="one"/>
+                <p:persistence-unit name="two"/>
+            </p:persistence>
+            """,
+            """
+            <p:persistence xmlns:p="https://jakarta.ee/xml/ns/persistence"
+                           xmlns:schema="http://www.w3.org/2001/XMLSchema-instance"
+                           schema:schemaLocation="urn:before before.xsd
+                                                 https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd urn:after after.xsd"
+                           version="3.2">
+                <p:persistence-unit name="one"/>
+                <p:persistence-unit name="two"/>
+            </p:persistence>
+            """,
+            spec -> spec.path("module/src/main/resources/META-INF/persistence.xml")
+          )
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({"70, 3.2", "70, 3.3", "70, 4.0", "71, 3.2", "71, 3.3", "71, 4.0"})
+    void preservesCurrentAndNewerDescriptors(String target, String version) {
+        rewriteRun(
+          spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target)
+            .cycles(3).expectedCyclesThatMakeChanges(0),
+          xml("""
+            <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_%s.xsd"
+                         version="%s"/>
+            """.formatted(version.replace('.', '_'), version),
+            spec -> spec.path("src/main/resources/META-INF/persistence.xml"))
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"60", "61", "62", "63", "64", "65", "66", "EE9"})
+    void preservesHibernate6AndEe9Contracts(String target) {
+        rewriteRun(
+          spec -> spec.recipeFromResources("EE9".equals(target) ?
+              "org.openrewrite.java.migrate.jakarta.JavaxPersistenceXmlToJakartaPersistenceXml" :
+              "org.openrewrite.hibernate.MigrateToHibernate" + target)
+            .cycles(3).expectedCyclesThatMakeChanges(1),
+          xml(
+            """
+            <persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
+                         version="2.2"/>
+            """,
+            """
+            <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+                         version="3.0"/>
+            """,
+            spec -> spec.path("src/main/resources/META-INF/persistence.xml")
+          )
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"70", "71"})
+    void doesNotUpgradeAnArbitrarilyNamedXmlFileTo32(String target) {
+        rewriteRun(
+          spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target)
+            .cycles(3).expectedCyclesThatMakeChanges(0),
+          xml("""
+            <persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0"/>
+            """, spec -> spec.path("src/main/resources/custom.xml"))
         );
     }
 }
