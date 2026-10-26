@@ -16,7 +16,7 @@
 
 <!-- Keep the gap above this line, otherwise they won't render correctly! -->
 
-[![ci](https://github.com/openrewrite/rewrite-hibernate/actions/workflows/ci.yml/badge.svg)](https://github.com/openrewrite/rewrite-hibernate/actions/workflows/ci.yml)
+[![ci](https://codegenomeproject.org/ci/modules/openrewrite/rewrite-hibernate/badge.svg)](https://codegenomeproject.org/ci/modules/openrewrite/rewrite-hibernate/builds/latest)
 [![Revved up by Develocity](https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A)](https://community.develocity.cloud/scans)
 [![Contributing Guide](https://img.shields.io/badge/Contributing-Guide-informational)](https://github.com/openrewrite/.github/blob/main/CONTRIBUTING.md)
 </div>
