@@ -297,6 +297,36 @@ class ChangeHibernateDialectTest implements RewriteTest {
         );
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"", " xmlns:xml=\"http://www.w3.org/XML/1998/namespace\""})
+    void preservesReservedXmlNamespaceInPersistence(String declaration) {
+        rewriteRun(
+          xml("""
+            <xml:persistence%s>
+                <xml:persistence-unit>
+                    <xml:properties>
+                        <xml:property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+                    </xml:properties>
+                </xml:persistence-unit>
+            </xml:persistence>
+            """.formatted(declaration), spec -> spec.path("META-INF/persistence.xml"))
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " xmlns:xml=\"http://www.w3.org/XML/1998/namespace\""})
+    void preservesReservedXmlNamespaceInHibernateConfiguration(String declaration) {
+        rewriteRun(
+          xml("""
+            <xml:hibernate-configuration%s>
+                <xml:session-factory>
+                    <xml:property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</xml:property>
+                </xml:session-factory>
+            </xml:hibernate-configuration>
+            """.formatted(declaration), spec -> spec.path("hibernate.cfg.xml"))
+        );
+    }
+
     @Test
     void preservesExistingJavaPropertiesAndYamlBehavior() {
         rewriteRun(
