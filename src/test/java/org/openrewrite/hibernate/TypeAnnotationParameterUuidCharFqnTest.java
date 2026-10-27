@@ -53,7 +53,7 @@ class TypeAnnotationParameterUuidCharFqnTest implements RewriteTest {
               import org.hibernate.type.SqlTypes;
 
               class Example {
-                  @JdbcTypeCode(SqlTypes.CHAR)
+                  @JdbcTypeCode(SqlTypes.VARCHAR)
                   java.util.UUID id;
               }
               """
@@ -82,7 +82,7 @@ class TypeAnnotationParameterUuidCharFqnTest implements RewriteTest {
               import org.hibernate.type.SqlTypes;
 
               class Example {
-                  @JdbcTypeCode(SqlTypes.CHAR)
+                  @JdbcTypeCode(SqlTypes.VARCHAR)
                   java.util.UUID getId() {
                       return null;
                   }
