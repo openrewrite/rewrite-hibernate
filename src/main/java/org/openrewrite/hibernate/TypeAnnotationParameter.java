@@ -91,7 +91,7 @@ public class TypeAnnotationParameter extends Recipe {
                     String name = (String) ((J.Literal) type).getValue();
                     // A local TypeDef takes precedence over a built-in registry name.
                     if (getCursor().getNearestMessage(name) == null) {
-                        String jdbcType = "uuid-char".equals(name) ? "CHAR" :
+                        String jdbcType = ("uuid-char".equals(name) || "org.hibernate.type.UUIDCharType".equals(name)) ? "CHAR" :
                                 "uuid-binary".equals(name) ? "BINARY" : "text".equals(name) ? "LONGVARCHAR" : null;
                         if (jdbcType != null) {
                             return migrateBasicType(a, name, jdbcType, ctx);
