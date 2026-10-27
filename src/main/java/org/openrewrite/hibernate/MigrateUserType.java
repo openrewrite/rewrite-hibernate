@@ -143,7 +143,7 @@ public class MigrateUserType extends Recipe {
                                       "public BigDecimal nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {\n" +
                                       "}";
                     J.MethodDeclaration updatedParam = JavaTemplate.builder(template)
-                            .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core"))
+                            .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "hibernate-core-6"))
                             .imports("java.math.BigDecimal", "java.sql.ResultSet", "java.sql.SQLException", "org.hibernate.engine.spi.SharedSessionContractImplementor")
                             .build()
                             .apply(getCursor(), md.getCoordinates().replace());
