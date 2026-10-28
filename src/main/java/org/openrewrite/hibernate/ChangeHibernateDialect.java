@@ -25,7 +25,6 @@ import org.openrewrite.xml.XmlIsoVisitor;
 import org.openrewrite.xml.trait.Namespaced;
 import org.openrewrite.xml.tree.Xml;
 
-import javax.xml.XMLConstants;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -101,15 +100,7 @@ public class ChangeHibernateDialect extends Recipe {
                     }
 
                     private String namespace(Cursor cursor) {
-                        String prefix = new Namespaced(cursor).getNamespacePrefix().orElse("");
-                        for (Cursor scope = cursor; scope != null; scope = scope.getParent()) {
-                            String namespace = new Namespaced(scope).getNamespaces().get(prefix);
-                            if (namespace != null) {
-                                return namespace;
-                            }
-                        }
-                        // The xml prefix has this binding even without an xmlns:xml declaration.
-                        return XMLConstants.XML_NS_PREFIX.equals(prefix) ? XMLConstants.XML_NS_URI : "";
+                        return new Namespaced(cursor).getNamespaceUri().orElse("");
                     }
                 });
     }

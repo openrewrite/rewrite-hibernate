@@ -160,6 +160,26 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
     }
 
     @Test
+    void matchesNamespacesWhateverTheirPrefixes() {
+        rewriteRun(
+          spec -> spec.expectedCyclesThatMakeChanges(1),
+          xml(
+            """
+            <p:persistence xmlns:p="https://jakarta.ee/xml/ns/persistence"
+                           xmlns:x="http://www.w3.org/2001/XMLSchema-instance"
+                           x:schemaLocation="https://jakarta.ee/xml/ns/persistence old.xsd"
+                           version="3.0"/>
+            """,
+            """
+            <p:persistence xmlns:p="https://jakarta.ee/xml/ns/persistence"
+                           xmlns:x="http://www.w3.org/2001/XMLSchema-instance"
+                           x:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd"
+                           version="3.2"/>
+            """, spec -> spec.path("persistence.xml"))
+        );
+    }
+
+    @Test
     void requiresTheRootElementAndItsActualNamespace() {
         rewriteRun(
           spec -> spec.expectedCyclesThatMakeChanges(0),

@@ -27,7 +27,7 @@ import org.openrewrite.xml.XmlIsoVisitor;
 import org.openrewrite.xml.trait.Namespaced;
 import org.openrewrite.xml.tree.Xml;
 
-import java.util.Map;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,9 +50,8 @@ public class MigratePersistenceXmlToJakartaPersistence32 extends Recipe {
             public Xml.Document visitDocument(Xml.Document document, ExecutionContext ctx) {
                 Xml.Tag root = document.getRoot();
                 Namespaced namespaced = new Namespaced(new Cursor(getCursor(), root));
-                Map<String, String> namespaces = namespaced.getNamespaces();
                 if (!"persistence".equals(namespaced.getLocalName().orElse(null)) ||
-                    !NAMESPACE.equals(namespaces.get(namespaced.getNamespacePrefix().orElse("")))) {
+                    !NAMESPACE.equals(namespaced.getNamespaceUri().orElse(null))) {
                     return document;
                 }
                 String version = root.getAttributes().stream()
@@ -61,13 +60,13 @@ public class MigratePersistenceXmlToJakartaPersistence32 extends Recipe {
                 if (!"3.0".equals(version) && !"3.1".equals(version)) {
                     return document;
                 }
+                List<Xml.Attribute> schemaLocations = namespaced.getSchemaLocations();
                 return document.withRoot(root.withAttributes(ListUtils.map(root.getAttributes(), attribute -> {
                     String name = attribute.getKeyAsString();
                     if ("version".equals(name)) {
                         return attribute.withValue(attribute.getValue().withValue("3.2"));
                     }
-                    if (name.contains(":") && "schemaLocation".equals(Namespaced.extractLocalName(name)) &&
-                        Namespaced.XML_SCHEMA_INSTANCE_URI.equals(namespaces.get(Namespaced.extractNamespacePrefix(name)))) {
+                    if ("schemaLocation".equals(Namespaced.extractLocalName(name)) && schemaLocations.contains(attribute)) {
                         return attribute.withValue(attribute.getValue().withValue(updateSchemaLocation(attribute.getValueAsString())));
                     }
                     return attribute;
