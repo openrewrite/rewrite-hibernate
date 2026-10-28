@@ -15,6 +15,8 @@ recipeDependencies {
     parserClasspath("jakarta.validation:jakarta.validation-api:3.1.1")
     parserClasspath("org.hibernate:hibernate-core:5.6.15.Final")
     parserClasspath("org.hibernate.orm:hibernate-core:6.5.1.Final")
+
+    testParserClasspath("javax.persistence:javax.persistence-api:2.2")
 }
 
 val rewriteVersion = rewriteRecipe.rewriteVersion.get()
@@ -31,9 +33,4 @@ dependencies {
     testImplementation("org.openrewrite:rewrite-maven")
     testImplementation("org.openrewrite:rewrite-yaml")
     testImplementation("org.openrewrite:rewrite-properties")
-
-    testRuntimeOnly("org.hibernate:hibernate-core:5.6.15.Final")
-    testRuntimeOnly("javax.persistence:javax.persistence-api:2.2")
-    testRuntimeOnly("javax.xml.bind:jaxb-api:2.3.1")
-    testRuntimeOnly("jakarta.persistence:jakarta.persistence-api:3.1.0")
 }

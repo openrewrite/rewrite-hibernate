@@ -17,6 +17,7 @@ package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -28,7 +29,8 @@ class AddScalarPreferStandardBasicTypesTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new AddScalarPreferStandardBasicTypes())
-          .parser(JavaParser.fromJavaVersion().classpath("hibernate-core", "javax.persistence-api"));
+          .parser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5", "javax.persistence-api"));
     }
 
     @DocumentExample
