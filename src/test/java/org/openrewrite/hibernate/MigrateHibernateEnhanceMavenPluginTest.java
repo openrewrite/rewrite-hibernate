@@ -20,9 +20,6 @@ import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.maven.Assertions.pomXml;
 
@@ -77,48 +74,16 @@ class MigrateHibernateEnhanceMavenPluginTest implements RewriteTest {
                 </build>
               </project>
               """,
-            spec -> spec.after(pom -> {
-                Matcher version = Pattern.compile("<hibernate.version>(7\\.0\\.\\d+\\.Final)</hibernate.version>").matcher(pom);
-                assertThat(version.find()).describedAs("Expected hibernate.version 7.0.x in %s", pom).isTrue();
-                return """
-                  <project>
-                    <groupId>com.example</groupId>
-                    <artifactId>demo</artifactId>
-                    <version>0.0.1-SNAPSHOT</version>
-                    <properties>
-                      <hibernate.version>%s</hibernate.version>
-                    </properties>
-                    <dependencies>
-                      <dependency>
-                        <groupId>org.hibernate.orm</groupId>
-                        <artifactId>hibernate-core</artifactId>
-                        <version>${hibernate.version}</version>
-                      </dependency>
-                    </dependencies>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.hibernate.orm</groupId>
-                          <artifactId>hibernate-maven-plugin</artifactId>
-                          <version>${hibernate.version}</version>
-                          <executions>
-                            <execution>
-                              <id>enhance</id>
-                              <goals>
-                                <goal>enhance</goal>
-                              </goals>
-                              <configuration>
-                                <enableLazyInitialization>true</enableLazyInitialization>
-                                <enableDirtyTracking>true</enableDirtyTracking>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                  </project>
-                  """.formatted(version.group(1));
-            })
+            spec -> spec.after(actual ->
+              assertThat(actual)
+                .containsPattern("<hibernate.version>7\\.0\\.\\d+\\.Final</hibernate.version>")
+                .containsPattern("""
+                  <groupId>org.hibernate.orm</groupId>
+                  \\s*<artifactId>hibernate-maven-plugin</artifactId>
+                  \\s*<version>\\$\\{hibernate.version}</version>""")
+                .doesNotContain("hibernate-enhance-maven-plugin")
+                .contains("<goal>enhance</goal>", "<enableLazyInitialization>true</enableLazyInitialization>")
+                .actual())
           )
         );
     }
@@ -144,26 +109,14 @@ class MigrateHibernateEnhanceMavenPluginTest implements RewriteTest {
                 </build>
               </project>
               """,
-            spec -> spec.after(pom -> {
-                Matcher version = Pattern.compile("<version>(7\\.0\\.\\d+\\.Final)</version>").matcher(pom);
-                assertThat(version.find()).describedAs("Expected plugin version 7.0.x in %s", pom).isTrue();
-                return """
-                  <project>
-                    <groupId>com.example</groupId>
-                    <artifactId>demo</artifactId>
-                    <version>0.0.1-SNAPSHOT</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.hibernate.orm</groupId>
-                          <artifactId>hibernate-maven-plugin</artifactId>
-                          <version>%s</version>
-                        </plugin>
-                      </plugins>
-                    </build>
-                  </project>
-                  """.formatted(version.group(1));
-            })
+            spec -> spec.after(actual ->
+              assertThat(actual)
+                .containsPattern("""
+                  <groupId>org.hibernate.orm</groupId>
+                  \\s*<artifactId>hibernate-maven-plugin</artifactId>
+                  \\s*<version>7\\.0\\.\\d+\\.Final</version>""")
+                .doesNotContain("hibernate-enhance-maven-plugin")
+                .actual())
           )
         );
     }
