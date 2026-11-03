@@ -36,6 +36,7 @@ recipeList:
       oldGroupId: org.hibernate.orm
       oldArtifactId: hibernate-jpamodelgen
       newArtifactId: hibernate-processor
+  - org.openrewrite.hibernate.MigrateHibernateEnhanceMavenPlugin
   # Class renames
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: org.hibernate.metamodel.spi.AdditionalJaxbMappingProducer
@@ -81,6 +82,27 @@ recipeList:
       fullyQualifiedConstantName: org.hibernate.annotations.CascadeType.REMOVE
 
   - org.openrewrite.hibernate.RemoveGeneratedValueStrategyWithGenericGenerator
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.MigrateHibernateEnhanceMavenPlugin
+displayName: Migrate `hibernate-enhance-maven-plugin` to `hibernate-maven-plugin`
+description: >-
+  Hibernate 7 publishes its Maven bytecode enhancement plugin as `org.hibernate.orm:hibernate-maven-plugin`;
+  `org.hibernate.orm.tooling:hibernate-enhance-maven-plugin` has no release past 7.0.0.Beta1.
+  This changes the plugin coordinates and upgrades its version to Hibernate 7, keeping the `enhance` goal and its configuration.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - org.openrewrite.maven.ChangePluginGroupIdAndArtifactId:
+      oldGroupId: org.hibernate.orm.tooling
+      oldArtifactId: hibernate-enhance-maven-plugin
+      newGroupId: org.hibernate.orm
+      newArtifactId: hibernate-maven-plugin
+  - org.openrewrite.maven.UpgradePluginVersion:
+      groupId: org.hibernate.orm
+      artifactId: hibernate-maven-plugin
+      newVersion: 7.0.x
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
