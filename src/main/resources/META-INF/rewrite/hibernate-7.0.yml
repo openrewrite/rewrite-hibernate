@@ -36,6 +36,15 @@ recipeList:
       oldGroupId: org.hibernate.orm
       oldArtifactId: hibernate-jpamodelgen
       newArtifactId: hibernate-processor
+  - org.openrewrite.maven.ChangePluginGroupIdAndArtifactId:
+      oldGroupId: org.hibernate.orm.tooling
+      oldArtifactId: hibernate-enhance-maven-plugin
+      newGroupId: org.hibernate.orm
+      newArtifactId: hibernate-maven-plugin
+  - org.openrewrite.maven.UpgradePluginVersion:
+      groupId: org.hibernate.orm
+      artifactId: hibernate-maven-plugin
+      newVersion: 7.0.x
   # Class renames
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: org.hibernate.metamodel.spi.AdditionalJaxbMappingProducer
