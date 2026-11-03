@@ -56,8 +56,8 @@ class MigratePersistenceXmlTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @CsvSource({"70, 3.0", "70, 3.1", "71, 3.0", "71, 3.1"})
+    @ParameterizedTest
     void upgradesJakartaDescriptors(String target, String version) {
         String before = """
           <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
@@ -106,8 +106,8 @@ class MigratePersistenceXmlTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @CsvSource({"70, 3.2", "70, 3.3", "70, 4.0", "71, 3.2", "71, 3.3", "71, 4.0"})
+    @ParameterizedTest
     void preservesCurrentAndNewerDescriptors(String target, String version) {
         rewriteRun(
           spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target)
@@ -154,9 +154,11 @@ class MigratePersistenceXmlTest implements RewriteTest {
         rewriteRun(
           spec -> spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate" + target)
             .cycles(3).expectedCyclesThatMakeChanges(0),
-          xml("""
+          xml(
+            """
             <persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0"/>
-            """, spec -> spec.path("src/main/resources/custom.xml"))
+            """,
+            spec -> spec.path("src/main/resources/custom.xml"))
         );
     }
 }

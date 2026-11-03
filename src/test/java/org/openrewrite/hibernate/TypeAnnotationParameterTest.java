@@ -20,14 +20,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.openrewrite.DocumentExample;
-import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.InMemoryExecutionContext;
+import org.openrewrite.Issue;
+import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.internal.ListUtils;
-import org.openrewrite.Issue;
-import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -333,13 +333,13 @@ class TypeAnnotationParameterTest implements RewriteTest {
     }
 
 
-    @Issue("https://github.com/openrewrite/rewrite-hibernate/issues/107")
-    @ParameterizedTest
     @CsvSource({
       "uuid-char, CHAR, java.util.UUID",
       "uuid-binary, BINARY, java.util.UUID",
       "text, LONGVARCHAR, String"
     })
+    @Issue("https://github.com/openrewrite/rewrite-hibernate/issues/107")
+    @ParameterizedTest
     void basicTypeRegistryNames(String name, String jdbcType, String javaType) {
         rewriteRun(
           spec -> spec.cycles(3).expectedCyclesThatMakeChanges(1),
@@ -366,8 +366,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
     }
 
 
-    @ParameterizedTest
     @CsvSource({"uuid-char, CHAR, java.util.UUID", "uuid-binary, BINARY, java.util.UUID", "text, LONGVARCHAR, String"})
+    @ParameterizedTest
     void basicTypeOnGetter(String name, String jdbcType, String javaType) {
         rewriteRun(
           java(
@@ -396,8 +396,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         );
     }
 
-    @ParameterizedTest
     @CsvSource({"uuid-char, String", "uuid-char, java.util.UUID[]", "uuid-binary, java.util.List<java.util.UUID>", "text, char[]"})
+    @ParameterizedTest
     void incompatibleAndContainerTypesArePreserved(String name, String javaType) {
         rewriteRun(java("""
           import org.hibernate.annotations.Type;
@@ -424,7 +424,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
     @Test
     void basicTypeParametersArePreserved() {
-        rewriteRun(java("""
+        rewriteRun(java(
+          """
           import org.hibernate.annotations.Parameter;
           import org.hibernate.annotations.Type;
 
@@ -437,14 +438,16 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
     @Test
     void emptyBasicTypeParameters() {
-        rewriteRun(java("""
+        rewriteRun(java(
+          """
           import org.hibernate.annotations.Type;
 
           class Example {
               @Type(type = "uuid-char", parameters = {})
               java.util.UUID value;
           }
-          """, """
+          """,
+          """
           import org.hibernate.annotations.JdbcTypeCode;
           import org.hibernate.type.SqlTypes;
 
@@ -460,7 +463,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(),
             "hibernate-core-5+", "hibernate-core-6+")),
-          java("""
+          java(
+            """
             import org.hibernate.annotations.JdbcTypeCode;
             import org.hibernate.annotations.Type;
 
@@ -469,7 +473,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(type = "uuid-char")
                 java.util.UUID value;
             }
-            """)
+            """
+          )
         );
     }
 
@@ -478,7 +483,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")
             .dependsOn("package com.example; public abstract class CustomType implements org.hibernate.usertype.UserType {}")),
-          java("""
+          java(
+            """
             import com.example.CustomType;
             import org.hibernate.annotations.Type;
 
@@ -486,7 +492,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(type = "CustomType", parameters = {})
                 Object value;
             }
-            """, """
+            """,
+            """
             import com.example.CustomType;
             import org.hibernate.annotations.Type;
 
@@ -494,7 +501,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(value = CustomType.class, parameters = {})
                 Object value;
             }
-            """)
+            """
+          )
         );
     }
 
@@ -503,7 +511,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")
             .dependsOn("package com.example; public abstract class CustomType implements org.hibernate.usertype.UserType {}")),
-          java("""
+          java(
+            """
             import com.example.CustomType;
             import org.hibernate.annotations.Type;
             import org.hibernate.annotations.TypeDef;
@@ -513,7 +522,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(type = "uuid-char", parameters = {})
                 java.util.UUID value;
             }
-            """, """
+            """,
+            """
             import com.example.CustomType;
             import org.hibernate.annotations.Type;
 
@@ -521,7 +531,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(value = CustomType.class, parameters = {})
                 java.util.UUID value;
             }
-            """)
+            """
+          )
         );
     }
 
@@ -529,7 +540,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
     void composesWithBooleanMappings() {
         rewriteRun(
           spec -> spec.recipes(new MigrateBooleanMappings(), new TypeAnnotationParameter()),
-          java("""
+          java(
+            """
             import org.hibernate.annotations.Type;
 
             class Example {
@@ -538,7 +550,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(type = "uuid-char")
                 java.util.UUID id;
             }
-            """, """
+            """,
+            """
             import jakarta.persistence.Convert;
             import org.hibernate.annotations.JdbcTypeCode;
             import org.hibernate.type.SqlTypes;
@@ -550,14 +563,16 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @JdbcTypeCode(SqlTypes.CHAR)
                 java.util.UUID id;
             }
-            """)
+            """
+          )
         );
     }
 
 
     @Test
     void defaultPackageUserTypeClass() {
-        rewriteRun(java("""
+        rewriteRun(java(
+          """
           import org.hibernate.annotations.Type;
           import org.hibernate.usertype.UserType;
 
@@ -568,7 +583,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
 
           abstract class CustomType implements UserType {
           }
-          """, """
+          """,
+          """
           import org.hibernate.annotations.Type;
           import org.hibernate.usertype.UserType;
 
@@ -587,7 +603,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")
             .dependsOn("package com.example; public abstract class CustomType implements org.hibernate.usertype.UserType {}")),
-          java("""
+          java(
+            """
             import org.hibernate.annotations.Type;
             import org.hibernate.annotations.TypeDef;
 
@@ -596,7 +613,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(type = "uuid-char", parameters = {})
                 Object value;
             }
-            """, """
+            """,
+            """
             import com.example.CustomType;
             import org.hibernate.annotations.Type;
 
@@ -604,7 +622,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(value = CustomType.class, parameters = {})
                 Object value;
             }
-            """, spec -> spec.mapBeforeRecipe(cu -> (J.CompilationUnit) new JavaIsoVisitor<ExecutionContext>() {
+            """,
+            spec -> spec.mapBeforeRecipe(cu -> (J.CompilationUnit) new JavaIsoVisitor<ExecutionContext>() {
                 @Override
                 public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                     J.Annotation a = super.visitAnnotation(annotation, ctx);
@@ -614,8 +633,7 @@ class TypeAnnotationParameterTest implements RewriteTest {
                     // Model a missing Class-expression type while retaining its valid, attributed class target.
                     // Type validation remains enabled; this is an explicit partial-LST boundary.
                     return a.withArguments(ListUtils.map(a.getArguments(), argument -> {
-                        if (argument instanceof J.Assignment) {
-                            J.Assignment assignment = (J.Assignment) argument;
+                        if (argument instanceof J.Assignment assignment) {
                             if ("typeClass".equals(assignment.getVariable().toString()) && assignment.getAssignment() instanceof J.FieldAccess) {
                                 return assignment.withAssignment(((J.FieldAccess) assignment.getAssignment()).withType(JavaType.Unknown.getInstance()));
                             }
@@ -632,7 +650,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")
             .dependsOn("package com.example; public abstract class CustomType implements org.hibernate.usertype.UserType {}")),
-          java("""
+          java(
+            """
             import org.hibernate.annotations.Parameter;
             import org.hibernate.annotations.Type;
 
@@ -640,7 +659,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(type = "com.example.CustomType", parameters = @Parameter(name = "format", value = "timestamp"))
                 Object value;
             }
-            """, """
+            """,
+            """
             import com.example.CustomType;
             import org.hibernate.annotations.Parameter;
             import org.hibernate.annotations.Type;
@@ -649,7 +669,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
                 @Type(value = CustomType.class, parameters = @Parameter(name = "format", value = "timestamp"))
                 Object value;
             }
-            """)
+            """
+          )
         );
     }
 
