@@ -38,6 +38,21 @@ class ChangeHibernateDialectTest implements RewriteTest {
     @DocumentExample
     @Test
     void preservesHibernateDoctypeWhitespaceAndCdata() {
+        String before = """
+          <?xml version="1.0"?>
+          <!DOCTYPE hibernate-configuration PUBLIC
+                  "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+                  "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+          <hibernate-configuration>
+              <session-factory>
+                  <!-- Keep the explanatory comment and surrounding whitespace. -->
+                  <property name="hibernate.dialect">
+                      org.hibernate.dialect.PostgreSQL95Dialect
+                  </property>
+                  <property name="dialect"><![CDATA[org.hibernate.dialect.MySQL8Dialect]]></property>
+              </session-factory>
+          </hibernate-configuration>
+          """;
         rewriteRun(
           xml(before, before.replace("PostgreSQL95Dialect", "PostgreSQLDialect")
               .replace("MySQL8Dialect", "MySQLDialect"), spec -> spec.path("hibernate.cfg.xml"))
@@ -134,6 +149,13 @@ class ChangeHibernateDialectTest implements RewriteTest {
 
     @Test
     void migratesPrefixedHibernateConfiguration() {
+        String before = """
+          <h:hibernate-configuration xmlns:h="http://www.hibernate.org/xsd/orm/cfg">
+              <h:session-factory>
+                  <h:property name="dialect">org.hibernate.dialect.MySQL8Dialect</h:property>
+              </h:session-factory>
+          </h:hibernate-configuration>
+          """;
         rewriteRun(
           xml(before, before.replace("MySQL8Dialect", "MySQLDialect"),
             spec -> spec.path("src/main/resources/hibernate.cfg.xml"))
@@ -142,6 +164,21 @@ class ChangeHibernateDialectTest implements RewriteTest {
 
     @Test
     void migratesUnqualifiedPersistenceAndMultipleUnits() {
+        String before = """
+          <persistence version="1.0">
+              <persistence-unit name="first">
+                  <properties>
+                      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+                  </properties>
+              </persistence-unit>
+              <persistence-unit name="second">
+                  <properties>
+                      <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle12cDialect"/>
+                      <property name="unrelated" value="org.hibernate.dialect.MySQL8Dialect"/>
+                  </properties>
+              </persistence-unit>
+          </persistence>
+          """;
         rewriteRun(
           xml(before, before.replace("name=\"hibernate.dialect\" value=\"org.hibernate.dialect.MySQL8Dialect\"",
                 "name=\"hibernate.dialect\" value=\"org.hibernate.dialect.MySQLDialect\"")
@@ -211,6 +248,22 @@ class ChangeHibernateDialectTest implements RewriteTest {
 
     @Test
     void preservesUnrelatedFilesAndRoots() {
+        String persistence = """
+          <persistence>
+              <persistence-unit name="example">
+                  <properties>
+                      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+                  </properties>
+              </persistence-unit>
+          </persistence>
+          """;
+        String hibernate = """
+          <hibernate-configuration>
+              <session-factory>
+                  <property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</property>
+              </session-factory>
+          </hibernate-configuration>
+          """;
         rewriteRun(
           xml(persistence, spec -> spec.path("META-INF/custom-persistence.xml")),
           xml(hibernate, spec -> spec.path("hibernate.custom.xml")),
