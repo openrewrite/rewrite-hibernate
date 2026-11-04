@@ -16,6 +16,7 @@
 package org.openrewrite.hibernate;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.Issue;
 import org.openrewrite.java.JavaParser;
@@ -34,6 +35,7 @@ class TypeAnnotationParameterUuidCharFqnTest implements RewriteTest {
           .expectedCyclesThatMakeChanges(0);
     }
 
+    @DocumentExample
     @Test
     void migrateBuiltInUuidCharFqnOnScalarUuidField() {
         rewriteRun(

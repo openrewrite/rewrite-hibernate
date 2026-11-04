@@ -18,6 +18,7 @@ package org.openrewrite.hibernate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
@@ -30,6 +31,7 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
         spec.recipe(new MigratePersistenceXmlToJakartaPersistence32()).cycles(3);
     }
 
+    @DocumentExample
     @Test
     void preservesOtherPairsOnTheSameLine() {
         rewriteRun(
@@ -46,7 +48,8 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                          xsi:schemaLocation="urn:before before.xsd https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd urn:after after.xsd"
                          version="3.2"/>
-            """, spec -> spec.path("META-INF/persistence.xml"))
+            """,
+            spec -> spec.path("META-INF/persistence.xml"))
         );
     }
 
@@ -60,7 +63,8 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
             """,
             """
             <persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.2"/>
-            """, spec -> spec.path("persistence.xml"))
+            """,
+            spec -> spec.path("persistence.xml"))
         );
     }
 
@@ -80,7 +84,8 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                          xsi:schemaLocation="urn:other https://jakarta.ee/xml/ns/persistence urn:after after.xsd"
                          version="3.2"/>
-            """, spec -> spec.path("persistence.xml"))
+            """,
+            spec -> spec.path("persistence.xml"))
         );
     }
 
@@ -100,7 +105,8 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                          xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence old.xsd dangling"
                          version="3.2"/>
-            """, spec -> spec.path("persistence.xml"))
+            """,
+            spec -> spec.path("persistence.xml"))
         );
     }
 
@@ -120,7 +126,8 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
                          schemaLocation="https://jakarta.ee/xml/ns/persistence unqualified.xsd"
                          other:schemaLocation="https://jakarta.ee/xml/ns/persistence unrelated.xsd"
                          other:version="3.0" version="3.2"/>
-            """, spec -> spec.path("persistence.xml"))
+            """,
+            spec -> spec.path("persistence.xml"))
         );
     }
 
@@ -139,12 +146,16 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
     void requiresAnUnqualifiedVersion() {
         rewriteRun(
           spec -> spec.expectedCyclesThatMakeChanges(0),
-          xml("""
+          xml(
+            """
             <persistence xmlns="https://jakarta.ee/xml/ns/persistence"/>
-            """, spec -> spec.path("one/persistence.xml")),
-          xml("""
+            """,
+            spec -> spec.path("one/persistence.xml")),
+          xml(
+            """
             <persistence xmlns="https://jakarta.ee/xml/ns/persistence" xmlns:other="urn:other" other:version="3.0"/>
-            """, spec -> spec.path("two/persistence.xml"))
+            """,
+            spec -> spec.path("two/persistence.xml"))
         );
     }
 
@@ -153,9 +164,11 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
     void restrictsSourcePaths(String path) {
         rewriteRun(
           spec -> spec.expectedCyclesThatMakeChanges(0),
-          xml("""
+          xml(
+            """
             <persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0"/>
-            """, spec -> spec.path(path))
+            """,
+            spec -> spec.path(path))
         );
     }
 
@@ -175,7 +188,8 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
                            xmlns:x="http://www.w3.org/2001/XMLSchema-instance"
                            x:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd"
                            version="3.2"/>
-            """, spec -> spec.path("persistence.xml"))
+            """,
+            spec -> spec.path("persistence.xml"))
         );
     }
 
@@ -183,18 +197,26 @@ class MigratePersistenceXmlToJakartaPersistence32Test implements RewriteTest {
     void requiresTheRootElementAndItsActualNamespace() {
         rewriteRun(
           spec -> spec.expectedCyclesThatMakeChanges(0),
-          xml("""
+          xml(
+            """
             <entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0"/>
-            """, spec -> spec.path("one/persistence.xml")),
-          xml("""
+            """,
+            spec -> spec.path("one/persistence.xml")),
+          xml(
+            """
             <persistence xmlns="urn:other" xmlns:p="https://jakarta.ee/xml/ns/persistence" version="3.0"/>
-            """, spec -> spec.path("two/persistence.xml")),
-          xml("""
+            """,
+            spec -> spec.path("two/persistence.xml")),
+          xml(
+            """
             <p:persistence xmlns="https://jakarta.ee/xml/ns/persistence" xmlns:p="urn:other" version="3.0"/>
-            """, spec -> spec.path("three/persistence.xml")),
-          xml("""
+            """,
+            spec -> spec.path("three/persistence.xml")),
+          xml(
+            """
             <wrapper><persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0"/></wrapper>
-            """, spec -> spec.path("four/persistence.xml"))
+            """,
+            spec -> spec.path("four/persistence.xml"))
         );
     }
 }
