@@ -646,6 +646,53 @@ class TypeAnnotationParameterTest implements RewriteTest {
     }
 
     @Test
+    void aliasWithPartiallyAttributedClassLiteralContainingComment() {
+        rewriteRun(
+          spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")
+            .dependsOn("package com.example; public abstract class CustomType implements org.hibernate.usertype.UserType {}")),
+          java(
+            """
+            import org.hibernate.annotations.Type;
+            import org.hibernate.annotations.TypeDef;
+
+            @TypeDef(name = "uuid-char", typeClass = com.example./* comment */CustomType.class)
+            class Example {
+                @Type(type = "uuid-char", parameters = {})
+                Object value;
+            }
+            """,
+            """
+            import com.example.CustomType;
+            import org.hibernate.annotations.Type;
+
+            class Example {
+                @Type(value = CustomType.class, parameters = {})
+                Object value;
+            }
+            """,
+            spec -> spec.mapBeforeRecipe(cu -> (J.CompilationUnit) new JavaIsoVisitor<ExecutionContext>() {
+                @Override
+                public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                    J.Annotation a = super.visitAnnotation(annotation, ctx);
+                    if (!"TypeDef".equals(a.getSimpleName())) {
+                        return a;
+                    }
+                    // Model a missing Class-expression type while retaining its valid, attributed class target.
+                    // Type validation remains enabled; this is an explicit partial-LST boundary.
+                    return a.withArguments(ListUtils.map(a.getArguments(), argument -> {
+                        if (argument instanceof J.Assignment assignment) {
+                            if ("typeClass".equals(assignment.getVariable().toString()) && assignment.getAssignment() instanceof J.FieldAccess) {
+                                return assignment.withAssignment(((J.FieldAccess) assignment.getAssignment()).withType(JavaType.Unknown.getInstance()));
+                            }
+                        }
+                        return argument;
+                    }));
+                }
+            }.visitNonNull(cu, new InMemoryExecutionContext())))
+        );
+    }
+
+    @Test
     void userTypeParametersAreNotTemporalTypeNames() {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5+")

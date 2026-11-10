@@ -255,10 +255,15 @@ public class MigrateUserType extends Recipe {
         JavaType.ShallowClass type = JavaType.ShallowClass.build(fullyQualifiedName);
         JavaType argumentType = typeArgument.getType() == null ? JavaType.Unknown.getInstance() : typeArgument.getType();
         // a copy of the type argument, so that the class literal it came from keeps its own ids
-        Expression argument = TypeTree.build(typeArgument.toString());
+        Expression argument = (Expression) new JavaVisitor<Integer>() {
+            @Override
+            public J preVisit(J tree, Integer p) {
+                return tree.withId(randomId());
+            }
+        }.visitNonNull(typeArgument, 0);
         return new J.ParameterizedType(randomId(), Space.EMPTY, Markers.EMPTY,
                 new J.Identifier(randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), type.getClassName(), type, null),
-                JContainer.build(singletonList(JRightPadded.build(argument.withType(argumentType)))),
+                JContainer.build(singletonList(JRightPadded.build(argument.<Expression>withPrefix(Space.EMPTY).withType(argumentType)))),
                 new JavaType.Parameterized(null, type, singletonList(argumentType)));
     }
 }
