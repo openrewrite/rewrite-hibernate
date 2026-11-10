@@ -37,7 +37,7 @@ class MigrateToHibernate60Test implements RewriteTest {
 
     @DocumentExample
     @Test
-    void removesEntityManager() {
+    void replacesEntityManager() {
         rewriteRun(
           mavenProject("a",
             //language=xml
@@ -61,6 +61,13 @@ class MigrateToHibernate60Test implements RewriteTest {
                   <groupId>org.example</groupId>
                   <artifactId>a</artifactId>
                   <version>1.0.0</version>
+                  <dependencies>
+                    <dependency>
+                      <groupId>org.hibernate.orm</groupId>
+                      <artifactId>hibernate-core</artifactId>
+                      <version>6.0.2.Final</version>
+                    </dependency>
+                  </dependencies>
                 </project>
                 """
             )
@@ -89,6 +96,15 @@ class MigrateToHibernate60Test implements RewriteTest {
                   <groupId>org.example</groupId>
                   <artifactId>b</artifactId>
                   <version>1.0.0</version>
+                  <dependencyManagement>
+                    <dependencies>
+                      <dependency>
+                        <groupId>org.hibernate.orm</groupId>
+                        <artifactId>hibernate-core</artifactId>
+                        <version>6.0.2.Final</version>
+                      </dependency>
+                    </dependencies>
+                  </dependencyManagement>
                 </project>
                 """
             )
