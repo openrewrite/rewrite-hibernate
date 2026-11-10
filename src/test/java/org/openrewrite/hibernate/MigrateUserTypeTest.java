@@ -197,6 +197,51 @@ class MigrateUserTypeTest implements RewriteTest {
     }
 
     @Test
+    void returnedClassWithCommentInClassLiteral() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import org.hibernate.usertype.UserType;
+
+              import java.sql.Types;
+
+              public abstract class BigDecimalAsString implements UserType {
+
+                  @Override
+                  public int[] sqlTypes() {
+                      return new int[]{Types.VARCHAR};
+                  }
+
+                  @Override
+                  public Class returnedClass() {
+                      return java.math./* comment */BigDecimal.class;
+                  }
+              }
+              """,
+            """
+              import org.hibernate.usertype.UserType;
+
+              import java.sql.Types;
+
+              public abstract class BigDecimalAsString implements UserType<java.math./* comment */BigDecimal> {
+
+                  @Override
+                  public int getSqlType() {
+                      return Types.VARCHAR;
+                  }
+
+                  @Override
+                  public Class<java.math./* comment */BigDecimal> returnedClass() {
+                      return java.math./* comment */BigDecimal.class;
+                  }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void requireReturnedTypeClass() {
         //language=java
         rewriteRun(

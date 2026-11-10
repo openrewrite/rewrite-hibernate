@@ -288,9 +288,19 @@ public class TypeAnnotationParameter extends Recipe {
     }
 
     private static @Nullable String getFullyQualifiedTypeName(Expression expr) {
+        if (expr instanceof J.FieldAccess && "class".equals(((J.FieldAccess) expr).getSimpleName())) {
+            return qualifiedName(((J.FieldAccess) expr).getTarget());
+        }
+        return qualifiedName(expr);
+    }
+
+    private static @Nullable String qualifiedName(Expression expr) {
+        if (expr instanceof J.Identifier) {
+            return ((J.Identifier) expr).getSimpleName();
+        }
         if (expr instanceof J.FieldAccess) {
-            String fqName = ((J.FieldAccess) expr).toString();
-            return fqName.endsWith(".class") ? fqName.substring(0, fqName.length() - 6) : fqName;
+            String target = qualifiedName(((J.FieldAccess) expr).getTarget());
+            return target == null ? null : target + "." + ((J.FieldAccess) expr).getSimpleName();
         }
         return null;
     }
