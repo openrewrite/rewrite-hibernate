@@ -135,7 +135,7 @@ class MigrateToHibernate56Test implements RewriteTest {
     }
 
     @Test
-    void upgradeOnlyOrmArtifacts() {
+    void upgradeOrmAndToolsButNotValidator() {
         rewriteRun(
           //language=xml
           pomXml(
@@ -177,7 +177,7 @@ class MigrateToHibernate56Test implements RewriteTest {
                   <dependency>
                     <groupId>org.hibernate</groupId>
                     <artifactId>hibernate-tools</artifactId>
-                    <version>5.4.33.Final</version>
+                    <version>5.6.15.Final</version>
                   </dependency>
                   <dependency>
                     <groupId>org.hibernate</groupId>
