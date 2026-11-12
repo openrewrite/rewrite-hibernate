@@ -32,26 +32,8 @@ class MigrateToHibernate56Test implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate56")
           .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "hibernate-core-5", "javax.persistence-api")
-            //language=java
-            .dependsOn(
-              """
-                package org.hibernate.ejb;
-                public class HibernatePersistence extends org.hibernate.jpa.HibernatePersistenceProvider {}
-                """,
-              """
-                package org.hibernate.cfg;
-                public class AnnotationConfiguration extends Configuration {}
-                """,
-              """
-                package org.hibernate.service;
-                import java.util.Map;
-                public class ServiceRegistryBuilder {
-                    public ServiceRegistryBuilder applySettings(Map settings) { return this; }
-                    public ServiceRegistry buildServiceRegistry() { return null; }
-                }
-                """
-            ));
+            .classpathFromResources(new InMemoryExecutionContext(),
+              "hibernate-core-4", "hibernate-entitymanager-4", "javax.persistence-api"));
     }
 
     @DocumentExample
