@@ -1,0 +1,110 @@
+#
+# Copyright 2026 the original author or authors.
+# <p>
+# Licensed under the Moderne Source Available License (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# <p>
+# https://docs.moderne.io/licensing/moderne-source-available-license
+# <p>
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.MigrateToHibernate56
+displayName: Migrate to Hibernate 5.6.x
+description: >-
+  This recipe will apply changes commonly needed when migrating from Hibernate 4.x or an earlier 5.x release to 5.6.x.
+  Hibernate ORM dependencies are upgraded to 5.6.x, the `hibernate-entitymanager`, `hibernate-java8` and
+  `hibernate-annotations` artifacts that were merged into `hibernate-core` are replaced by it, and types that were
+  removed in 5.x are replaced by their successors, including the JPA provider in `persistence.xml`.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-entitymanager
+      newArtifactId: hibernate-core
+      newVersion: 5.6.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-java8
+      newArtifactId: hibernate-core
+      newVersion: 5.6.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-annotations
+      newArtifactId: hibernate-core
+      newVersion: 5.6.x
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.hibernate
+      artifactId: hibernate-*
+      newVersion: 5.6.x
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.ejb.HibernatePersistence
+      newFullyQualifiedTypeName: org.hibernate.jpa.HibernatePersistenceProvider
+  - org.openrewrite.xml.ChangeTagValue:
+      elementName: /persistence/persistence-unit/provider
+      oldValue: org.hibernate.ejb.HibernatePersistence
+      newValue: org.hibernate.jpa.HibernatePersistenceProvider
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.ejb.QueryHints
+      newFullyQualifiedTypeName: org.hibernate.jpa.QueryHints
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.cfg.AnnotationConfiguration
+      newFullyQualifiedTypeName: org.hibernate.cfg.Configuration
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.hibernate.service.ServiceRegistryBuilder buildServiceRegistry()
+      newMethodName: build
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.service.ServiceRegistryBuilder
+      newFullyQualifiedTypeName: org.hibernate.boot.registry.StandardServiceRegistryBuilder
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.type.StringClobType
+      newFullyQualifiedTypeName: org.hibernate.type.MaterializedClobType
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.type.PrimitiveByteArrayBlobType
+      newFullyQualifiedTypeName: org.hibernate.type.MaterializedBlobType
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.hibernate.type.ByteArrayBlobType
+      newFullyQualifiedTypeName: org.hibernate.type.WrappedMaterializedBlobType
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.hibernate.MigrateToHibernate56Jakarta
+displayName: Migrate to Hibernate 5.6.x with Jakarta Persistence
+description: >-
+  This recipe migrates to Hibernate 5.6.x and switches to its `-jakarta` artifacts, such as `hibernate-core-jakarta`,
+  which are based on Jakarta Persistence 3.0. `javax.persistence` usages, the JPA API dependency and `persistence.xml`
+  namespaces move to `jakarta.persistence` as well.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - org.openrewrite.hibernate.MigrateToHibernate56
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-core
+      newArtifactId: hibernate-core-jakarta
+      newVersion: 5.6.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-envers
+      newArtifactId: hibernate-envers-jakarta
+      newVersion: 5.6.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-jpamodelgen
+      newArtifactId: hibernate-jpamodelgen-jakarta
+      newVersion: 5.6.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-testing
+      newArtifactId: hibernate-testing-jakarta
+      newVersion: 5.6.x
+  - org.openrewrite.java.migrate.jakarta.JavaxPersistenceToJakartaPersistence
+  - org.openrewrite.java.migrate.jakarta.JavaxPersistenceXmlToJakartaPersistenceXml

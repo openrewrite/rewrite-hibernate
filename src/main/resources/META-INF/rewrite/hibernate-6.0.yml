@@ -26,6 +26,7 @@ description: >-
 preconditions:
   - org.openrewrite.Singleton
 recipeList:
+  - org.openrewrite.hibernate.MigrateToHibernate56
   - org.openrewrite.hibernate.MigrateToHibernateDependencies60
   - org.openrewrite.hibernate.AddScalarPreferStandardBasicTypes
   - org.openrewrite.hibernate.EmptyInterceptorToInterface

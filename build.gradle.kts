@@ -16,6 +16,8 @@ recipeDependencies {
     parserClasspath("org.hibernate:hibernate-core:5.6.15.Final")
     parserClasspath("org.hibernate.orm:hibernate-core:6.5.1.Final")
 
+    testParserClasspath("org.hibernate:hibernate-core:4.3.11.Final")
+    testParserClasspath("org.hibernate:hibernate-entitymanager:4.3.11.Final")
     testParserClasspath("javax.persistence:javax.persistence-api:2.2")
 }
 
