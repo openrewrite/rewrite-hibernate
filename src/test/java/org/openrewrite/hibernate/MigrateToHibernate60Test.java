@@ -113,6 +113,79 @@ class MigrateToHibernate60Test implements RewriteTest {
     }
 
     @Test
+    void moveToolsAndValidatorArtifactsToTheirOwnGroupIds() {
+        rewriteRun(
+          //language=xml
+          pomXml(
+            """
+              <project>
+                <groupId>org.example</groupId>
+                <artifactId>a</artifactId>
+                <version>1.0.0</version>
+                <properties>
+                  <hibernate.version>5.6.15.Final</hibernate.version>
+                </properties>
+                <dependencies>
+                  <dependency>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-core</artifactId>
+                    <version>${hibernate.version}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-tools</artifactId>
+                    <version>${hibernate.version}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-validator-annotation-processor</artifactId>
+                    <version>6.0.23.Final</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-validator-cdi</artifactId>
+                    <version>6.0.23.Final</version>
+                  </dependency>
+                </dependencies>
+              </project>
+              """,
+            """
+              <project>
+                <groupId>org.example</groupId>
+                <artifactId>a</artifactId>
+                <version>1.0.0</version>
+                <properties>
+                  <hibernate.version>6.0.2.Final</hibernate.version>
+                </properties>
+                <dependencies>
+                  <dependency>
+                    <groupId>org.hibernate.orm</groupId>
+                    <artifactId>hibernate-core</artifactId>
+                    <version>${hibernate.version}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>org.hibernate.tool</groupId>
+                    <artifactId>hibernate-tools-orm</artifactId>
+                    <version>6.0.2.Final</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>org.hibernate.validator</groupId>
+                    <artifactId>hibernate-validator-annotation-processor</artifactId>
+                    <version>8.0.6.Final</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>org.hibernate.validator</groupId>
+                    <artifactId>hibernate-validator-cdi</artifactId>
+                    <version>8.0.6.Final</version>
+                  </dependency>
+                </dependencies>
+              </project>
+              """
+          )
+        );
+    }
+
+    @Test
     void hibernateValidatorGetsItsOwnGroupIdNotOrm() {
         rewriteRun(
           //language=xml

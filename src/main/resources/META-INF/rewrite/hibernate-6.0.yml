@@ -140,6 +140,22 @@ recipeList:
       oldArtifactId: hibernate-validator
       newGroupId: org.hibernate.validator
       newVersion: 8.0.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-validator-annotation-processor
+      newGroupId: org.hibernate.validator
+      newVersion: 8.0.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-validator-cdi
+      newGroupId: org.hibernate.validator
+      newVersion: 8.0.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: org.hibernate
+      oldArtifactId: hibernate-tools
+      newGroupId: org.hibernate.tool
+      newArtifactId: hibernate-tools-orm
+      newVersion: 6.0.x
   # Single glob for all remaining ORM artifacts — preserves shared version properties
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: org.hibernate
