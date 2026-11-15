@@ -33,7 +33,9 @@ class MigrateToHibernate56Test implements RewriteTest {
         spec.recipeFromResources("org.openrewrite.hibernate.MigrateToHibernate56")
           .parser(JavaParser.fromJavaVersion()
             .classpathFromResources(new InMemoryExecutionContext(),
-              "hibernate-core-4", "hibernate-entitymanager-4", "javax.persistence-api"));
+              "hibernate-core-4",
+              "hibernate-entitymanager-4",
+              "javax.persistence-api"));
     }
 
     @DocumentExample

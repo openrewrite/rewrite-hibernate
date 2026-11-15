@@ -38,7 +38,7 @@ class ChangeHibernateDialectTest implements RewriteTest {
     @DocumentExample
     @Test
     void preservesHibernateDoctypeWhitespaceAndCdata() {
-        String before = """
+        var before = """
           <?xml version="1.0"?>
           <!DOCTYPE hibernate-configuration PUBLIC
                   "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
@@ -149,7 +149,7 @@ class ChangeHibernateDialectTest implements RewriteTest {
 
     @Test
     void migratesPrefixedHibernateConfiguration() {
-        String before = """
+        var before = """
           <h:hibernate-configuration xmlns:h="http://www.hibernate.org/xsd/orm/cfg">
               <h:session-factory>
                   <h:property name="dialect">org.hibernate.dialect.MySQL8Dialect</h:property>
@@ -164,7 +164,7 @@ class ChangeHibernateDialectTest implements RewriteTest {
 
     @Test
     void migratesUnqualifiedPersistenceAndMultipleUnits() {
-        String before = """
+        var before = """
           <persistence version="1.0">
               <persistence-unit name="first">
                   <properties>
@@ -248,7 +248,7 @@ class ChangeHibernateDialectTest implements RewriteTest {
 
     @Test
     void preservesUnrelatedFilesAndRoots() {
-        String persistence = """
+        var persistence = """
           <persistence>
               <persistence-unit name="example">
                   <properties>
@@ -257,7 +257,7 @@ class ChangeHibernateDialectTest implements RewriteTest {
               </persistence-unit>
           </persistence>
           """;
-        String hibernate = """
+        var hibernate = """
           <hibernate-configuration>
               <session-factory>
                   <property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</property>
