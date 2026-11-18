@@ -30,6 +30,7 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
+import org.openrewrite.test.TypeValidation;
 
 import static org.openrewrite.java.Assertions.java;
 
@@ -208,6 +209,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
     @Test
     void qualifiedTypeClass() {
         rewriteRun(
+          // `io.hypersistence.utils` is not on the test classpath
+          spec -> spec.typeValidationOptions(TypeValidation.builder().identifiers(false).build()),
           //language=java
           java(
             """
@@ -266,6 +269,8 @@ class TypeAnnotationParameterTest implements RewriteTest {
     @Test
     void qualifiedTypeDefsOnClass() {
         rewriteRun(
+          // `io.hypersistence.utils` is not on the test classpath
+          spec -> spec.typeValidationOptions(TypeValidation.builder().identifiers(false).build()),
           //language=java
           java(
             """
