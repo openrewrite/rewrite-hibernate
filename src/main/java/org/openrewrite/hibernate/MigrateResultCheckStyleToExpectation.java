@@ -104,7 +104,10 @@ public class MigrateResultCheckStyleToExpectation extends Recipe {
             private J.Annotation applyTemplate(J.Assignment assignment, String map, ExecutionContext ctx) {
                 J.Annotation updatedAnnotation = JavaTemplate.builder("verify = #{}")
                         .javaParser(JavaParser.fromJavaVersion().dependsOn(
-                                "package org.hibernate.jdbc;public class Expectation { public static class None {} }"))
+                                "package org.hibernate.jdbc;public class Expectation { " +
+                                        "public static class None {} " +
+                                        "public static class RowCount {} " +
+                                        "public static class OutParameter {} }"))
                         .build()
                         .apply(getCursor(), assignment.getCoordinates().replace(), map);
 
