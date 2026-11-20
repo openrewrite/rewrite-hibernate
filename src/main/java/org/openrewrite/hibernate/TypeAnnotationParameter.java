@@ -21,6 +21,7 @@ import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
+import org.openrewrite.java.service.AnnotationService;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
@@ -175,7 +176,7 @@ public class TypeAnnotationParameter extends Recipe {
                             (method.getParameters().isEmpty() || method.getParameters().get(0) instanceof J.Empty);
                 }
                 if (!compatible || (getAttributeValue(a, "parameters") != null && !hasEmptyParameters(a)) ||
-                        service(org.openrewrite.java.service.AnnotationService.class)
+                        service(AnnotationService.class)
                                 .getAllAnnotations(owner).stream().anyMatch(annotation ->
                                         TypeUtils.isOfClassType(annotation.getType(), "org.hibernate.annotations.JdbcTypeCode"))) {
                     return a;
