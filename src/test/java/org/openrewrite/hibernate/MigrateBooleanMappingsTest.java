@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -312,72 +313,76 @@ class MigrateBooleanMappingsTest implements RewriteTest {
         );
     }
 
-    @Test
-    void noChange_shouldBeMade_whenTypeIsClass() {
-        //language=java
-        rewriteRun(
-          java(
-            """
-              import org.hibernate.annotations.Type;
-              import jakarta.persistence.Column;
-              
-              public class SomeClass {
-              
-                  private Object someObject;
-              
-                  @Column(name = "SOME_OBJECT")
-                  @Type(type = Object.class) // we just need some class, it is not checked
-                  public Object getSomeObject() {
-                      return someObject;
-                  }
-              }
-              """
-          )
-        );
-    }
+    @Nested
+    class NoChange {
 
-    @Test
-    void noChange_shouldBeMade_whenTypeIsNameOfClass() {
-        //language=java
-        rewriteRun(
-          java(
-            """
-              import org.hibernate.annotations.Type;
-              import jakarta.persistence.Column;
+        @Test
+        void noChange_shouldBeMade_whenTypeIsClass() {
+            //language=java
+            rewriteRun(
+              java(
+                """
+                  import org.hibernate.annotations.Type;
+                  import jakarta.persistence.Column;
               
-              public class SomeClass {
+                  public class SomeClass {
               
-                  private Object someObject;
+                      private Object someObject;
               
-                  @Column(name = "SOME_OBJECT")
-                  @Type(type = "java.lang.Object") // we just need some class name, it is not checked
-                  public Object getSomeObject() {
-                      return someObject;
+                      @Column(name = "SOME_OBJECT")
+                      @Type(type = Object.class) // we just need some class, it is not checked
+                      public Object getSomeObject() {
+                          return someObject;
+                      }
                   }
-              }
-              """
-          )
-        );
-    }
+                  """
+              )
+            );
+        }
 
-    @Test
-    void noChange_shouldBeMade_whenTypeIsBoolean() {
-        //language=java
-        rewriteRun(
-          java(
-            """
-              import jakarta.persistence.Column;
-              import org.hibernate.annotations.Type;
+        @Test
+        void noChange_shouldBeMade_whenTypeIsNameOfClass() {
+            //language=java
+            rewriteRun(
+              java(
+                """
+                  import org.hibernate.annotations.Type;
+                  import jakarta.persistence.Column;
               
-              public class SomeClass {
+                  public class SomeClass {
               
-                  @Column(name = "IS_SOMETHING")
-                  @Type(type = "boolean")
-                  private boolean isSomething;
-              }
-              """
-          )
-        );
+                      private Object someObject;
+              
+                      @Column(name = "SOME_OBJECT")
+                      @Type(type = "java.lang.Object") // we just need some class name, it is not checked
+                      public Object getSomeObject() {
+                          return someObject;
+                      }
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void noChange_shouldBeMade_whenTypeIsBoolean() {
+            //language=java
+            rewriteRun(
+              java(
+                """
+                  import jakarta.persistence.Column;
+                  import org.hibernate.annotations.Type;
+              
+                  public class SomeClass {
+              
+                      @Column(name = "IS_SOMETHING")
+                      @Type(type = "boolean")
+                      private boolean isSomething;
+                  }
+                  """
+              )
+            );
+        }
     }
 
 }

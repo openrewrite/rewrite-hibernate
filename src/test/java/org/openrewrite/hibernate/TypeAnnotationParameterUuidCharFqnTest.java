@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
@@ -95,72 +96,6 @@ class TypeAnnotationParameterUuidCharFqnTest implements RewriteTest {
     }
 
     @Test
-    void retainBuiltInFqnWithNonemptyParameters() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import org.hibernate.annotations.Parameter;
-              import org.hibernate.annotations.Type;
-
-              class Example {
-                  @Type(type = "org.hibernate.type.UUIDCharType", parameters = @Parameter(name = "custom", value = "true"))
-                  java.util.UUID id;
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    void retainBuiltInFqnWithExistingJdbcTypeCode() {
-        rewriteRun(
-          spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(
-            new InMemoryExecutionContext(), "hibernate-core-5+", "hibernate-core-6+")),
-          //language=java
-          java(
-            """
-              import org.hibernate.annotations.JdbcTypeCode;
-              import org.hibernate.annotations.Type;
-
-              class Example {
-                  @JdbcTypeCode(java.sql.Types.VARCHAR)
-                  @Type(type = "org.hibernate.type.UUIDCharType")
-                  java.util.UUID id;
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    void retainBuiltInFqnOnUnsupportedOwners() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import org.hibernate.annotations.Type;
-
-              class Example {
-                  @Type(type = "org.hibernate.type.UUIDCharType")
-                  java.util.List<java.util.UUID> ids;
-
-                  @Type(type = "org.hibernate.type.UUIDCharType")
-                  java.util.UUID[] getIds() {
-                      return null;
-                  }
-
-                  @Type(type = "org.hibernate.type.UUIDCharType")
-                  java.util.UUID findId(java.util.UUID id) {
-                      return id;
-                  }
-              }
-              """
-          )
-        );
-    }
-
-    @Test
     void localTypeDefStillOverridesTheBuiltInFqn() {
         rewriteRun(
           spec -> spec.expectedCyclesThatMakeChanges(1)
@@ -190,5 +125,75 @@ class TypeAnnotationParameterUuidCharFqnTest implements RewriteTest {
               """
           )
         );
+    }
+
+    @Nested
+    class NoChange {
+
+        @Test
+        void retainBuiltInFqnWithNonemptyParameters() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import org.hibernate.annotations.Parameter;
+                  import org.hibernate.annotations.Type;
+
+                  class Example {
+                      @Type(type = "org.hibernate.type.UUIDCharType", parameters = @Parameter(name = "custom", value = "true"))
+                      java.util.UUID id;
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void retainBuiltInFqnWithExistingJdbcTypeCode() {
+            rewriteRun(
+              spec -> spec.parser(JavaParser.fromJavaVersion().classpathFromResources(
+                new InMemoryExecutionContext(), "hibernate-core-5+", "hibernate-core-6+")),
+              //language=java
+              java(
+                """
+                  import org.hibernate.annotations.JdbcTypeCode;
+                  import org.hibernate.annotations.Type;
+
+                  class Example {
+                      @JdbcTypeCode(java.sql.Types.VARCHAR)
+                      @Type(type = "org.hibernate.type.UUIDCharType")
+                      java.util.UUID id;
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void retainBuiltInFqnOnUnsupportedOwners() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import org.hibernate.annotations.Type;
+
+                  class Example {
+                      @Type(type = "org.hibernate.type.UUIDCharType")
+                      java.util.List<java.util.UUID> ids;
+
+                      @Type(type = "org.hibernate.type.UUIDCharType")
+                      java.util.UUID[] getIds() {
+                          return null;
+                      }
+
+                      @Type(type = "org.hibernate.type.UUIDCharType")
+                      java.util.UUID findId(java.util.UUID id) {
+                          return id;
+                      }
+                  }
+                  """
+              )
+            );
+        }
     }
 }

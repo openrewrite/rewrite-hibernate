@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
@@ -115,128 +116,6 @@ class RemoveGeneratedValueStrategyWithGenericGeneratorTest implements RewriteTes
     }
 
     @Test
-    void leaveAloneWhenTableGeneratorMatchesName() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.persistence.Entity;
-              import jakarta.persistence.GeneratedValue;
-              import jakarta.persistence.GenerationType;
-              import jakarta.persistence.Id;
-              import jakarta.persistence.TableGenerator;
-              import org.hibernate.annotations.GenericGenerator;
-
-              @Entity
-              @TableGenerator(name = "GEN", table = "GEN_TABLE")
-              class A {
-                  @Id
-                  @GenericGenerator(name = "OTHER", strategy = "org.hibernate.id.UUIDGenerator")
-                  @GeneratedValue(strategy = GenerationType.TABLE, generator = "GEN")
-                  Long id;
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    void leaveAloneWhenSequenceGeneratorMatchesName() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.persistence.Entity;
-              import jakarta.persistence.GeneratedValue;
-              import jakarta.persistence.GenerationType;
-              import jakarta.persistence.Id;
-              import jakarta.persistence.SequenceGenerator;
-              import org.hibernate.annotations.GenericGenerator;
-
-              @Entity
-              @SequenceGenerator(name = "GEN", sequenceName = "GEN_SEQ")
-              class A {
-                  @Id
-                  @GenericGenerator(name = "OTHER", strategy = "org.hibernate.id.UUIDGenerator")
-                  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "GEN")
-                  Long id;
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    void leaveAloneWhenNoGeneratorAttribute() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.persistence.Entity;
-              import jakarta.persistence.GeneratedValue;
-              import jakarta.persistence.GenerationType;
-              import jakarta.persistence.Id;
-              import org.hibernate.annotations.GenericGenerator;
-
-              @Entity
-              class A {
-                  @Id
-                  @GenericGenerator(name = "MY_ID_GEN", strategy = "com.foo.CustomGen")
-                  @GeneratedValue(strategy = GenerationType.TABLE)
-                  Long id;
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    void leaveAloneWhenStrategyIsIdentityOrAuto() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.persistence.Entity;
-              import jakarta.persistence.GeneratedValue;
-              import jakarta.persistence.GenerationType;
-              import jakarta.persistence.Id;
-              import org.hibernate.annotations.GenericGenerator;
-
-              @Entity
-              class A {
-                  @Id
-                  @GenericGenerator(name = "MY_ID_GEN", strategy = "com.foo.CustomGen")
-                  @GeneratedValue(strategy = GenerationType.AUTO, generator = "MY_ID_GEN")
-                  Long id;
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    void leaveAloneWhenNoGenericGeneratorPresent() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.persistence.Entity;
-              import jakarta.persistence.GeneratedValue;
-              import jakarta.persistence.GenerationType;
-              import jakarta.persistence.Id;
-
-              @Entity
-              class A {
-                  @Id
-                  @GeneratedValue(strategy = GenerationType.TABLE, generator = "SOMEWHERE_ELSE")
-                  Long id;
-              }
-              """
-          )
-        );
-    }
-
-    @Test
     void worksWhenGenericGeneratorIsOnSiblingField() {
         rewriteRun(
           //language=java
@@ -314,5 +193,131 @@ class RemoveGeneratedValueStrategyWithGenericGeneratorTest implements RewriteTes
               """
           )
         );
+    }
+
+    @Nested
+    class NoChange {
+
+        @Test
+        void leaveAloneWhenTableGeneratorMatchesName() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.persistence.Entity;
+                  import jakarta.persistence.GeneratedValue;
+                  import jakarta.persistence.GenerationType;
+                  import jakarta.persistence.Id;
+                  import jakarta.persistence.TableGenerator;
+                  import org.hibernate.annotations.GenericGenerator;
+
+                  @Entity
+                  @TableGenerator(name = "GEN", table = "GEN_TABLE")
+                  class A {
+                      @Id
+                      @GenericGenerator(name = "OTHER", strategy = "org.hibernate.id.UUIDGenerator")
+                      @GeneratedValue(strategy = GenerationType.TABLE, generator = "GEN")
+                      Long id;
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void leaveAloneWhenSequenceGeneratorMatchesName() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.persistence.Entity;
+                  import jakarta.persistence.GeneratedValue;
+                  import jakarta.persistence.GenerationType;
+                  import jakarta.persistence.Id;
+                  import jakarta.persistence.SequenceGenerator;
+                  import org.hibernate.annotations.GenericGenerator;
+
+                  @Entity
+                  @SequenceGenerator(name = "GEN", sequenceName = "GEN_SEQ")
+                  class A {
+                      @Id
+                      @GenericGenerator(name = "OTHER", strategy = "org.hibernate.id.UUIDGenerator")
+                      @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "GEN")
+                      Long id;
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void leaveAloneWhenNoGeneratorAttribute() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.persistence.Entity;
+                  import jakarta.persistence.GeneratedValue;
+                  import jakarta.persistence.GenerationType;
+                  import jakarta.persistence.Id;
+                  import org.hibernate.annotations.GenericGenerator;
+
+                  @Entity
+                  class A {
+                      @Id
+                      @GenericGenerator(name = "MY_ID_GEN", strategy = "com.foo.CustomGen")
+                      @GeneratedValue(strategy = GenerationType.TABLE)
+                      Long id;
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void leaveAloneWhenStrategyIsIdentityOrAuto() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.persistence.Entity;
+                  import jakarta.persistence.GeneratedValue;
+                  import jakarta.persistence.GenerationType;
+                  import jakarta.persistence.Id;
+                  import org.hibernate.annotations.GenericGenerator;
+
+                  @Entity
+                  class A {
+                      @Id
+                      @GenericGenerator(name = "MY_ID_GEN", strategy = "com.foo.CustomGen")
+                      @GeneratedValue(strategy = GenerationType.AUTO, generator = "MY_ID_GEN")
+                      Long id;
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void leaveAloneWhenNoGenericGeneratorPresent() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.persistence.Entity;
+                  import jakarta.persistence.GeneratedValue;
+                  import jakarta.persistence.GenerationType;
+                  import jakarta.persistence.Id;
+
+                  @Entity
+                  class A {
+                      @Id
+                      @GeneratedValue(strategy = GenerationType.TABLE, generator = "SOMEWHERE_ELSE")
+                      Long id;
+                  }
+                  """
+              )
+            );
+        }
     }
 }
