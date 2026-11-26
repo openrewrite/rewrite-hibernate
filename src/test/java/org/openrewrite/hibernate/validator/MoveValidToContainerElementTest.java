@@ -15,6 +15,7 @@
  */
 package org.openrewrite.hibernate.validator;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.InMemoryExecutionContext;
@@ -388,62 +389,6 @@ class MoveValidToContainerElementTest implements RewriteTest {
     }
 
     @Test
-    void leaveNonContainersAlone() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.validation.Valid;
-              import java.util.List;
-
-              class Customer {
-                  @Valid
-                  private Order order;
-
-                  private @Valid Order shippedOrder;
-
-                  @Valid
-                  private Order[] orders;
-
-                  @Valid
-                  private List rawOrders;
-
-                  @Valid
-                  private Box<Order> boxedOrder;
-              }
-
-              class Order {
-              }
-
-              class Box<T> {
-              }
-              """
-          )
-        );
-    }
-
-    @Test
-    void leaveWildcardsAlone() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.validation.Valid;
-              import java.util.List;
-
-              class Customer {
-                  @Valid
-                  private List<? extends Order> orders;
-              }
-
-              class Order {
-              }
-              """
-          )
-        );
-    }
-
-    @Test
     void genericMethod() {
         rewriteRun(
           //language=java
@@ -559,71 +504,131 @@ class MoveValidToContainerElementTest implements RewriteTest {
         );
     }
 
-    @Test
-    void leaveArrayTypeArgumentsAlone() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.validation.Valid;
-              import java.util.List;
+    @Nested
+    class NoChange {
 
-              class Customer {
-                  @Valid
-                  private List<Order[]> orders;
-              }
+        @Test
+        void leaveNonContainersAlone() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.validation.Valid;
+                  import java.util.List;
 
-              class Order {
-              }
-              """
-          )
-        );
-    }
+                  class Customer {
+                      @Valid
+                      private Order order;
 
-    @Test
-    void leaveContainersWithExtraTypeParametersAlone() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.validation.Valid;
-              import java.util.Iterator;
+                      private @Valid Order shippedOrder;
 
-              class Registry<K, V> implements Iterable<V> {
-                  public Iterator<V> iterator() {
-                      return null;
+                      @Valid
+                      private Order[] orders;
+
+                      @Valid
+                      private List rawOrders;
+
+                      @Valid
+                      private Box<Order> boxedOrder;
                   }
-              }
 
-              class Customer {
-                  @Valid
-                  private Registry<String, Order> registry;
-              }
+                  class Order {
+                  }
 
-              class Order {
-              }
-              """
-          )
-        );
-    }
+                  class Box<T> {
+                  }
+                  """
+              )
+            );
+        }
 
-    @Test
-    void alreadyOnContainerElement() {
-        rewriteRun(
-          //language=java
-          java(
-            """
-              import jakarta.validation.Valid;
-              import java.util.List;
+        @Test
+        void leaveWildcardsAlone() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.validation.Valid;
+                  import java.util.List;
 
-              class Customer {
-                  private List<@Valid Order> orders;
-              }
+                  class Customer {
+                      @Valid
+                      private List<? extends Order> orders;
+                  }
 
-              class Order {
-              }
-              """
-          )
-        );
+                  class Order {
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void leaveArrayTypeArgumentsAlone() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.validation.Valid;
+                  import java.util.List;
+
+                  class Customer {
+                      @Valid
+                      private List<Order[]> orders;
+                  }
+
+                  class Order {
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void leaveContainersWithExtraTypeParametersAlone() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.validation.Valid;
+                  import java.util.Iterator;
+
+                  class Registry<K, V> implements Iterable<V> {
+                      public Iterator<V> iterator() {
+                          return null;
+                      }
+                  }
+
+                  class Customer {
+                      @Valid
+                      private Registry<String, Order> registry;
+                  }
+
+                  class Order {
+                  }
+                  """
+              )
+            );
+        }
+
+        @Test
+        void alreadyOnContainerElement() {
+            rewriteRun(
+              //language=java
+              java(
+                """
+                  import jakarta.validation.Valid;
+                  import java.util.List;
+
+                  class Customer {
+                      private List<@Valid Order> orders;
+                  }
+
+                  class Order {
+                  }
+                  """
+              )
+            );
+        }
     }
 }
